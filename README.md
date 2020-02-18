@@ -1,4 +1,6 @@
-# Backend
+# streamshore backend
+
+#### [frontend](https://github.com/sethmaxwl/streamshore)
 
 To start your Phoenix server:
 
