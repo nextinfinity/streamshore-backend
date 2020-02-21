@@ -18,8 +18,8 @@ defmodule BackendWeb.RoomChatChannel do
 
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room_chat:lobby).
-  def handle_in("shout", payload, socket) do
-    broadcast socket, "shout", payload
+  def handle_in("new:msg", payload, socket) do
+    broadcast socket, "new:msg", payload
     {:noreply, socket}
   end
 
