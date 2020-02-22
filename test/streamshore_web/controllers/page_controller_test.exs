@@ -1,5 +1,5 @@
-defmodule BackendWeb.PageControllerTest do
-  use BackendWeb.ConnCase
+defmodule StreamshoreWeb.PageControllerTest do
+  use StreamshoreWeb.ConnCase
 
   test "GET /", %{conn: conn} do
     conn = get(conn, "/")

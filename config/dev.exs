@@ -1,10 +1,10 @@
 use Mix.Config
 
 # Configure your database
-config :backend, Backend.Repo,
+config :streamshore, Streamshore.Repo,
   username: "root",
   password: "",
-  database: "backend_dev",
+  database: "streamshore_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -15,7 +15,7 @@ config :backend, Backend.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with webpack to recompile .js and .css sources.
-config :backend, BackendWeb.Endpoint,
+config :streamshore, StreamshoreWeb.Endpoint,
   http: [port: 4000],
   debug_errors: true,
   code_reloader: true,
@@ -55,13 +55,13 @@ config :backend, BackendWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :backend, BackendWeb.Endpoint,
+config :streamshore, StreamshoreWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/backend_web/(live|views)/.*(ex)$",
-      ~r"lib/backend_web/templates/.*(eex)$"
+      ~r"lib/streamshore_web/(live|views)/.*(ex)$",
+      ~r"lib/streamshore_web/templates/.*(eex)$"
     ]
   ]
 

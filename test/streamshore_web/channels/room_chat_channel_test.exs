@@ -1,10 +1,10 @@
-defmodule BackendWeb.RoomChatChannelTest do
-  use BackendWeb.ChannelCase
+defmodule StreamshoreWeb.RoomChatChannelTest do
+  use StreamshoreWeb.ChannelCase
 
   setup do
     {:ok, _, socket} =
-      socket(BackendWeb.UserSocket, "user_id", %{some: :assign})
-      |> subscribe_and_join(BackendWeb.RoomChatChannel, "room_chat:lobby")
+      socket(StreamshoreWeb.UserSocket, "user_id", %{some: :assign})
+      |> subscribe_and_join(StreamshoreWeb.RoomChatChannel, "room_chat:lobby")
 
     {:ok, socket: socket}
   end

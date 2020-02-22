@@ -1,5 +1,5 @@
-defmodule BackendWeb.LayoutViewTest do
-  use BackendWeb.ConnCase, async: true
+defmodule StreamshoreWeb.LayoutViewTest do
+  use StreamshoreWeb.ConnCase, async: true
 
   # When testing helpers, you may want to import Phoenix.HTML and
   # use functions such as safe_to_string() to convert the helper

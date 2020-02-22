@@ -1,16 +1,16 @@
-defmodule BackendWeb.Endpoint do
-  use Phoenix.Endpoint, otp_app: :backend
+defmodule StreamshoreWeb.Endpoint do
+  use Phoenix.Endpoint, otp_app: :streamshore
 
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
-    key: "_backend_key",
-    signing_salt: "CSJbVEiF"
+    key: "_streamshore_key",
+    signing_salt: "41tWQZVt"
   ]
 
-  socket "/socket", BackendWeb.UserSocket,
+  socket "/socket", StreamshoreWeb.UserSocket,
     websocket: true,
     longpoll: false
 
@@ -20,7 +20,7 @@ defmodule BackendWeb.Endpoint do
   # when deploying your static files in production.
   plug Plug.Static,
     at: "/",
-    from: :backend,
+    from: :streamshore,
     gzip: false,
     only: ~w(css fonts images js favicon.ico robots.txt)
 
@@ -43,5 +43,5 @@ defmodule BackendWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug BackendWeb.Router
+  plug StreamshoreWeb.Router
 end

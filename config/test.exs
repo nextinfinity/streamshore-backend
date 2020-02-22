@@ -1,16 +1,16 @@
 use Mix.Config
 
 # Configure your database
-config :backend, Backend.Repo,
+config :streamshore, Streamshore.Repo,
   username: "root",
   password: "",
-  database: "backend_test",
+  database: "streamshore_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
-config :backend, BackendWeb.Endpoint,
+config :streamshore, StreamshoreWeb.Endpoint,
   http: [port: 4002],
   server: false
 

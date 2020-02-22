@@ -1,5 +1,5 @@
-defmodule BackendWeb.ErrorView do
-  use BackendWeb, :view
+defmodule StreamshoreWeb.ErrorView do
+  use StreamshoreWeb, :view
 
   # If you want to customize a particular status code
   # for a certain format, you may uncomment below.
