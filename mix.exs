@@ -1,9 +1,9 @@
-defmodule Backend.MixProject do
+defmodule Streamshore.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :backend,
+      app: :streamshore,
       version: "0.1.0",
       elixir: "~> 1.5",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -19,7 +19,7 @@ defmodule Backend.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Backend.Application, []},
+      mod: {Streamshore.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

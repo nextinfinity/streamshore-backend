@@ -1,4 +1,4 @@
-defmodule Backend.DataCase do
+defmodule Streamshore.DataCase do
   @moduledoc """
   This module defines the setup for tests requiring
   access to the application's data layer.
@@ -10,7 +10,7 @@ defmodule Backend.DataCase do
   we enable the SQL sandbox, so changes done to the database
   are reverted at the end of every test. If you are using
   PostgreSQL, you can even run database tests asynchronously
-  by setting `use Backend.DataCase, async: true`, although
+  by setting `use Streamshore.DataCase, async: true`, although
   this option is not recommended for other databases.
   """
 
@@ -18,20 +18,20 @@ defmodule Backend.DataCase do
 
   using do
     quote do
-      alias Backend.Repo
+      alias Streamshore.Repo
 
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
-      import Backend.DataCase
+      import Streamshore.DataCase
     end
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Backend.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Streamshore.Repo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Backend.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.mode(Streamshore.Repo, {:shared, self()})
     end
 
     :ok

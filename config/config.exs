@@ -7,16 +7,16 @@
 # General application configuration
 use Mix.Config
 
-config :backend,
-  ecto_repos: [Backend.Repo]
+config :streamshore,
+  ecto_repos: [Streamshore.Repo]
 
 # Configures the endpoint
-config :backend, BackendWeb.Endpoint,
+config :streamshore, StreamshoreWeb.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "bVSxYSeUl8164RmztALJ1Z+H3a3NkTABQZ1EF7gP1limS2y5z0Dl/ja7Ud4G1kG7",
-  render_errors: [view: BackendWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Backend.PubSub, adapter: Phoenix.PubSub.PG2],
-  live_view: [signing_salt: "4l6fW7J/"]
+  secret_key_base: "QrqZj1palDcW+pPZm346iKQkCYq4JvMK7WoSCRaT9T/E4FhHAY4jVX8fPXmabd/z",
+  render_errors: [view: StreamshoreWeb.ErrorView, accepts: ~w(html json)],
+  pubsub: [name: Streamshore.PubSub, adapter: Phoenix.PubSub.PG2],
+  live_view: [signing_salt: "n76/WXj5"]
 
 # Configures Elixir's Logger
 config :logger, :console,

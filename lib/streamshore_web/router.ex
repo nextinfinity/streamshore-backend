@@ -1,5 +1,5 @@
-defmodule BackendWeb.Router do
-  use BackendWeb, :router
+defmodule StreamshoreWeb.Router do
+  use StreamshoreWeb, :router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -13,14 +13,14 @@ defmodule BackendWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", BackendWeb do
+  scope "/", StreamshoreWeb do
     pipe_through :browser
 
-    # get "/", PageController, :index
+    get "/", PageController, :index
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", BackendWeb do
+  # scope "/api", StreamshoreWeb do
   #   pipe_through :api
   # end
 end
