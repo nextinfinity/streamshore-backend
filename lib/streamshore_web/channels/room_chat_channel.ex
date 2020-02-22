@@ -2,7 +2,7 @@ defmodule StreamshoreWeb.RoomChatChannel do
   use StreamshoreWeb, :channel
 
   # TODO: handle multiple topics (would a simple room_chat:* do here?)
-  def join("room_chat:lobby", payload, socket) do
+  def join("room_chat:" <> room, payload, socket) do
     if authorized?(payload) do
       {:ok, socket}
     else
