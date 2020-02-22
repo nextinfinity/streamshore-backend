@@ -42,6 +42,7 @@ defmodule StreamshoreWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
+  plug Corsica, max_age: 600, origins: "*"
   plug Plug.Session, @session_options
   plug StreamshoreWeb.Router
 end
