@@ -25,6 +25,7 @@ defmodule StreamshoreWeb.UserController do
     %Streamshore.User{}
     |> User.register_changeset(params)
     |> Repo.insert()
+    json(conn, %{success: true})
     # TODO: create user (register)
   end
 
