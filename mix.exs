@@ -43,7 +43,7 @@ defmodule Streamshore.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:dictionary, github: "rawandrew/dictionary"},
+      {:dictionary, github: "nextinfinity/dictionary"},
       {:plug, "~> 1.0"},
       {:corsica, "~> 1.0"}
     ]
