@@ -1,4 +1,4 @@
-defmodule StreamshoreWeb.UserController do
+defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
 
   def index(conn, _params) do
@@ -6,27 +6,27 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def edit(conn, _params) do
-    # TODO: edit user (precursor to update)
+    # TODO: edit room (precursor to update)
   end
 
   def new(conn, _params) do
-    # TODO: new user (precursor to create)
+    # TODO: new room (precursor to create)
   end
 
   def show(conn, _params) do
-    # TODO: show user info
+    # TODO: show room info
   end
 
   def create(conn, _params) do
-    # TODO: create user (register)
+    # TODO: create room
   end
 
   def update(conn, _params) do
-    # TODO: profile edit action
+    # TODO: room edit action
   end
 
   def delete(conn, _params) do
-    # TODO: delete user
+    # TODO: delete room
   end
 
 end

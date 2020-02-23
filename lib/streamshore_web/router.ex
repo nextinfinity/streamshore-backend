@@ -19,14 +19,22 @@ defmodule StreamshoreWeb.Router do
     get "/", PageController, :index
   end
 
-  scope "/user", StreamshoreWeb do
-    pipe_through :browser
 
-    get "/anon", UserController, :get_anon
+  scope "/api", StreamshoreWeb do
+    pipe_through :api
+
+    # TODO: do we even need show here? trying to limit vulnerabilities
+    resources "/session", SessionController, except: [:index, :edit, :update]
+
+    resources "/users", UserController do
+      resources "/playlists", PlaylistController do
+        resources "/videos", PlaylistVideoController
+      end
+    end
+
+    resources "/rooms", RoomController do
+      resources "/videos", VideoController
+    end
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", StreamshoreWeb do
-  #   pipe_through :api
-  # end
 end

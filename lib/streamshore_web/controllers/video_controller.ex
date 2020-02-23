@@ -1,4 +1,4 @@
-defmodule StreamshoreWeb.UserController do
+defmodule StreamshoreWeb.VideoController do
   use StreamshoreWeb, :controller
 
   def index(conn, _params) do
@@ -6,27 +6,27 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def edit(conn, _params) do
-    # TODO: edit user (precursor to update)
+    # TODO: edit video (precursor to update)
   end
 
   def new(conn, _params) do
-    # TODO: new user (precursor to create)
+    # TODO: new video (precursor to create)
   end
 
   def show(conn, _params) do
-    # TODO: show user info
+    # TODO: show video info
   end
 
   def create(conn, _params) do
-    # TODO: create user (register)
+    # TODO: create video (add to list)
   end
 
   def update(conn, _params) do
-    # TODO: profile edit action
+    # TODO: video edit action
   end
 
   def delete(conn, _params) do
-    # TODO: delete user
+    # TODO: delete video
   end
 
 end
