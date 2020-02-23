@@ -16,8 +16,13 @@ defmodule StreamshoreWeb.Router do
   scope "/", StreamshoreWeb do
     pipe_through :browser
 
-    get "/anon", UserController, :get_anon
     get "/", PageController, :index
+  end
+
+  scope "/user", StreamshoreWeb do
+    pipe_through :browser
+
+    get "/anon", UserController, :get_anon
   end
 
   # Other scopes may use custom stacks.
