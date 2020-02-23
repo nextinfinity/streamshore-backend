@@ -4,9 +4,10 @@ defmodule StreamshoreWeb.UserController do
 
   def get_anonymous_name() do
     # TODO: check for existing anon users
-    Stream.repeatedly(fn -> String.capitalize(String.trim(random_word(), "\r")) end)
-    |> Enum.take(3)
-    |> Enum.join
+
+    String.capitalize(String.trim(random_adjective(), "\r")) <>
+    String.capitalize(String.trim(random_adjective(), "\r")) <>
+    String.capitalize(String.trim(random_animal(), "\r"))
   end
 
   def get_anon(conn, _params) do
