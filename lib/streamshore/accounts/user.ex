@@ -6,6 +6,8 @@ defmodule Streamshore.User do
         field(:username, :string, unique: true)
         field(:email, :string, unique: true)
         field(:password, :string)
+
+        timestamps()
         # field(:token, :joken)
     end
     
