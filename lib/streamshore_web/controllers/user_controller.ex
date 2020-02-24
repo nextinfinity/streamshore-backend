@@ -3,25 +3,12 @@ defmodule StreamshoreWeb.UserController do
   alias Streamshore.Repo
   alias Streamshore.User
 
-  def index(conn, _params) do
+  def index(conn, params) do
     # TODO: list
-
-  end
-
-  def edit(conn, _params) do
-    # TODO: edit user (precursor to update)
-  end
-
-  def new(conn, _params) do
-    # TODO: new user (precursor to create)
-  end
-
-  def show(conn, _params) do
-    # TODO: show user info
+    # Show every instance of user, (a list of all the users)
   end
 
   def create(conn, params) do
-    
     %Streamshore.User{}
     |> User.register_changeset(params)
     |> Repo.insert()
@@ -29,11 +16,11 @@ defmodule StreamshoreWeb.UserController do
     # TODO: create user (register)
   end
 
-  def update(conn, _params) do
+  def update(conn, params) do
     # TODO: profile edit action
   end
 
-  def delete(conn, _params) do
+  def delete(conn, params) do
     # TODO: delete user
   end
 
