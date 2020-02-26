@@ -2,7 +2,7 @@ defmodule StreamshoreWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "room_chat:*", StreamshoreWeb.RoomChatChannel
+  channel "room:*", StreamshoreWeb.RoomChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

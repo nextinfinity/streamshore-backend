@@ -44,8 +44,5 @@ defmodule StreamshoreWeb.Endpoint do
   plug Plug.Head
   plug Corsica, max_age: 600, origins: "*", allow_headers: :all, allow_methods: :all
   plug Plug.Session, @session_options
-  plug Plug.Static,
-       at: "/video",
-       from: "video"
   plug StreamshoreWeb.Router
 end

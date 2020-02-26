@@ -1,8 +1,8 @@
-defmodule StreamshoreWeb.RoomChatChannel do
+defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
 
   # TODO: handle multiple topics (would a simple room_chat:* do here?)
-  def join("room_chat:" <> room, payload, socket) do
+  def join("room:" <> _room, payload, socket) do
     if authorized?(payload) do
       {:ok, socket}
     else
@@ -18,8 +18,8 @@ defmodule StreamshoreWeb.RoomChatChannel do
 
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room_chat:lobby).
-  def handle_in("new:msg", payload, socket) do
-    broadcast socket, "new:msg", payload
+  def handle_in("chat", payload, socket) do
+    broadcast socket, "chat", payload
     {:noreply, socket}
   end
 
