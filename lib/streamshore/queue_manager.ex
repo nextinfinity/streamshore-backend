@@ -15,8 +15,16 @@ defmodule Streamshore.QueueManager do
 
   def schedule, do: Process.send_after(self(), :timer, 1000)
 
-  def play_next(_room) do
-
+  def play_next(room) do
+    room_data = Videos.get(room)
+    Map.put(room_data, :playing, nil)
+    if (length(room_data[:queue]) > 0) do
+      {next_video, queue} = List.pop_at(room_data[:queue], 0)
+      Map.put(room_data, :playing, next_video)
+      Map.put(room_data, :queue, queue)
+      Videos.set(room, room_data)
+    end
+    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "video", %{video: room_data[:playing]})
   end
 
   def timer() do
