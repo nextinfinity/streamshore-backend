@@ -19,7 +19,11 @@ defmodule StreamshoreWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
-    broadcast socket, "chat", payload
+    time = Timex.now
+    # TODO: use user's timezone on frontend instead of converting here
+    timezone = Timex.Timezone.local()
+    time = Timex.Timezone.convert(time, timezone)
+    broadcast socket, "chat", %{usr: payload["usr"], msg: payload["msg"], time: Timex.format!(time, "%I:%M %P", :strftime)}
     {:noreply, socket}
   end
 
