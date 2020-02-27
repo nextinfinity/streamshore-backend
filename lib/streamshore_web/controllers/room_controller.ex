@@ -5,14 +5,6 @@ defmodule StreamshoreWeb.RoomController do
     # TODO: list
   end
 
-  def edit(conn, _params) do
-    # TODO: edit room (precursor to update)
-  end
-
-  def new(conn, _params) do
-    # TODO: new room (precursor to create)
-  end
-
   def show(conn, _params) do
     json(conn, %{video: "https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8"})
     # TODO: show room info

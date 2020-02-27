@@ -15,6 +15,17 @@ defmodule Streamshore.QueueManager do
 
   def schedule, do: Process.send_after(self(), :timer, 1000)
 
+  def add_to_queue(room, url) do
+    room_data = Videos.get(room)
+    video = %{youtubeURL: url}
+    Map.put(room_data, :queue, room_data[:queue] ++ video)
+    Videos.set(room, room_data)
+  end
+
+  def remove_from_queue(room, index) do
+    room_data = Videos.get(room)
+  end
+
   def play_next(room) do
     room_data = Videos.get(room)
     Map.put(room_data, :playing, nil)

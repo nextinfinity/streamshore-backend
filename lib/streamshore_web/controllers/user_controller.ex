@@ -5,14 +5,6 @@ defmodule StreamshoreWeb.UserController do
     # TODO: list
   end
 
-  def edit(conn, _params) do
-    # TODO: edit user (precursor to update)
-  end
-
-  def new(conn, _params) do
-    # TODO: new user (precursor to create)
-  end
-
   def show(conn, _params) do
     # TODO: show user info
   end
