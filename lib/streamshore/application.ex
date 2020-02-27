@@ -11,9 +11,9 @@ defmodule Streamshore.Application do
       # Start the Ecto repository
       Streamshore.Repo,
       # Start the endpoint when the application starts
-      StreamshoreWeb.Endpoint
+      StreamshoreWeb.Endpoint,
       # Starts a worker by calling: Streamshore.Worker.start_link(arg)
-      # {Streamshore.Worker, arg},
+      StreamshoreWeb.VideoController
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
