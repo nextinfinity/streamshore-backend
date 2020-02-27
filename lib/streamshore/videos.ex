@@ -32,11 +32,8 @@ defmodule Streamshore.Videos do
   #######################
 
   def init(args) do
-    schedule()
     { :ok, Enum.into(args, %{}) }
   end
-
-  def schedule, do: Process.send_after(self(), :timer, 1000)
 
   def handle_cast({ :set, key, value }, state) do
     { :noreply, Map.put(state, key, value) }
@@ -52,34 +49,6 @@ defmodule Streamshore.Videos do
 
   def handle_call({ :keys }, _from, state) do
     { :reply, Map.keys(state), state }
-  end
-
-  def play_next do
-
-  end
-
-  def timer(state) do
-    schedule()
-    current_time = get_seconds()
-    Enum.each(Map.keys(state), fn room ->
-      if state[room][:playing] do
-        runtime = current_time - state[room][:playing][:start]
-        if runtime >= state[room][:playing][:length] do
-          play_next()
-        else
-          StreamshoreWeb.Endpoint.broadcast("room:" <> room, "time", runtime)
-        end
-      end
-    end)
-  end
-
-  def get_seconds() do
-    :os.system_time(:second)
-  end
-
-  def handle_info(:timer, state) do
-    timer(state)
-    {:noreply, state}
   end
 
 end
