@@ -13,7 +13,7 @@ defmodule Streamshore.Application do
       # Start the endpoint when the application starts
       StreamshoreWeb.Endpoint,
       # Starts a worker by calling: Streamshore.Worker.start_link(arg)
-      StreamshoreWeb.VideoController
+      Streamshore.Videos
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

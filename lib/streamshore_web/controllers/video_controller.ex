@@ -1,21 +1,5 @@
 defmodule StreamshoreWeb.VideoController do
   use StreamshoreWeb, :controller
-  use GenServer
-
-  queue = %{}
-  current_video = %{}
-  start_time = %{}
-
-  def start_link(_params) do
-    GenServer.start_link(__MODULE__, [])
-  end
-
-  def init(state) do
-    schedule()
-    {:ok, state}
-  end
-
-  def schedule, do: Process.send_after(self(), :timer, 1000)
 
   def index(conn, _params) do
     # TODO: list
@@ -43,20 +27,6 @@ defmodule StreamshoreWeb.VideoController do
 
   def delete(conn, _params) do
     # TODO: delete video
-  end
-
-  def timer() do
-    schedule()
-    IO.puts(get_seconds)
-  end
-
-  def get_seconds() do
-    :os.system_time(:second)
-  end
-
-  def handle_info(:timer, state) do
-    timer()
-    {:noreply, state}
   end
 
 end
