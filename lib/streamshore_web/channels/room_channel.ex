@@ -23,7 +23,7 @@ defmodule StreamshoreWeb.RoomChannel do
     # TODO: use user's timezone on frontend instead of converting here
     timezone = Timex.Timezone.local()
     time = Timex.Timezone.convert(time, timezone)
-    broadcast socket, "chat", %{usr: payload["usr"], msg: payload["msg"], time: Timex.format!(time, "%I:%M %P", :strftime)}
+    broadcast socket, "chat", %{usr: payload["usr"], msg: payload["msg"], anon: payload["anon"], time: Timex.format!(time, "%I:%M %P", :strftime)}
     {:noreply, socket}
   end
 
