@@ -15,12 +15,20 @@ defmodule Streamshore.QueueManager do
 
   def schedule, do: Process.send_after(self(), :timer, 1000)
 
-  def add_to_queue(room, url) do
+  def add_to_queue(room, id, user) do
     room_data = Videos.get(room)
-    video = %{youtubeURL: url}
-    Map.put(room_data, :queue, room_data[:queue] ++ video)
+    IO.inspect(room_data)
+    room_data = if (!room_data) do
+      %{queue: []}
+    else
+      room_data
+    end
+    IO.inspect(room_data)
+    video = [%{id: id, submittedBy: user}]
+    room_data = Map.put(room_data, :queue, room_data[:queue] ++ video)
+    IO.inspect(room_data)
     Videos.set(room, room_data)
-    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", room_data[:queue])
+    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
   end
 
   def remove_from_queue(room, index) do
@@ -49,7 +57,7 @@ defmodule Streamshore.QueueManager do
         if runtime >= Videos.get(room)[:playing][:length] do
           play_next(room)
         else
-          StreamshoreWeb.Endpoint.broadcast("room:" <> room, "time", %{time: runtime})
+          StreamshoreWeb.Endpoint.broadcast("room:room", "time", %{time: runtime})
         end
       end
     end)
