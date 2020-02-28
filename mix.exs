@@ -46,7 +46,9 @@ defmodule Streamshore.MixProject do
       {:dictionary, github: "nextinfinity/dictionary"},
       {:plug, "~> 1.0"},
       {:corsica, "~> 1.0"},
-      {:joken, "~> 2.0-rc0"}
+      {:joken, "~> 2.0-rc0"},
+      {:comeonin, "~> 5.1"},
+      {:bcrypt_elixir, "2.0.1"}
     ]
   end
 

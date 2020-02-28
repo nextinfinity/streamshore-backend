@@ -3,17 +3,24 @@ defmodule StreamshoreWeb.UserController do
   alias Streamshore.Repo
   alias Streamshore.User
 
-  def index(conn, params) do
-    # TODO: list
-    # Show every instance of user, (a list of all the users)
+  def index(conn, _params) do
+    users = Repo.all(User)
+    render(conn, "index.html", users: users)
   end
 
   def create(conn, params) do
+    successful = params
     %Streamshore.User{}
-    |> User.register_changeset(params)
+    |> User.changeset(params)
     |> Repo.insert()
-    json(conn, %{success: true})
-    # TODO: create user (register)
+
+    case successful do
+      {:ok, %Streamshore.User{}} ->
+        json(conn, %{success: true}) # This is whatever message the frontend wants
+
+      {:error, changeset} ->
+        json(conn, %{success: false}) # Whatever failure message the frontend wants
+    end
   end
 
   def update(conn, params) do
