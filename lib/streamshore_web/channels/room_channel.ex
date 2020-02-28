@@ -27,6 +27,16 @@ defmodule StreamshoreWeb.RoomChannel do
     {:noreply, socket}
   end
 
+  def handle_in("video", payload, socket) do
+    video = Streamshore.QueueManager.get_video(payload["room"])
+    video = if video do
+      video
+    else
+      %{}
+    end
+    {:reply, {:ok, video}, socket}
+  end
+
   # Add authorization logic here as required.
   defp authorized?(_payload) do
     # TODO: authentication

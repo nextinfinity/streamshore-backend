@@ -52,6 +52,11 @@ defmodule Streamshore.QueueManager do
     StreamshoreWeb.Endpoint.broadcast("room:" <> room, "video", %{video: room_data[:playing]})
   end
 
+  def get_video(room) do
+    room_data = Videos.get(room)
+    room_data[:playing]
+  end
+
   def timer() do
     schedule()
     current_time = get_seconds()
