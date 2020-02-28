@@ -18,7 +18,9 @@ defmodule StreamshoreWeb.RoomController do
   end
 
   def create(conn, _params) do
-    # TODO: create room
+    %Streamshore.Room{}
+    |> Repo.insert()
+    json(conn, %{success: true})
   end
 
   def update(conn, _params) do

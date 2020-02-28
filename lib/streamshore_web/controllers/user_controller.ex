@@ -10,10 +10,10 @@ defmodule StreamshoreWeb.UserController do
 
   def create(conn, params) do
     %Streamshore.User{}
-    |> User.register_changeset(params)
+    |> User._changeset(params)
     |> Repo.insert()
     json(conn, %{success: true})
-    # TODO: create user (register)
+    # TODO: create user ()
   end
 
   def update(conn, params) do

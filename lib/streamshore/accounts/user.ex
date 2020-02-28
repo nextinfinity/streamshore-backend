@@ -11,7 +11,7 @@ defmodule Streamshore.User do
         # field(:token, :joken)
     end
     
-    def register_changeset(user, params \\ %{}) do
+    def _changeset(user, params \\ %{}) do
     user
     |> cast(params, [:username, :email, :password])
     |> unique_constraint(:username)

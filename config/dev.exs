@@ -3,7 +3,7 @@ use Mix.Config
 # Configure your database
 config :streamshore, Streamshore.Repo,
   username: "root",
-  password: "",
+  password: "hahafunnyvideo",
   database: "streamshore_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
