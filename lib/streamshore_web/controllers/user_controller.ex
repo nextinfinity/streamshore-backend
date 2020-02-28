@@ -17,7 +17,7 @@ defmodule StreamshoreWeb.UserController do
 
     case successful do
       {:ok, schema}->
-        json(conn, %{success: true, username: username}) # Need to return the username
+        json(conn, %{success: true, username: username})
 
       {:error, changeset}->
         json(conn, %{success: false})
