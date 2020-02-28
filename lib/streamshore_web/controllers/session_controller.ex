@@ -2,10 +2,6 @@ defmodule StreamshoreWeb.SessionController do
   use StreamshoreWeb, :controller
   import Dictionary
 
-  def new(conn, _params) do
-    # TODO: new session (precursor to create)
-  end
-
   def show(conn, _params) do
     # TODO: show session info
   end
