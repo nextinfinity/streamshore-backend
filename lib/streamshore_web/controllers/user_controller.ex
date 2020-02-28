@@ -9,6 +9,7 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def create(conn, params) do
+    username = params["username"]
     successful =
     %Streamshore.User{}
     |> User.changeset(params)
@@ -16,7 +17,7 @@ defmodule StreamshoreWeb.UserController do
 
     case successful do
       {:ok, schema}->
-        json(conn, %{success: true}) # Need to return the username
+        json(conn, %{success: true, username: username}) # Need to return the username
 
       {:error, changeset}->
         json(conn, %{success: false})
