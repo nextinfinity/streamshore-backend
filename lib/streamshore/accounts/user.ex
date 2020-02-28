@@ -22,14 +22,6 @@ defmodule Streamshore.User do
 
     def valid_password(changeset) do
     # TODO: Implement later
-        # pass = Ecto.Changeset.get_field(changeset, :password)
-        # # TODO: Hash password
-        # left_map = %{key: pass}
-        # if (match?(left_map, "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})")) do
-        #     changeset
-        # else 
-        #     add_error(changeset, :password, "is not a valid password")
-        # end
         changeset
     end
 
