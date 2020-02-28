@@ -5,7 +5,7 @@ defmodule Streamshore.Room do
     schema "rooms" do
         field(:roomName, :string, unique: true)
         field(:roomDesc, :string, unique: true)
-        field(:isPrivate, :bool)
+        field(:isPrivate, :boolean)
 
         timestamps()
         # field(:token, :joken)
