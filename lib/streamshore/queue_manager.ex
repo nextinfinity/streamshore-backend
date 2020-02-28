@@ -20,6 +20,7 @@ defmodule Streamshore.QueueManager do
     video = %{youtubeURL: url}
     Map.put(room_data, :queue, room_data[:queue] ++ video)
     Videos.set(room, room_data)
+    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", room_data[:queue])
   end
 
   def remove_from_queue(room, index) do
@@ -34,6 +35,7 @@ defmodule Streamshore.QueueManager do
       Map.put(room_data, :playing, next_video)
       Map.put(room_data, :queue, queue)
       Videos.set(room, room_data)
+      StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", room_data[:queue])
     end
     StreamshoreWeb.Endpoint.broadcast("room:" <> room, "video", %{video: room_data[:playing]})
   end
