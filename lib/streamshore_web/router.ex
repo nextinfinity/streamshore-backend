@@ -24,11 +24,11 @@ defmodule StreamshoreWeb.Router do
     pipe_through :api
 
     # TODO: do we even need show here? trying to limit vulnerabilities
-    resources "/session", SessionController, except: [:index, :edit, :update]
+    resources "/session", SessionController, except: [:index, :new, :edit, :update]
 
-    resources "/users", UserController do
-      resources "/playlists", PlaylistController do
-        resources "/videos", PlaylistVideoController
+    resources "/users", UserController, except: [:new, :edit] do
+      resources "/playlists", PlaylistController, except: [:new, :edit]  do
+        resources "/videos", PlaylistVideoController, except: [:new, :edit]
       end
     end
 

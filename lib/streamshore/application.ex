@@ -12,9 +12,10 @@ defmodule Streamshore.Application do
       Streamshore.Repo,
       
       # Start the endpoint when the application starts
-      StreamshoreWeb.Endpoint
+      StreamshoreWeb.Endpoint,
       # Starts a worker by calling: Streamshore.Worker.start_link(arg)
-      # {Streamshore.Worker, arg},
+      Streamshore.Videos,
+      Streamshore.QueueManager
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

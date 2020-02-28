@@ -46,7 +46,8 @@ defmodule Streamshore.MixProject do
       {:dictionary, github: "nextinfinity/dictionary"},
       {:plug, "~> 1.0"},
       {:corsica, "~> 1.0"},
-      {:joken, "~> 2.0-rc0"}
+      {:httpoison, "~> 1.6"},
+      {:timex, "~> 3.5"}
     ]
   end
 
