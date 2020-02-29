@@ -5,14 +5,6 @@ defmodule StreamshoreWeb.PlaylistVideoController do
     # TODO: list
   end
 
-  def edit(conn, _params) do
-    # TODO: edit video (precursor to update)
-  end
-
-  def new(conn, _params) do
-    # TODO: new video (precursor to create)
-  end
-
   def show(conn, _params) do
     # TODO: show video info
   end

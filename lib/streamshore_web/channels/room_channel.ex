@@ -1,8 +1,8 @@
-defmodule StreamshoreWeb.RoomChatChannel do
+defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
 
   # TODO: handle multiple topics (would a simple room_chat:* do here?)
-  def join("room_chat:" <> room, payload, socket) do
+  def join("room:" <> _room, payload, socket) do
     if authorized?(payload) do
       {:ok, socket}
     else
@@ -18,9 +18,23 @@ defmodule StreamshoreWeb.RoomChatChannel do
 
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room_chat:lobby).
-  def handle_in("new:msg", payload, socket) do
-    broadcast socket, "new:msg", payload
+  def handle_in("chat", payload, socket) do
+    time = Timex.now
+    # TODO: use user's timezone on frontend instead of converting here
+    timezone = Timex.Timezone.local()
+    time = Timex.Timezone.convert(time, timezone)
+    broadcast socket, "chat", %{usr: payload["usr"], msg: payload["msg"], anon: payload["anon"], time: Timex.format!(time, "%I:%M %P", :strftime)}
     {:noreply, socket}
+  end
+
+  def handle_in("video", payload, socket) do
+    video = Streamshore.QueueManager.get_video(payload["room"])
+    video = if video do
+      video
+    else
+      %{}
+    end
+    {:reply, {:ok, video}, socket}
   end
 
   # Add authorization logic here as required.

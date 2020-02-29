@@ -1,24 +1,20 @@
 defmodule StreamshoreWeb.VideoController do
   use StreamshoreWeb, :controller
 
-  def index(conn, _params) do
-    # TODO: list
+  alias Streamshore.Videos
+  alias Streamshore.QueueManager
+
+  def index(conn, params) do
+    json(conn, Videos.get(params[:room_id]))
   end
 
-  def edit(conn, _params) do
-    # TODO: edit video (precursor to update)
+  def show(conn, params) do
+    json(conn, Videos.get(params[:room_id][:id]))
   end
 
-  def new(conn, _params) do
-    # TODO: new video (precursor to create)
-  end
-
-  def show(conn, _params) do
-    # TODO: show video info
-  end
-
-  def create(conn, _params) do
-    # TODO: create video (add to list)
+  def create(conn, params) do
+    QueueManager.add_to_queue(params["room_id"], params["id"], params["user"])
+    json(conn, %{success: true})
   end
 
   def update(conn, _params) do

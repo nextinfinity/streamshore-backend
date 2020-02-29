@@ -49,6 +49,8 @@ defmodule Streamshore.MixProject do
       {:joken, "~> 2.0-rc0"},
       {:comeonin, "~> 5.1"},
       {:bcrypt_elixir, "~> 2.0"}
+      {:httpoison, "~> 1.6"},
+      {:timex, "~> 3.5"}
     ]
   end
 

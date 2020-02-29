@@ -5,14 +5,6 @@ defmodule StreamshoreWeb.PlaylistController do
     # TODO: list
   end
 
-  def edit(conn, _params) do
-    # TODO: edit playlist (precursor to update)
-  end
-
-  def new(conn, _params) do
-    # TODO: new playlist (precursor to create)
-  end
-
   def show(conn, _params) do
     # TODO: show playlist info
   end

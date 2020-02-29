@@ -24,6 +24,10 @@ defmodule StreamshoreWeb.UserController do
     end
   end
 
+  def show(conn, _params) do
+    # TODO: show user info
+  end
+
   def update(conn, params) do
     # TODO: profile edit action
   end
