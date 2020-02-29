@@ -50,6 +50,7 @@ defmodule Streamshore.MixProject do
       {:comeonin, "~> 5.1"},
       {:bcrypt_elixir, "~> 2.0"}
       {:httpoison, "~> 1.6"},
+      {:poison, "~> 3.1"},
       {:timex, "~> 3.5"}
     ]
   end
