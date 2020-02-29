@@ -8,7 +8,16 @@ defmodule StreamshoreWeb.SessionController do
 
   def create(conn, params) do
     if (Enum.count(params) != 0) do
-      # TODO: create session (login)
+      # # TODO: create session (login)
+      # successful = Repo.get_by(User, [email: email, password: password])
+
+      # case successful do
+      #   {:ok, %Streamshore.User{}} ->
+      #     json(conn, %{success: true, username: username})
+
+      #   {:error, changeset} ->
+      #     json(conn, %{success: false})
+      # end
     end
     # TODO: user account logic (create session)
     # TODO: check for existing anon users
