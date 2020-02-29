@@ -47,6 +47,7 @@ defmodule Streamshore.MixProject do
       {:plug, "~> 1.0"},
       {:corsica, "~> 1.0"},
       {:httpoison, "~> 1.6"},
+      {:poison, "~> 3.1"},
       {:timex, "~> 3.5"}
     ]
   end

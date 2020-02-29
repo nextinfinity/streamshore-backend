@@ -17,19 +17,25 @@ defmodule Streamshore.QueueManager do
 
   def add_to_queue(room, id, user) do
     room_data = Videos.get(room)
-    IO.inspect(room_data)
     room_data = if (!room_data) do
       %{queue: []}
     else
       room_data
     end
-    IO.inspect(room_data)
-    video = [%{id: id, submittedBy: user}]
+    data = HTTPoison.get! "https://www.googleapis.com/youtube/v3/videos?id=" <> id <> "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
+    body = Enum.at(Poison.decode!(data.body)["items"], 0)
+    title = body["snippet"]["title"]
+    channel = body["snippet"]["channelTitle"]
+    thumbnail = body["snippet"]["thumbnails"]["high"]["url"]
+    length = body["contentDetails"]["duration"]
+    length = Timex.Duration.to_seconds(Timex.Duration.parse!(length))
+    video = [%{id: id, submittedBy: user, title: title, channel: channel, thumbnail: thumbnail, length: length}]
     room_data = Map.put(room_data, :queue, room_data[:queue] ++ video)
-    IO.inspect(room_data)
     Videos.set(room, room_data)
     StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
-    play_next(room)
+    if !room_data[:playing] do
+      play_next(room)
+    end
   end
 
   def remove_from_queue(room, index) do
@@ -38,7 +44,6 @@ defmodule Streamshore.QueueManager do
 
   def play_next(room) do
     room_data = Videos.get(room)
-    Map.put(room_data, :playing, nil)
     room_data = if (length(room_data[:queue]) > 0) do
       room_data = Videos.get(room)
       {next_video, queue} = List.pop_at(room_data[:queue], 0)
@@ -48,6 +53,9 @@ defmodule Streamshore.QueueManager do
       Videos.set(room, room_data)
       StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
       room_data
+    else
+      room_data = Videos.get(room)
+      Map.put(room_data, :playing, nil)
     end
     StreamshoreWeb.Endpoint.broadcast("room:" <> room, "video", %{video: room_data[:playing]})
   end
@@ -63,11 +71,11 @@ defmodule Streamshore.QueueManager do
     Enum.each(Videos.keys, fn room ->
       if Videos.get(room)[:playing] do
         runtime = current_time - Videos.get(room)[:playing][:start]
-        #if runtime >= Videos.get(room)[:playing][:length] do
-        #  play_next(room)
-        #else
-          StreamshoreWeb.Endpoint.broadcast("room:room", "time", %{time: runtime})
-        #end
+        if runtime >= Videos.get(room)[:playing][:length] do
+          play_next(room)
+        else
+          StreamshoreWeb.Endpoint.broadcast("room:" <> room, "time", %{time: runtime})
+        end
       end
     end)
   end
