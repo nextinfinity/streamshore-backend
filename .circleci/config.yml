@@ -10,7 +10,7 @@ jobs:
       - image: circleci/mysql:8.0.19
         environment:
           MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: streamshore_dev
+          MYSQL_DATABASE: streamshore_test
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
