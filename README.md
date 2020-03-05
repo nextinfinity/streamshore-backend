@@ -1,4 +1,4 @@
-# streamshore backend [![CircleCI](https://circleci.com/gh/nextinfinity/streamshore-backend.svg?style=shield&circle-token=04368b5676827c2ede46717553395b3a9f2e0796)](https://circleci.com/gh/nextinfinity/streamshore-backend.svg)
+# streamshore backend [![CircleCI](https://circleci.com/gh/nextinfinity/streamshore-backend.svg?style=shield&circle-token=04368b5676827c2ede46717553395b3a9f2e0796)](https://circleci.com/gh/nextinfinity/streamshore-backend)
 
 
 #### [frontend](https://github.com/sethmaxwl/streamshore)
