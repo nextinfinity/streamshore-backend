@@ -49,6 +49,16 @@ defmodule StreamshoreWeb.UserController do
 
   def delete(conn, params) do
     # TODO: delete user
+    username = params["username"]
+    user = User |> Repo.get_by(username: username)
+    successful = Repo.delete(user)
+    case successful do
+      {:ok, schema}->
+        json(conn, %{success: true})
+
+      {:error, changeset}->
+        json(conn, %{success: false})
+    end
   end
 
 end
