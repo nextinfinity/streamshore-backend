@@ -7,9 +7,9 @@ jobs:
     docker:
       # specify the version here
       - image: circleci/elixir:1.10.1
-      - image: circleci/mysql:8.0.4
+      - image: circleci/mysql:8.0.19
         environment:
-          MYSQL_ROOT_PASSWORD: ""
+          MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: streamshore_dev
 
       # Specify service dependencies here if necessary
