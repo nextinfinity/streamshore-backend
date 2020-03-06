@@ -8,7 +8,7 @@ RUN mkdir /app
 COPY . /app
 
 WORKDIR /app/assets
-npm install
+RUN npm install
 
 WORKDIR /app
 
