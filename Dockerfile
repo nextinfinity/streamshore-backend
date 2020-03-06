@@ -2,12 +2,13 @@
 
 # Extend from the official Elixir image
 FROM circleci/elixir:1.10.1
+USER root
 
 # Create app directory and copy the Elixir projects into it
-RUN mkdir "~/app"
-COPY . "~/app"
+RUN mkdir /app
+COPY . /app
 
-WORKDIR "~/app/assets"
+WORKDIR /app/assets
 RUN npm install
 
 WORKDIR /app
