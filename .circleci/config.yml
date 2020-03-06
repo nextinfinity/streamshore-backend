@@ -56,6 +56,6 @@ workflows:
       - aws-ecs/deploy-service-update:
           requires:
             - aws-ecr/build-and-push-image
-          family: 'streamshore-backend'
+          family: 'streamshore'
           cluster-name: 'streamshore'
           container-image-name-updates: 'container=streamshore-backend,tag=${CIRCLE_SHA1}'
