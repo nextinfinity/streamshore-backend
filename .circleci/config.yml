@@ -52,3 +52,4 @@ workflows:
             - build
           repo: streamshore
           tag: '${CIRCLE_SHA1}'
+          extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE"

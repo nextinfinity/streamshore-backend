@@ -4,6 +4,9 @@
 FROM circleci/elixir:1.10.1
 USER root
 
+ARG DB
+ARG SECRET
+
 # Install NPM
 # install curl
 RUN apt-get install curl
@@ -22,6 +25,8 @@ RUN npm install
 WORKDIR /app
 
 ENV MIX_ENV=prod
+ENV DATABASE_URL=$DB
+ENV SECRET_KEY_BASE=$SECRET
 # Install hex package manager
 # By using --force, we don’t need to type “Y” to confirm the installation
 RUN mix local.hex --force
