@@ -1,7 +1,11 @@
 # Elixir CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-elixir/ for more details
-version: 2
+version: 2.1
+orbs:
+  aws-ecr: circleci/aws-ecr@6.7.1
+  aws-ecs: circleci/aws-ecs@1.1.0
+
 jobs:
   build:
     docker:
@@ -37,5 +41,14 @@ jobs:
       - run: mix local.hex --force
       - run: mix local.rebar --force
       - run: mix deps.get
-      - run: mix ecto.create
       - run: mix test
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build
+      - aws-ecr/build-and-push-image:
+          requires:
+            - build
+          repo: streamshore
+          tag: '${CIRCLE_SHA1}'
