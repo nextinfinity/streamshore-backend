@@ -4,6 +4,14 @@
 FROM circleci/elixir:1.10.1
 USER root
 
+# Install NPM
+# install curl
+RUN apt-get install curl
+# get install script and pass it to execute:
+RUN curl -sL https://deb.nodesource.com/setup_4.x | bash
+# and install node
+RUN apt-get install nodejs
+
 # Create app directory and copy the Elixir projects into it
 RUN mkdir /app
 COPY . /app
