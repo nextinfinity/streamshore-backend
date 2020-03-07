@@ -58,4 +58,4 @@ workflows:
             - aws-ecr/build-and-push-image
           family: 'streamshore'
           cluster-name: 'streamshore'
-          container-image-name-updates: 'container=streamshore-backend,tag=${CIRCLE_SHA1}'
+          container-image-name-updates: 'container=streamshore,tag=${CIRCLE_SHA1}'
