@@ -42,7 +42,8 @@ jobs:
       - run: mix local.rebar --force
       - run: mix deps.get
       - run: mix test
-
+        
+workflows:
   build-and-deploy:
     jobs:
       - test
