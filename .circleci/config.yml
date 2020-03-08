@@ -42,7 +42,7 @@ jobs:
       - run: mix local.rebar --force
       - run: mix deps.get
       - run: mix test
-        
+
 workflows:
   build-and-deploy:
     jobs:
@@ -52,7 +52,7 @@ workflows:
             branches:
               only: master
           requires:
-            - build
+            - test
           repo: streamshore
           tag: '${CIRCLE_SHA1}'
           extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE"
