@@ -7,7 +7,7 @@ orbs:
   aws-ecs: circleci/aws-ecs@1.1.0
 
 jobs:
-  build:
+  test:
     docker:
       # specify the version here
       - image: circleci/elixir:1.10.1
@@ -43,11 +43,14 @@ jobs:
       - run: mix deps.get
       - run: mix test
 
-workflows:
   build-and-deploy:
     jobs:
-      - build
+      - test
       - aws-ecr/build-and-push-image:
+          filters:
+            branches:
+              only:
+                - master
           requires:
             - build
           repo: streamshore

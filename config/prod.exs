@@ -19,12 +19,12 @@ config :streamshore, StreamshoreWeb.Endpoint,
          port: 443,
          cipher_suite: :strong,
          keyfile: "/cert/privkey.pem",
-         certfile: "/cert/cert.pem",
-         force_ssl: [hsts: true]
+         certfile: "/cert/cert.pem"
        ],
        http: [
          port: 80
-       ]
+       ],
+       force_ssl: [hsts: true]
 
 # Do not print debug messages in production
 config :logger, level: :info
