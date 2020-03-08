@@ -10,7 +10,8 @@ use Mix.Config
 # which you should run after static files are built and
 # before starting your production server.
 
-config :streamshore, StreamshoreWeb.Endpoint,
+config :streamshore,
+       StreamshoreWeb.Endpoint,
        url: [
          host: System.get_env("DOMAIN"),
          port: 443
@@ -24,7 +25,10 @@ config :streamshore, StreamshoreWeb.Endpoint,
        http: [
          port: 80
        ],
-       force_ssl: [hsts: true]
+       force_ssl: [
+         hsts: true
+       ],
+       check_origin: ["//" <> System.get_env("DOMAIN"),  "//" <> System.get_env("FRONTEND")]
 
 # Do not print debug messages in production
 config :logger, level: :info

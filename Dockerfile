@@ -7,6 +7,7 @@ USER root
 ARG DB
 ARG SECRET
 ARG DOMAIN
+ARG FRONTEND
 
 # Install NPM
 # install curl
@@ -34,6 +35,7 @@ ENV MIX_ENV=prod
 ENV DATABASE_URL=$DB
 ENV SECRET_KEY_BASE=$SECRET
 ENV DOMAIN=$DOMAIN
+ENV FRONTEND=$FRONTEND
 # Install hex package manager
 # By using --force, we don’t need to type “Y” to confirm the installation
 RUN mix local.hex --force
