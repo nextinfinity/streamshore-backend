@@ -18,7 +18,7 @@ config :streamshore, StreamshoreWeb.Endpoint,
        https: [
          port: 443,
          cipher_suite: :strong,
-         keyfile: "/cert/key.pem",
+         keyfile: "/cert/privkey.pem",
          certfile: "/cert/cert.pem",
          force_ssl: [hsts: true]
        ],

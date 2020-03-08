@@ -23,7 +23,7 @@ COPY . /app
 RUN mkdir /cert
 
 WORKDIR /cert
-RUN openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 1 -subj '/CN=$DOMAIN'
+RUN openssl req -x509 -newkey rsa:4096 -nodes -keyout privkey.pem -out cert.pem -days 1 -subj '/CN=$DOMAIN'
 
 WORKDIR /app/assets
 RUN npm install
