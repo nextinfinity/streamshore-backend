@@ -10,4 +10,9 @@ defmodule Streamshore.Room do
         timestamps()
         # field(:token, :joken)
     end
+
+    def changeset(room, params \\ %{}) do
+        room
+        |> cast(params, [:roomName, :roomDesc, :isPrivate])
+    end
 end

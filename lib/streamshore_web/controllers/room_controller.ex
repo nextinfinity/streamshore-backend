@@ -1,7 +1,9 @@
 defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
+  alias Streamshore.Repo
+  alias Streamshore.Room
 
-  def index(conn, _params) do
+  def index(_conn, _params) do
     # TODO: list
   end
 
@@ -10,17 +12,18 @@ defmodule StreamshoreWeb.RoomController do
     # TODO: show room info
   end
 
-  def create(conn, _params) do
+  def create(conn, params) do
     %Streamshore.Room{}
+    |> Room.changeset(params)
     |> Repo.insert()
     json(conn, %{success: true})
   end
 
-  def update(conn, _params) do
+  def update(_conn, _params) do
     # TODO: room edit action
   end
 
-  def delete(conn, _params) do
+  def delete(_conn, _params) do
     # TODO: delete room
   end
 
