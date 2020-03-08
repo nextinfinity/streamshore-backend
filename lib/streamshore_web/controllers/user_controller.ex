@@ -2,6 +2,7 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
+  alias Streamshore.Friends
   
   def index(conn, _params) do
     users = Repo.all(User)
@@ -29,7 +30,6 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def update(conn, params) do
-    # TODO: profile edit action
     username = params["username"]
     user = User |> Repo.get_by(username: username)
     password = params["password"]
@@ -48,10 +48,24 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def delete(conn, params) do
-    # TODO: delete user
     username = params["username"]
     user = User |> Repo.get_by(username: username)
     successful = Repo.delete(user)
+    case successful do
+      {:ok, schema}->
+        json(conn, %{success: true})
+
+      {:error, changeset}->
+        json(conn, %{success: false})
+    end
+  end
+
+  def addFriend(conn, params) do
+    successful =
+    %Streamshore.Friends{}
+    |> Friend.changeset(params)
+    |> Repo.insert()
+
     case successful do
       {:ok, schema}->
         json(conn, %{success: true})
