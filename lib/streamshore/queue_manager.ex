@@ -52,7 +52,7 @@ defmodule Streamshore.QueueManager do
     room_data = if (length(room_data[:queue]) > 0) do
       room_data = Videos.get(room)
       {next_video, queue} = List.pop_at(room_data[:queue], 0)
-      next_video = Map.put(next_video, :start, get_seconds())
+      next_video = Map.put(next_video, :start, get_seconds() - 1)
       room_data = Map.put(room_data, :playing, next_video)
       room_data = Map.put(room_data, :queue, queue)
       Videos.set(room, room_data)
