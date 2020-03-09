@@ -74,12 +74,11 @@ defmodule Streamshore.QueueManager do
 
   def timer() do
     schedule()
-    current_time = get_seconds()
     Enum.each(
       Videos.keys,
       fn room ->
         if Videos.get(room)[:playing] do
-          runtime = current_time - Videos.get(room)[:playing][:start]
+          runtime = get_runtime(room)
           if runtime >= Videos.get(room)[:playing][:length] do
             play_next(room)
           else
@@ -88,6 +87,10 @@ defmodule Streamshore.QueueManager do
         end
       end
     )
+  end
+
+  def get_runtime(room) do
+    get_seconds() - Videos.get(room)[:playing][:start]
   end
 
   def get_seconds() do
