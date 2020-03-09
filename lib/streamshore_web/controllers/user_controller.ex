@@ -2,18 +2,30 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
-
-  def index(conn, params) do
-    # TODO: list
-    # Show every instance of user, (a list of all the users)
+  
+  def index(conn, _params) do
+    users = Repo.all(User)
+    render(conn, "index.html", users: users)
   end
 
   def create(conn, params) do
+    username = params["username"]
+    successful =
     %Streamshore.User{}
-    |> User._changeset(params)
+    |> User.changeset(params)
     |> Repo.insert()
-    json(conn, %{success: true})
-    # TODO: create user ()
+
+    case successful do
+      {:ok, schema}->
+        json(conn, %{success: true, username: username})
+
+      {:error, changeset}->
+        json(conn, %{success: false})
+    end
+  end
+
+  def show(conn, _params) do
+    # TODO: show user info
   end
 
   def update(conn, params) do

@@ -3,7 +3,7 @@ use Mix.Config
 # Configure your database
 config :streamshore, Streamshore.Repo,
   username: "root",
-  password: "hahafunnyvideo",
+  password: "password",
   database: "streamshore_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox

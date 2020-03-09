@@ -23,8 +23,20 @@ defmodule StreamshoreWeb.RoomChannel do
     # TODO: use user's timezone on frontend instead of converting here
     timezone = Timex.Timezone.local()
     time = Timex.Timezone.convert(time, timezone)
-    broadcast socket, "chat", %{usr: payload["usr"], msg: payload["msg"], anon: payload["anon"], time: Timex.format!(time, "%I:%M %P", :strftime)}
+    time = Timex.format!(time, "%I:%M %P", :strftime)
+    payload = Map.put(payload, :time, time)
+    broadcast socket, "chat", payload
     {:noreply, socket}
+  end
+
+  def handle_in("video", payload, socket) do
+    video = Streamshore.QueueManager.get_video(payload["room"])
+    video = if video do
+      video
+    else
+      %{}
+    end
+    {:reply, {:ok, video}, socket}
   end
 
   # Add authorization logic here as required.
