@@ -10,7 +10,7 @@ defmodule StreamshoreWeb.SessionController do
   @spec create(Plug.Conn.t(), any) :: Plug.Conn.t()
   def create(conn, params) do
     if (Enum.count(params) != 0) do
-      # # TODO: create session (login)
+      # TODO: create session (login)
       # successful = Repo.get_by(User, [email: email, password: password])
 
       # case successful do
@@ -43,9 +43,9 @@ defmodule StreamshoreWeb.SessionController do
   end
 
   def do_login(email, password) do
-    user = Repo.get_by(user, [email: email])
+    user = Repo.get_by(User, [email: email, password: password])
     if user do
-      if Comeonin.Bcrypt.checkpw(password, user["password"]) do
+      if Comeonin.Bcrypt.checkpw(password, User["password"]) do
         user
       else
         nil
