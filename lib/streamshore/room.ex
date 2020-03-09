@@ -3,16 +3,17 @@ defmodule Streamshore.Room do
     import Ecto.Changeset
 
     schema "rooms" do
-        field(:roomName, :string, unique: true)
-        field(:roomDesc, :string, unique: true)
-        field(:isPrivate, :boolean)
-
-        timestamps()
+        field :roomName, :string
+        field :roomDesc, :string
+        field :isPrivate, :boolean
         # field(:token, :joken)
     end
 
     def changeset(room, params \\ %{}) do
         room
         |> cast(params, [:roomName, :roomDesc, :isPrivate])
+        |> validate_required([:roomName])
+        |> validate_length(:roomName, min: 5, max: 32)
     end
+
 end
