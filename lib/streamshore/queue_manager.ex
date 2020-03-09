@@ -91,7 +91,7 @@ defmodule Streamshore.QueueManager do
   end
 
   def get_seconds() do
-    :os.system_time(:millisecond) / 1000
+    System.monotonic_time(:millisecond) / 1000
   end
 
   def handle_info(:timer, state) do
