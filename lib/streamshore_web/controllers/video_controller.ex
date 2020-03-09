@@ -13,8 +13,8 @@ defmodule StreamshoreWeb.VideoController do
   end
 
   def create(conn, params) do
-    QueueManager.add_to_queue(params["room_id"], params["id"], params["user"])
-    json(conn, %{success: true})
+    success = QueueManager.add_to_queue(params["room_id"], params["id"], params["user"])
+    json(conn, %{success: success})
   end
 
   def update(conn, _params) do
