@@ -69,19 +69,26 @@ defmodule StreamshoreWeb.UserController do
     end
   end
 
-  def addFriend(conn, params) do
-    successful =
-    %Streamshore.Friends{}
-    |> Friend.changeset(params)
-    |> Repo.insert()
+  def add_friend(conn, params) do
+    friendee = params["freindee"]
+    if User |> Repo.get_by(username: friendee) do 
+      successful =
+      %Streamshore.Friends{}
+      |> Friend.changeset(params)
+      |> Repo.insert()
 
-    case successful do
-      {:ok, schema}->
-        json(conn, %{success: true})
+      case successful do
+        {:ok, schema}->
+          json(conn, %{success: true})
 
-      {:error, changeset}->
-        json(conn, %{success: false})
+        {:error, changeset}->
+          json(conn, %{success: false})
+      end
+    else 
+      json(conn, %{success: false, error: "User does not exist"})
     end
   end
 
+  def get_friends(conn, params) do
+  end
 end
