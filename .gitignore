@@ -36,3 +36,6 @@ npm-debug.log
 # Intellij files
 *.iml
 .idea/
+
+# Elixir LS
+.elixir_ls/
