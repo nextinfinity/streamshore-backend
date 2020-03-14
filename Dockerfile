@@ -6,6 +6,8 @@ USER root
 
 ARG DB
 ARG SECRET
+ARG DOMAIN
+ARG FRONTEND
 
 # Install NPM
 # install curl
@@ -19,6 +21,11 @@ RUN apt-get install -y nodejs
 RUN mkdir /app
 COPY . /app
 
+RUN mkdir /cert
+
+WORKDIR /cert
+RUN openssl req -x509 -newkey rsa:4096 -nodes -keyout privkey.pem -out cert.pem -days 1 -subj '/CN=$DOMAIN'
+
 WORKDIR /app/assets
 RUN npm install
 
@@ -27,6 +34,8 @@ WORKDIR /app
 ENV MIX_ENV=prod
 ENV DATABASE_URL=$DB
 ENV SECRET_KEY_BASE=$SECRET
+ENV DOMAIN=$DOMAIN
+ENV FRONTEND=$FRONTEND
 # Install hex package manager
 # By using --force, we don’t need to type “Y” to confirm the installation
 RUN mix local.hex --force
