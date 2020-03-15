@@ -19,7 +19,7 @@ defmodule Streamshore.User do
     end
 
     def convert_changeset_errors(changeset) do
-        traverse_errors(changeset, fn {msg, otps} ->
+        traverse_errors(changeset, fn {msg, opts} ->
             Enum.reduce(opts, msg, fn {key, value}, acc ->
                 String.replace(acc, "%{#{key}}", to_string(value))
             end)

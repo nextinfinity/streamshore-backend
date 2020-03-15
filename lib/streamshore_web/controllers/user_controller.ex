@@ -100,5 +100,12 @@ defmodule StreamshoreWeb.UserController do
   end 
 
   def get_friends(conn, params) do
+    friend = params["friend"]
+    query = from f in "friends", where: f.friend == type(^friend, :string), select: f.friendee
+    Repo.all(query)
+  end
+
+  def set_nickname(conn, params) do
+
   end
 end
