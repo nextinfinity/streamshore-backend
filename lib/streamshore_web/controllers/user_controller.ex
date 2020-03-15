@@ -15,7 +15,7 @@ defmodule StreamshoreWeb.UserController do
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
-      json(conn, %{success: false, error: "Invalid password"})
+      json(conn, %{success: false, errors: "password: invalid password"})
     else 
       successful =
       %Streamshore.User{}
@@ -27,7 +27,8 @@ defmodule StreamshoreWeb.UserController do
           json(conn, %{success: true, username: username})
 
         {:error, changeset}->
-          json(conn, %{success: false})
+          errors = User.convert_changeset_errors(changeset)
+          json(conn, %{success: false, errors: errors})
       end
     end
   end
