@@ -18,6 +18,18 @@ defmodule Streamshore.User do
         |> hash_pass
     end
 
+    def convert_changeset_errors(changeset) do
+        traverse_errors(changeset, fn {msg, otps} ->
+            Enum.reduce(opts, msg, fn {key, value}, acc ->
+                String.replace(acc, "%{#{key}}", to_string(value))
+            end)
+        end)
+        |> Enum.reduce("", fn {k, v}, acc ->
+            joined_errors = Enum.join(v, "; ")
+            "#{acc}#{k}: #{joined_errors}"
+        end)
+    end
+
     def valid_password(password) do
         if String.match?(password, ~r/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/) do
             true

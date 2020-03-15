@@ -1,4 +1,5 @@
 defmodule StreamshoreWeb.UserController do
+  import Ecto.Query, only: [from: 2]
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
@@ -88,6 +89,15 @@ defmodule StreamshoreWeb.UserController do
       json(conn, %{success: false, error: "User does not exist"})
     end
   end
+
+  def remove_friend(conn, params) do
+    friend = params["friend"]
+    friendee = params["friendee"]
+    relation1 = Friends |> Repo.get_by(friend: friend, friendee: friendee)
+    relation2 = Friends |> Repo.get_by(friend: friendee, friendee: friend)
+    Repo.delete(relation1)
+    Repo.delete(relation2)
+  end 
 
   def get_friends(conn, params) do
   end
