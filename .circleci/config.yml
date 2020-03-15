@@ -7,7 +7,7 @@ orbs:
   aws-ecs: circleci/aws-ecs@1.1.0
 
 jobs:
-  build:
+  test:
     docker:
       # specify the version here
       - image: circleci/elixir:1.10.1
@@ -29,7 +29,7 @@ jobs:
       # Our primary container isn't MYSQL so run a sleep command until it's ready.
           name: Waiting for MySQL to be ready
           command: |
-            for i in `seq 1 10`;
+            for i in `seq 1 15`;
             do
               nc -z 127.0.0.1 3306 && echo Success && exit 0
               echo -n .
@@ -46,13 +46,16 @@ jobs:
 workflows:
   build-and-deploy:
     jobs:
-      - build
+      - test
       - aws-ecr/build-and-push-image:
+          filters:
+            branches:
+              only: master
           requires:
-            - build
+            - test
           repo: streamshore
           tag: '${CIRCLE_SHA1}'
-          extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE"
+          extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE --build-arg DOMAIN=$DOMAIN --build-arg FRONTEND=$FRONTEND"
       - aws-ecs/deploy-service-update:
           requires:
             - aws-ecr/build-and-push-image

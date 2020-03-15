@@ -24,10 +24,6 @@ secret_key_base =
     """
 
 config :streamshore, StreamshoreWeb.Endpoint,
-  http: [
-    ip: {0, 0, 0, 0},
-    port: String.to_integer(System.get_env("PORT") || "80")
-  ],
   secret_key_base: secret_key_base
 
 # ## Using releases (Elixir v1.9+)
