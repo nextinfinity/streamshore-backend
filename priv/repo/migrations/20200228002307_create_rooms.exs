@@ -6,6 +6,6 @@ defmodule Streamshore.Repo.Migrations.CreateRooms do
       add(:roomName, :string)
       add(:roomDesc, :string)
       add(:isPrivate, :boolean)
-
+      timestamps
   end
 end
