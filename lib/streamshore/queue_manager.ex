@@ -47,6 +47,16 @@ defmodule Streamshore.QueueManager do
     room_data = Videos.get(room)
   end
 
+  def move_to_front(room, index) do
+    room_data = Videos.get(room)
+    {video, queue} = List.pop_at(room_data[:queue], String.to_integer(index))
+    video = [video]
+    queue = video ++ queue
+    room_data = Map.put(room_data, :queue, queue)
+    Videos.set(room, room_data)
+    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
+  end
+
   def play_next(room) do
     room_data = Videos.get(room)
     room_data = if (length(room_data[:queue]) > 0) do
