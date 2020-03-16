@@ -1,13 +1,22 @@
 defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
+  alias StreamshoreWeb.Presence
 
-  # TODO: handle multiple topics (would a simple room_chat:* do here?)
   def join("room:" <> _room, payload, socket) do
     if authorized?(payload) do
-      {:ok, socket}
+      send(self(), :after_join)
+      {:ok, assign(socket, :user_id, payload["user_id"])}
     else
       {:error, %{reason: "unauthorized"}}
     end
+  end
+
+  def handle_info(:after_join, socket) do
+    push(socket, "presence_state", Presence.list(socket))
+    {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
+      online_at: inspect(System.system_time(:second))
+    })
+    {:noreply, socket}
   end
 
   # Channels can be used in a request/response fashion
