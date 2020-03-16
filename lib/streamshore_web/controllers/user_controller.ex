@@ -107,6 +107,11 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def set_nickname(conn, params) do
-
+    friend = params["friend"]
+    nickname = params["nickname"]
+    friendee = params["friendee"]
+    relation = Friends |> Repo.get_by(friend: friend, friendee: friendee)
+    changeset = Friends.changeset(friend, %{nickname: nickname})
+    Repo.update(changeset)
   end
 end

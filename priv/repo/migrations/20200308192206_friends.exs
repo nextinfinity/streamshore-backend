@@ -5,5 +5,6 @@ defmodule Streamshore.Repo.Migrations.Friends do
     create table(:friends) do
       add(:friend, :string)
       add(:friendee, :string)
+      add(:nickname, :string)
   end
 end

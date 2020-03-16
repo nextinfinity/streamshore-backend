@@ -5,6 +5,7 @@ defmodule Streamshore.Friends do
     schema "friends" do
         field(:friend, :string)
         field(:friendee, :string)
+        field(:nickname, :string)
     end
 
     def changeset(friend, params \\ %{}) do
