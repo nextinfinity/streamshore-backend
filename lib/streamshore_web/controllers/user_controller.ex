@@ -15,7 +15,7 @@ defmodule StreamshoreWeb.UserController do
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
-      json(conn, %{success: false, errors: "password: invalid password"})
+      json(conn, %{success: false, errors: "password: password is invalid"})
     else 
       successful =
       %Streamshore.User{}
@@ -43,7 +43,7 @@ defmodule StreamshoreWeb.UserController do
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
-      json(conn, %{success: false, error: "Invalid password"})
+      json(conn, %{success: false, error: "password: password is invalid"})
     else
       password = Bcrypt.hash_pwd_salt(password)
       changeset = User.changeset(user, %{password: password})
