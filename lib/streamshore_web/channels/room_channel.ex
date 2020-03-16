@@ -36,6 +36,11 @@ defmodule StreamshoreWeb.RoomChannel do
     {:reply, {:ok, video}, socket}
   end
 
+  def handle_in("delete", payload, socket) do
+    broadcast socket, "chat", payload
+    {:noreply, socket}
+  end
+
   # Add authorization logic here as required.
   defp authorized?(_payload) do
     # TODO: authentication
