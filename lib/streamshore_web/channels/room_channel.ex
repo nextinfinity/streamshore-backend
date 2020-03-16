@@ -30,6 +30,7 @@ defmodule StreamshoreWeb.RoomChannel do
   def handle_in("chat", payload, socket) do
     time = Timex.to_unix(Timex.now)
     payload = Map.put(payload, :time, time)
+    payload = Map.put(payload, :uuid, UUID.uuid4())
     broadcast socket, "chat", payload
     {:noreply, socket}
   end
@@ -42,6 +43,11 @@ defmodule StreamshoreWeb.RoomChannel do
       %{}
     end
     {:reply, {:ok, video}, socket}
+  end
+
+  def handle_in("delete", payload, socket) do
+    broadcast socket, "chat", payload
+    {:noreply, socket}
   end
 
   # Add authorization logic here as required.
