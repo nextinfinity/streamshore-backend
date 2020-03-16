@@ -111,7 +111,7 @@ defmodule StreamshoreWeb.UserController do
     nickname = params["nickname"]
     friendee = params["friendee"]
     relation = Friends |> Repo.get_by(friend: friend, friendee: friendee)
-    changeset = Friends.changeset(friend, %{nickname: nickname})
+    changeset = Friends.changeset(relation, %{nickname: nickname})
     Repo.update(changeset)
   end
 end
