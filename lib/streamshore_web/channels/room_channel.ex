@@ -21,6 +21,7 @@ defmodule StreamshoreWeb.RoomChannel do
   def handle_in("chat", payload, socket) do
     time = Timex.to_unix(Timex.now)
     payload = Map.put(payload, :time, time)
+    payload = Map.put(payload, :uuid, UUID.uuid4())
     broadcast socket, "chat", payload
     {:noreply, socket}
   end

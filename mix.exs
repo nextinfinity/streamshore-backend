@@ -51,7 +51,8 @@ defmodule Streamshore.MixProject do
       {:bcrypt_elixir, "~> 2.0"},
       {:httpoison, "~> 1.6"},
       {:poison, "~> 3.1"},
-      {:timex, "~> 3.5"}
+      {:timex, "~> 3.5"},
+      {:uuid, "~> 1.1"}
     ]
   end
 
