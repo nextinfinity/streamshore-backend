@@ -47,6 +47,16 @@ defmodule Streamshore.QueueManager do
     room_data = Videos.get(room)
   end
 
+  def move_to_front(room, index) do
+    room_data = Videos.get(room)
+    {video, queue} = List.pop_at(room_data[:queue], String.to_integer(index))
+    video = [video]
+    queue = video ++ queue
+    room_data = Map.put(room_data, :queue, queue)
+    Videos.set(room, room_data)
+    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
+  end
+
   def play_next(room) do
     room_data = Videos.get(room)
     room_data = if (length(room_data[:queue]) > 0) do
@@ -74,12 +84,11 @@ defmodule Streamshore.QueueManager do
 
   def timer() do
     schedule()
-    current_time = get_seconds()
     Enum.each(
       Videos.keys,
       fn room ->
         if Videos.get(room)[:playing] do
-          runtime = current_time - Videos.get(room)[:playing][:start]
+          runtime = get_runtime(room)
           if runtime >= Videos.get(room)[:playing][:length] do
             play_next(room)
           else
@@ -88,6 +97,10 @@ defmodule Streamshore.QueueManager do
         end
       end
     )
+  end
+
+  def get_runtime(room) do
+    get_seconds() - Videos.get(room)[:playing][:start]
   end
 
   def get_seconds() do

@@ -2,7 +2,7 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
-  
+
   def index(conn, _params) do
     users = Repo.all(User)
     render(conn, "index.html", users: users)
@@ -32,6 +32,7 @@ defmodule StreamshoreWeb.UserController do
     # TODO: profile edit action
   end
 
+  @spec delete(any, any) :: nil
   def delete(conn, params) do
     # TODO: delete user
   end
