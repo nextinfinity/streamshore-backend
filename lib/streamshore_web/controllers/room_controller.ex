@@ -5,7 +5,7 @@ defmodule StreamshoreWeb.RoomController do
   import Ecto.Query
 
   def index(conn, _params) do
-    query = from r in Room, select: %{title: r.name, owner: r.owner, route: r.route}
+    query = from r in Room, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail}
     rooms = Repo.all(query)
     json(conn, rooms)
   end

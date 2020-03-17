@@ -8,6 +8,7 @@ defmodule Streamshore.Repo.Migrations.CreateRooms do
       add(:privacy, :integer)
       add(:owner, :string)
       add(:route, :string)
+      add(:thumbnail, :string)
       timestamps
     end
   end
