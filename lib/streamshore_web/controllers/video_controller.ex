@@ -17,8 +17,9 @@ defmodule StreamshoreWeb.VideoController do
     json(conn, %{success: success})
   end
 
-  def update(conn, _params) do
-    # TODO: video edit action
+  def update(conn, params) do
+    success = QueueManager.move_to_front(params["room_id"], params["id"])
+    json(conn, %{success: success})
   end
 
   def delete(conn, _params) do

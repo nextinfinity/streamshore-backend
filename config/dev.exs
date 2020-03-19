@@ -4,7 +4,7 @@ use Mix.Config
 # Dev password is deliberately insecure and should NOT be used for production.
 config :streamshore, Streamshore.Repo,
   username: "root",
-  password: "hahafunnyvideo",
+  password: "password",
   database: "streamshore_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,

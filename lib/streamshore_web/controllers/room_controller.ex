@@ -2,17 +2,28 @@ defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.Room
+  import Ecto.Query
 
-  def index(_conn, _params) do
-    # TODO: list
+  def index(conn, _params) do
+    query = from r in Room, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail}
+    rooms = Repo.all(query)
+    json(conn, rooms)
   end
 
-  def show(conn, _params) do
-    json(conn, %{video: "https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8"})
-    # TODO: show room info
+  def show(conn, params) do
+    room = Repo.get_by(Room, route: params["id"])
+    success = if room do
+      true
+    else
+      false
+    end
+    json(conn, %{success: success})
   end
 
   def create(conn, params) do
+    route = String.downcase(String.replace(params["name"], " ", "-"))
+    params = Map.put(params, "route", route)
+    inspect(params)
     %Streamshore.Room{}
     |> Room.changeset(params)
     |> Repo.insert()

@@ -15,7 +15,8 @@ defmodule Streamshore.Application do
       StreamshoreWeb.Endpoint,
       # Starts a worker by calling: Streamshore.Worker.start_link(arg)
       Streamshore.Videos,
-      Streamshore.QueueManager
+      Streamshore.QueueManager,
+      StreamshoreWeb.Presence
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
