@@ -34,4 +34,16 @@ defmodule Streamshore.User do
                 changeset
         end
     end
+
+    def set_name_if_anonymous(changeset) do
+        #name = get_field(changeset, :username)
+      
+        #if is_nil(name) do
+          #put_change(changeset, :username, String.capitalize(String.trim(random_adjective(), "\r")) <>
+          #String.capitalize(String.trim(random_adjective(), "\r")) <>
+          #String.capitalize(String.trim(random_animal(), "\r")))
+        #else
+          #changeset
+        #end
+    end
 end

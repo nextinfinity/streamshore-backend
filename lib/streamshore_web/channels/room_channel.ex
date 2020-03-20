@@ -46,7 +46,7 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def handle_in("delete", payload, socket) do
-    broadcast socket, "chat", payload
+    broadcast socket, "delete", payload
     {:noreply, socket}
   end
 
