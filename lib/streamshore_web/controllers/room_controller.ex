@@ -22,12 +22,19 @@ defmodule StreamshoreWeb.RoomController do
 
   def create(conn, params) do
     route = String.downcase(String.replace(params["name"], " ", "-"))
+    route = Regex.replace(~r/[^A-Za-z0-9\-]/, route, "")
     params = Map.put(params, "route", route)
-    inspect(params)
-    %Streamshore.Room{}
+    success = %Streamshore.Room{}
     |> Room.changeset(params)
     |> Repo.insert()
-    json(conn, %{success: true})
+
+    case success do
+      {:ok, schema}->
+        json(conn, %{success: true, route: route})
+
+      {:error, changeset}->
+        json(conn, %{success: false})
+    end
   end
 
   def update(_conn, _params) do
