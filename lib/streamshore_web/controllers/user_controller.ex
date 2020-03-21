@@ -16,24 +16,23 @@ defmodule StreamshoreWeb.UserController do
     |> Repo.insert()
 
     case successful do
-      {:ok, schema}->
+      {:ok, _schema}->
         json(conn, %{success: true, username: username})
 
-      {:error, changeset}->
+      {:error, _changeset}->
         json(conn, %{success: false})
     end
   end
 
-  def show(conn, _params) do
+  def show(_conn, _params) do
     # TODO: show user info
   end
 
-  def update(conn, params) do
+  def update(_conn, _params) do
     # TODO: profile edit action
   end
 
-  @spec delete(any, any) :: nil
-  def delete(conn, params) do
+  def delete(_conn, _params) do
     # TODO: delete user
   end
 

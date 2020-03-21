@@ -22,7 +22,7 @@ defmodule StreamshoreWeb.VideoController do
     json(conn, %{success: success})
   end
 
-  def delete(conn, _params) do
+  def delete(_conn, _params) do
     # TODO: delete video
   end
 
