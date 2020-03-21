@@ -11,5 +11,8 @@ defmodule Streamshore.Repo.Migrations.CreateRooms do
       add(:thumbnail, :string)
       timestamps
     end
+
+    create(unique_index(:rooms, [:name]))
+    create(unique_index(:rooms, [:route]))
   end
 end

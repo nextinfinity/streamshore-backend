@@ -20,14 +20,34 @@ defmodule StreamshoreWeb.RoomController do
     json(conn, %{success: success})
   end
 
+  def convert_changeset_errors(changeset) do
+    out =  Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", to_string(value))
+      end)
+    end)
+    out
+  end
+
   def create(conn, params) do
     route = String.downcase(String.replace(params["name"], " ", "-"))
+    route = Regex.replace(~r/[^A-Za-z0-9\-]/, route, "")
     params = Map.put(params, "route", route)
-    inspect(params)
-    %Streamshore.Room{}
+    success = %Streamshore.Room{}
     |> Room.changeset(params)
     |> Repo.insert()
-    json(conn, %{success: true})
+
+    case success do
+      {:ok, schema}->
+        json(conn, %{success: true, route: route})
+
+      {:error, changeset}->
+        errors = convert_changeset_errors(changeset)
+        key = Enum.at(Map.keys(errors), 0)
+        key = Enum.at(Map.keys(errors), 0)
+        err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
+        json(conn, %{success: false, error_msg: String.capitalize(err)})
+    end
   end
 
   def update(_conn, _params) do
