@@ -1,23 +1,23 @@
 defmodule StreamshoreWeb.PlaylistVideoController do
   use StreamshoreWeb, :controller
 
-  def index(conn, _params) do
+  def index(_conn, _params) do
     # TODO: list
   end
 
-  def show(conn, _params) do
+  def show(_conn, _params) do
     # TODO: show video info
   end
 
-  def create(conn, _params) do
+  def create(_conn, _params) do
     # TODO: create video (add to list)
   end
 
-  def update(conn, _params) do
+  def update(_conn, _params) do
     # TODO: video edit action
   end
 
-  def delete(conn, _params) do
+  def delete(_conn, _params) do
     # TODO: delete video
   end
 

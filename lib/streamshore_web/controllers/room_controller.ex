@@ -38,12 +38,11 @@ defmodule StreamshoreWeb.RoomController do
     |> Repo.insert()
 
     case success do
-      {:ok, schema}->
+      {:ok, _schema}->
         json(conn, %{success: true, route: route})
 
       {:error, changeset}->
         errors = convert_changeset_errors(changeset)
-        key = Enum.at(Map.keys(errors), 0)
         key = Enum.at(Map.keys(errors), 0)
         err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
         json(conn, %{success: false, error_msg: String.capitalize(err)})
