@@ -1,10 +1,12 @@
 defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
+  alias StreamshoreWeb.PermissionController
+  alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
   alias Streamshore.Videos
 
-  def join("room:" <> _room, payload, socket) do
-    if authorized?(payload) do
+  def join("room:" <> room, payload, socket) do
+    if authorized?(payload, room) do
       send(self(), :after_join)
       {:ok, assign(socket, :user_id, payload["user_id"])}
     else
@@ -50,8 +52,7 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    # TODO: authentication
-    true
+  defp authorized?(payload, room) do
+    PermissionController.get_perm(room, payload["user_id"]) > PermissionLevel.banned()
   end
 end
