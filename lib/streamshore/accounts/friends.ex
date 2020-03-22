@@ -6,11 +6,12 @@ defmodule Streamshore.Friends do
         field(:friender, :string)
         field(:friendee, :string)
         field(:nickname, :string)
+        field(:accepted, :integer)
     end
 
     def changeset(friend, params \\ %{}) do
         friend
-        |> cast(params, [:friender, :friendee, :nickname])
+        |> cast(params, [:friender, :friendee, :nickname, :accepted])
     end
 
     

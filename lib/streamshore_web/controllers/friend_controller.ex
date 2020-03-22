@@ -20,10 +20,11 @@ defmodule StreamshoreWeb.FriendController do
     friender = params["user_id"]
     friendee = params["friendee"]
     nickname = params["nickname"]
+    accepted = 0
     if User |> Repo.get_by(username: friendee) do 
       if !(Friends |> Repo.get_by(friender: friender, friendee: friendee)) do
-        changeset1 = Friends.changeset(%Friends{}, %{friender: friender, friendee: friendee, nickname: nickname})
-        changeset2 = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname})
+        changeset1 = Friends.changeset(%Friends{}, %{friender: friender, friendee: friendee, nickname: nickname, accepted: accepted})
+        changeset2 = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname, accepted: accepted})
         successful1 = Repo.insert(changeset1)
         successful2 = Repo.insert(changeset2)
 
@@ -45,10 +46,9 @@ defmodule StreamshoreWeb.FriendController do
   def update(conn, params) do
     friender = params["user_id"]
     friendee = params["id"]
-    nickname = params["nickname"]
     relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
     if relation do
-      changeset = Friends.changeset(relation, %{nickname: nickname})
+      changeset = Friends.changeset(relation, params)
       successful = Repo.update(changeset)
       case successful do
         {:ok, schema}->

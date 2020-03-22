@@ -6,6 +6,7 @@ defmodule Streamshore.Repo.Migrations.Friends do
       add(:friender, :string)
       add(:friendee, :string)
       add(:nickname, :string)
+      add(:accepted, :integer)
     end
 
   end
