@@ -32,12 +32,33 @@ defmodule StreamshoreWeb.UserController do
     # TODO: show user info
   end
 
-  def update(_conn, _params) do
-    # TODO: profile edit action
+  def update(conn, params) do
+    username = params["id"]
+    user = User |> Repo.get_by(username: username)
+    password = params["password"]
+    valid_pass = User.valid_password(password)
+    if !valid_pass do
+      json(conn, %{success: false, error: "password: password is invalid"})
+    else
+      changeset = User.changeset(user, %{password: password})
+      successful = Repo.update(changeset)
+      case successful do
+        {:ok, schema}->
+          json(conn, %{success: true})
+
+        {:error, changeset}->
+          json(conn, %{success: false})
+      end
+    end
   end
 
-  def delete(_conn, _params) do
-    # TODO: delete user
+  def delete(conn, params) do
+    username = params["username"]
+    user = User |> Repo.get_by(username: username)
+    successful = Repo.delete(user)
+    case successful do
+      {:ok, schema}->
+        json(conn, %{success: true})
+    end
   end
-
 end
