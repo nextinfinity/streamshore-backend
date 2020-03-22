@@ -37,7 +37,11 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def handle_in("video", payload, socket) do
-    {:reply, {:ok, Videos.get(payload["room"])}, socket}
+    data = case Videos.get(payload["room"]) do
+      nil -> %{}
+      data -> data
+    end
+    {:reply, {:ok, data}, socket}
   end
 
   def handle_in("delete", payload, socket) do
