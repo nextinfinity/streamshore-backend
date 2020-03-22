@@ -1,5 +1,4 @@
 defmodule StreamshoreWeb.UserController do
-  import Ecto.Query, only: [from: 2]
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
@@ -19,15 +18,10 @@ defmodule StreamshoreWeb.UserController do
 
   def create(conn, params) do
     username = params["username"]
-    password = params["password"]
-    valid_pass = User.valid_password(password)
-    if !valid_pass do
-      json(conn, %{success: false, errors: "password: password is invalid"})
-    else 
-      successful =
-      %Streamshore.User{}
-      |> User.changeset(params)
-      |> Repo.insert()
+    successful =
+    %Streamshore.User{}
+    |> User.changeset(params)
+    |> Repo.insert()
 
     case successful do
       {:ok, _schema}->
@@ -38,7 +32,6 @@ defmodule StreamshoreWeb.UserController do
         key = Enum.at(Map.keys(errors), 0)
         err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
         json(conn, %{success: false, error_msg: String.capitalize(err)})
-      end
     end
   end
 
@@ -74,9 +67,6 @@ defmodule StreamshoreWeb.UserController do
     case successful do
       {:ok, schema}->
         json(conn, %{success: true})
-
-      {:error, changeset}->
-        json(conn, %{success: false})
     end
   end
 end
