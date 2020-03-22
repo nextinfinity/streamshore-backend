@@ -39,8 +39,8 @@ defmodule StreamshoreWeb.RoomController do
       {:error, changeset}->
         errors = Util.convert_changeset_errors(changeset)
         key = Enum.at(Map.keys(errors), 0)
-        err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-        json(conn, %{success: false, error_msg: String.capitalize(err)})
+        err = "Room " <> Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
+        json(conn, %{success: false, error_msg: err})
     end
   end
 
