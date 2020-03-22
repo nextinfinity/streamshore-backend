@@ -1,14 +1,13 @@
 defmodule Streamshore.User do
     use Ecto.Schema
     import Ecto.Changeset
-    
+
     schema "users" do
         field(:username, :string, unique: true)
         field(:email, :string, unique: true)
         field(:password, :string)
 
         timestamps()
-        # field(:token, :joken)
     end
     
     def changeset(user, params \\ %{}) do
@@ -16,13 +15,27 @@ defmodule Streamshore.User do
         |> cast(params, [:username, :email, :password])
         |> unique_constraint(:username)
         |> unique_constraint(:email)
-        |> valid_password()
         |> hash_pass
     end
 
-    def valid_password(changeset) do
-    # TODO: Implement later
-        changeset
+    def convert_changeset_errors(changeset) do
+        traverse_errors(changeset, fn {msg, opts} ->
+            Enum.reduce(opts, msg, fn {key, value}, acc ->
+                String.replace(acc, "%{#{key}}", to_string(value))
+            end)
+        end)
+        |> Enum.reduce("", fn {k, v}, acc ->
+            joined_errors = Enum.join(v, "; ")
+            "#{acc}#{k}: #{joined_errors}"
+        end)
+    end
+
+    def valid_password(password) do
+        if String.match?(password, ~r/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/) do
+            true
+        else 
+            false
+        end
     end
 
     def hash_pass(changeset) do
