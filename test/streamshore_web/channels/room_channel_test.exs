@@ -3,8 +3,8 @@ defmodule StreamshoreWeb.RoomChannelTest do
 
   setup do
     {:ok, _, socket} =
-      socket(StreamshoreWeb.UserSocket, "user_id", %{some: :assign})
-      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby")
+      socket(StreamshoreWeb.UserSocket)
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user_id: "anon"})
 
     {:ok, socket: socket}
   end
