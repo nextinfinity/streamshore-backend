@@ -34,9 +34,9 @@ defmodule StreamshoreWeb.PermissionController do
   end
 
   def get_perm(room, user) do
-    perm = Repo.get_by(Permission, %{room: room, user: user})
+    perm = Repo.get_by(Permission, %{room: room, username: user})
     if perm do
-      perm
+      perm.permission
     else
       PermissionLevel.user()
     end
