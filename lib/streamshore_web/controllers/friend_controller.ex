@@ -1,13 +1,16 @@
 defmodule StreamshoreWeb.FriendController do
+  import Ecto.Query, only: [from: 2]
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
   alias Streamshore.Friends
 
-  def index(_conn, _params) do
-    # friend = params["friend"]
-    # query = from f in "friends", where: f.friend == type(^friend, :string), select: f.friendee
-    # Repo.all(query)
+  def index(conn, params) do
+    friender = params["user_id"]
+    list =
+    Ecto.Query.from(f in Friends, where: f.friender == ^friender, select: f.friendee)
+    |> Repo.all
+    json(conn, %{success: true, list: list})
   end
 
   def create(conn, params) do
