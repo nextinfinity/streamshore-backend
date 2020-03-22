@@ -19,16 +19,14 @@ defmodule StreamshoreWeb.FriendController do
   def create(conn, params) do
     friender = params["user_id"]
     friendee = params["friendee"]
-    nickname = params["nickname"]
+    nickname = nil
     accepted = 0
     if User |> Repo.get_by(username: friendee) do 
-      if !(Friends |> Repo.get_by(friender: friender, friendee: friendee)) do
-        changeset1 = Friends.changeset(%Friends{}, %{friender: friender, friendee: friendee, nickname: nickname, accepted: accepted})
-        changeset2 = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname, accepted: accepted})
-        successful1 = Repo.insert(changeset1)
-        successful2 = Repo.insert(changeset2)
+      if !(Friends |> Repo.get_by(friender: friendee, friendee: friender)) do
+        changeset = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname, accepted: accepted})
+        successful = Repo.insert(changeset)
 
-        case successful1 && successful2 do
+        case successful do
           {:ok, schema}->
             json(conn, %{success: true})
 
@@ -46,19 +44,51 @@ defmodule StreamshoreWeb.FriendController do
   def update(conn, params) do
     friender = params["user_id"]
     friendee = params["id"]
-    relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-    if relation do
-      changeset = Friends.changeset(relation, params)
-      successful = Repo.update(changeset)
-      case successful do
-        {:ok, schema}->
-          json(conn, %{success: true})
+    if params["accepted"] do
+      accepted = params["accepted"]
+      if accepted == "1" do
+        # change accepted to 1 for one user and insert the other user
+        relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
+        if relation do
+          changeset = Friends.changeset(relation, params)
+          successful = Repo.update(changeset)
+          changeset = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nil, accepted: accepted})
+          successful = Repo.insert(changeset)
+          case successful do
+            {:ok, schema}->
+              json(conn, %{success: true})
 
-        {:error, changeset}->
+            {:error, changeset}->
+              json(conn, %{success: false})
+          end
+        else
           json(conn, %{success: false})
+        end
+      else 
+        # delete the input
+        relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
+        successful = Repo.delete(relation)
+        case successful do
+          {:ok, schema}->
+            json(conn, %{success: true})
+         end
       end
     else
-      json(conn, %{success: false})
+      # update nickname
+      relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
+      if relation do
+        changeset = Friends.changeset(relation, params)
+        successful = Repo.update(changeset)
+        case successful do
+          {:ok, schema}->
+            json(conn, %{success: true})
+
+          {:error, changeset}->
+            json(conn, %{success: false})
+        end
+      else
+        json(conn, %{success: false})
+      end
     end
   end
 
