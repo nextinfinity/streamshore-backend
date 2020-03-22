@@ -47,7 +47,6 @@ defmodule StreamshoreWeb.UserController do
     if !valid_pass do
       json(conn, %{success: false, error: "password: password is invalid"})
     else
-      password = Bcrypt.hash_pwd_salt(password)
       changeset = User.changeset(user, %{password: password})
       successful = Repo.update(changeset)
       case successful do
