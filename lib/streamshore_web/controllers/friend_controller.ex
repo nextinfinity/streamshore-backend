@@ -7,7 +7,6 @@ defmodule StreamshoreWeb.FriendController do
 
   def index(conn, params) do
     friender = params["user_id"]
-    list =
     query = from f in Friends, where: f.friender == ^friender, select: %{friendee: f.friendee, nickname: f.nickname}
     list = Repo.all(query)
     if list do 
