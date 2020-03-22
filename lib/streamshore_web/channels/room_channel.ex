@@ -1,6 +1,7 @@
 defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
   alias StreamshoreWeb.Presence
+  alias Streamshore.Videos
 
   def join("room:" <> _room, payload, socket) do
     if authorized?(payload) do
@@ -36,13 +37,7 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def handle_in("video", payload, socket) do
-    video = Streamshore.QueueManager.get_video(payload["room"])
-    video = if video do
-      video
-    else
-      %{}
-    end
-    {:reply, {:ok, video}, socket}
+    {:reply, {:ok, Videos.get(payload["room"])}, socket}
   end
 
   def handle_in("delete", payload, socket) do
