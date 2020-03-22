@@ -8,10 +8,10 @@ defmodule StreamshoreWeb.FriendController do
   def index(conn, params) do
     friender = params["user_id"]
     list =
-    Ecto.Query.from(f in Friends, where: f.friender == ^friender, select: f.friendee)
-    |> Repo.all
+    query = from f in Friends, where: f.friender == ^friender, select: %{friendee: f.friendee, nickname: f.nickname}
+    list = Repo.all(query)
     if list do 
-      json(conn, %{list: list})
+      json(conn, list)
     else 
       json(conn, %{list: nil})
     end
