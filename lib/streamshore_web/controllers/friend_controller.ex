@@ -63,8 +63,8 @@ defmodule StreamshoreWeb.FriendController do
   end
 
   def delete(conn, params) do
-    friender = params["id"]
-    friendee = params["friendee"]
+    friender = params["user_id"]
+    friendee = params["id"]
     relation1 = Friends |> Repo.get_by(friender: friender, friendee: friendee)
     successful1 = Repo.delete(relation1)
     relation2 = Friends |> Repo.get_by(friender: friendee, friendee: friender)
