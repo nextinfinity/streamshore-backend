@@ -2,6 +2,7 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
+  
   def index(conn, _params) do
     users = Repo.all(User)
     render(conn, "index.html", users: users)
