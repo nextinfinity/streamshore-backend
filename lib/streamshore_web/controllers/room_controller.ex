@@ -2,6 +2,7 @@ defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
+  alias StreamshoreWeb.Presence
   alias Streamshore.Repo
   alias Streamshore.Room
   alias Streamshore.Util
@@ -10,6 +11,7 @@ defmodule StreamshoreWeb.RoomController do
   def index(conn, _params) do
     query = from r in Room, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail}
     rooms = Repo.all(query)
+    rooms = Enum.map(rooms, fn room -> Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route]))) end)
     json(conn, rooms)
   end
 
