@@ -7,13 +7,12 @@ defmodule StreamshoreWeb.FriendController do
 
   def index(conn, params) do
     friender = params["user_id"]
-    query = from f in Friends, where: f.friender == ^friender, select: %{friendee: f.friendee, nickname: f.nickname}
-    list = Repo.all(query)
-    if list do 
-      json(conn, list)
-    else 
-      json(conn, %{list: nil})
-    end
+    query = from f in Friends, where: f.friender == ^friender and f.accepted == 1, select: %{friendee: f.friendee, nickname: f.nickname}
+    friends = Repo.all(query)
+    query = from f in Friends, where: f.friender == ^friender and f.accepted == 0, select: %{friendee: f.friendee, nickname: f.nickname}
+    requests = Repo.all(query)
+    map = %{friends: friends, requests: requests}
+    json(conn, map)
   end
 
   def create(conn, params) do
