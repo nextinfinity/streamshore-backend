@@ -3,12 +3,6 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
-<<<<<<< HEAD
-  alias Streamshore.Friends
-  
-=======
-
->>>>>>> master
   def index(conn, _params) do
     users = Repo.all(User)
     render(conn, "index.html", users: users)
@@ -35,16 +29,6 @@ defmodule StreamshoreWeb.UserController do
       |> User.changeset(params)
       |> Repo.insert()
 
-<<<<<<< HEAD
-      case successful do
-        {:ok, schema}->
-          json(conn, %{success: true, username: username})
-
-        {:error, changeset}->
-          errors = User.convert_changeset_errors(changeset)
-          json(conn, %{success: false, errors: errors})
-      end
-=======
     case successful do
       {:ok, _schema}->
         json(conn, %{success: true, username: username})
@@ -54,7 +38,6 @@ defmodule StreamshoreWeb.UserController do
         key = Enum.at(Map.keys(errors), 0)
         err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
         json(conn, %{success: false, error_msg: String.capitalize(err)})
->>>>>>> master
     end
   end
 
@@ -62,7 +45,6 @@ defmodule StreamshoreWeb.UserController do
     # TODO: show user info
   end
 
-<<<<<<< HEAD
   def update(conn, params) do
     username = params["username"]
     user = User |> Repo.get_by(username: username)
@@ -91,15 +73,6 @@ defmodule StreamshoreWeb.UserController do
     case successful do
       {:ok, schema}->
         json(conn, %{success: true})
-=======
-  def update(_conn, _params) do
-    # TODO: profile edit action
-  end
-
-  def delete(_conn, _params) do
-    # TODO: delete user
-  end
->>>>>>> master
 
       {:error, changeset}->
         json(conn, %{success: false})
