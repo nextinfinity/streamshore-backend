@@ -22,17 +22,21 @@ defmodule StreamshoreWeb.FriendController do
     friendee = params["friendee"]
     nickname = params["nickname"]
     if User |> Repo.get_by(username: friendee) do 
-      changeset1 = Friends.changeset(%Friends{}, %{friender: friender, friendee: friendee, nickname: nickname})
-      changeset2 = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname})
-      successful1 = Repo.insert(changeset1)
-      successful2 = Repo.insert(changeset2)
+      if !(Friends |> Repo.get_by(friender: friender, friendee: friendee)) do
+        changeset1 = Friends.changeset(%Friends{}, %{friender: friender, friendee: friendee, nickname: nickname})
+        changeset2 = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname})
+        successful1 = Repo.insert(changeset1)
+        successful2 = Repo.insert(changeset2)
 
-      case successful1 && successful2 do
-        {:ok, schema}->
-          json(conn, %{success: true})
+        case successful1 && successful2 do
+          {:ok, schema}->
+            json(conn, %{success: true})
 
-        {:error, changeset}->
-          json(conn, %{success: false})
+          {:error, changeset}->
+            json(conn, %{success: false})
+        end
+      else
+        json(conn, %{success: false, error: "Friend connection already exists"})
       end
     else 
       json(conn, %{success: false, error: "User does not exist"})
