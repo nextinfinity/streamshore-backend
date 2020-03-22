@@ -42,6 +42,26 @@ defmodule StreamshoreWeb.FriendController do
     end
   end
 
+  def update(conn, params) do
+    friender = params["user_id"]
+    friendee = params["id"]
+    nickname = params["nickname"]
+    relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
+    if relation do
+      changeset = Friends.changeset(relation, %{nickname: nickname})
+      successful = Repo.update(changeset)
+      case successful do
+        {:ok, schema}->
+          json(conn, %{success: true})
+
+        {:error, changeset}->
+          json(conn, %{success: false})
+      end
+    else
+      json(conn, %{success: false})
+    end
+  end
+
   def delete(conn, params) do
     friender = params["id"]
     friendee = params["friendee"]
