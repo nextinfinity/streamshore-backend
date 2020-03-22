@@ -40,8 +40,8 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def update(conn, params) do
-    id = params["id"]
-    user = User |> Repo.get_by(id: id)
+    username = params["id"]
+    user = User |> Repo.get_by(username: username)
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
