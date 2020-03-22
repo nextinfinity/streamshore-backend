@@ -38,6 +38,7 @@ defmodule StreamshoreWeb.UserController do
         key = Enum.at(Map.keys(errors), 0)
         err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
         json(conn, %{success: false, error_msg: String.capitalize(err)})
+      end
     end
   end
 
@@ -46,8 +47,8 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def update(conn, params) do
-    username = params["username"]
-    user = User |> Repo.get_by(username: username)
+    id = params["id"]
+    user = User |> Repo.get_by(id: id)
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
