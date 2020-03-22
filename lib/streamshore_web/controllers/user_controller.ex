@@ -70,48 +70,4 @@ defmodule StreamshoreWeb.UserController do
         json(conn, %{success: false})
     end
   end
-
-  def add_friend(conn, params) do
-    friendee = params["freindee"]
-    if User |> Repo.get_by(username: friendee) do 
-      successful =
-      %Streamshore.Friends{}
-      |> Friend.changeset(params)
-      |> Repo.insert()
-
-      case successful do
-        {:ok, schema}->
-          json(conn, %{success: true})
-
-        {:error, changeset}->
-          json(conn, %{success: false})
-      end
-    else 
-      json(conn, %{success: false, error: "User does not exist"})
-    end
-  end
-
-  def remove_friend(conn, params) do
-    friend = params["friend"]
-    friendee = params["friendee"]
-    relation1 = Friends |> Repo.get_by(friend: friend, friendee: friendee)
-    relation2 = Friends |> Repo.get_by(friend: friendee, friendee: friend)
-    Repo.delete(relation1)
-    Repo.delete(relation2)
-  end 
-
-  def get_friends(conn, params) do
-    friend = params["friend"]
-    query = from f in "friends", where: f.friend == type(^friend, :string), select: f.friendee
-    Repo.all(query)
-  end
-
-  def set_nickname(conn, params) do
-    friend = params["friend"]
-    nickname = params["nickname"]
-    friendee = params["friendee"]
-    relation = Friends |> Repo.get_by(friend: friend, friendee: friendee)
-    changeset = Friends.changeset(relation, %{nickname: nickname})
-    Repo.update(changeset)
-  end
 end
