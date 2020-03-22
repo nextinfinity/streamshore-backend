@@ -13,15 +13,16 @@ defmodule StreamshoreWeb.VideoController do
   end
 
   def create(conn, params) do
-    QueueManager.add_to_queue(params["room_id"], params["id"], params["user"])
-    json(conn, %{success: true})
+    success = QueueManager.add_to_queue(params["room_id"], params["id"], params["user"])
+    json(conn, %{success: success})
   end
 
-  def update(conn, _params) do
-    # TODO: video edit action
+  def update(conn, params) do
+    success = QueueManager.move_to_front(params["room_id"], params["id"])
+    json(conn, %{success: success})
   end
 
-  def delete(conn, _params) do
+  def delete(_conn, _params) do
     # TODO: delete video
   end
 
