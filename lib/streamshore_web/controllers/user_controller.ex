@@ -2,18 +2,11 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
   alias Streamshore.Repo
   alias Streamshore.User
+  alias Streamshore.Util
+
   def index(conn, _params) do
     users = Repo.all(User)
     render(conn, "index.html", users: users)
-  end
-
-  def convert_changeset_errors(changeset) do
-    out =  Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
-    out
   end
 
   def create(conn, params) do
@@ -32,11 +25,11 @@ defmodule StreamshoreWeb.UserController do
         {:ok, _schema}->
           json(conn, %{success: true, username: username})
 
-        {:error, changeset}->
-          errors = convert_changeset_errors(changeset)
-          key = Enum.at(Map.keys(errors), 0)
-          err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-          json(conn, %{success: false, error_msg: String.capitalize(err)})
+      {:error, changeset}->
+        errors = Util.convert_changeset_errors(changeset)
+        key = Enum.at(Map.keys(errors), 0)
+        err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
+        json(conn, %{success: false, error_msg: String.capitalize(err)})
       end
     end
   end
