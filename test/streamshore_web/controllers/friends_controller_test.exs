@@ -13,7 +13,7 @@ defmodule FriendsControllerTest do
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}
         #accept friend request
-        conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: 1})
+        conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
         assert json_response(conn, 200) == %{"success" => true}
     end
 
