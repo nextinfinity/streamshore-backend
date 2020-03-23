@@ -9,18 +9,45 @@ defmodule StreamshoreWeb.RoomChannelTest do
     {:ok, socket: socket}
   end
 
-  test "ping replies with status ok", %{socket: socket} do
-    ref = push socket, "ping", %{"hello" => "there"}
-    assert_reply ref, :ok, %{"hello" => "there"}
+  test "user list" do
+    {:ok, _, test_socket} = socket(StreamshoreWeb.UserSocket)
+    |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user_id: "test"})
+
+    assert_push "presence_state", %{"anon" => %{}}
+    assert_push "presence_diff", %{:joins => %{"test" => %{}}}
+
+    test_socket
+    |> leave
   end
 
-  #test "shout broadcasts to room_chat:lobby", %{socket: socket} do
-  #  push socket, "chat", %{"hello" => "all"}
-  #  assert_broadcast "shout", %{"hello" => "all"}
-  #end
+  test "ping replies with status ok", %{socket: socket} do
+    ref = push socket, "ping", %{"msg" => "hello world"}
+    assert_reply ref, :ok, %{"msg" => "hello world"}
+  end
+
+  test "chat", %{socket: socket} do
+    push socket, "chat", %{"msg" => "hello world"}
+    assert_broadcast "chat", %{"msg" => "hello world"}
+  end
+
+  test "chat travel time", %{socket: socket} do
+    push socket, "chat", %{"msg" => "hello world"}
+    assert_broadcast "chat", %{"msg" => "hello world"}, 1000
+  end
+
+  test "chat user", %{socket: socket} do
+    push socket, "chat", %{"msg" => "hello world"}
+    assert_broadcast "chat", %{:user => "anon"}
+  end
+
+  test "chat time", %{socket: socket} do
+    push socket, "chat", %{"msg" => "hello world"}
+    _time = Timex.to_unix(Timex.now())
+    assert_broadcast "chat", %{:time => _time}
+  end
 
   test "broadcasts are pushed to the client", %{socket: socket} do
-    broadcast_from! socket, "broadcast", %{"some" => "data"}
-    assert_push "broadcast", %{"some" => "data"}
+    broadcast_from! socket, "broadcast", %{"msg" => "hello world"}
+    assert_push "broadcast", %{"msg" => "hello world"}
   end
 end
