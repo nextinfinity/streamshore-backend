@@ -27,4 +27,16 @@ defmodule FriendsControllerTest do
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => false, "error" => "User does not exist"}
     end
+
+    test "Getting a list of friends", %{conn: conn} do
+        
+    end
+
+    test "Users cannot see other users friends", %{conn: conn} do
+        
+    end
+
+    test "Getting a list of nicknames", %{conn: conn} do
+        
+    end
 end
