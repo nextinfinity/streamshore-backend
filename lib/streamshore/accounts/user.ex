@@ -16,7 +16,6 @@ defmodule Streamshore.User do
         |> cast(params, [:username, :email, :password])
         |> unique_constraint(:username)
         |> unique_constraint(:email)
-        #|> valid_password()
         |> hash_pass
     end
 
