@@ -16,13 +16,15 @@ defmodule Streamshore.User do
         |> cast(params, [:username, :email, :password])
         |> unique_constraint(:username)
         |> unique_constraint(:email)
-        |> valid_password()
         |> hash_pass
     end
 
-    def valid_password(changeset) do
-    # TODO: Implement later
-        changeset
+    def valid_password(password) do
+        if Regex.match?(~r/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/, password) do
+            true
+        else 
+            false
+        end
     end
 
     def hash_pass(changeset) do
