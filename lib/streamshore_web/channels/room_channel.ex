@@ -32,6 +32,7 @@ defmodule StreamshoreWeb.RoomChannel do
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
     time = Timex.to_unix(Timex.now)
+    payload = Map.put(payload, :user, socket.assigns.user_id)
     payload = Map.put(payload, :time, time)
     payload = Map.put(payload, :uuid, UUID.uuid4())
     broadcast socket, "chat", payload
