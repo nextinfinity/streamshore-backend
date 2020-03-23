@@ -9,6 +9,17 @@ defmodule StreamshoreWeb.RoomChannelTest do
     {:ok, socket: socket}
   end
 
+  test "user list" do
+    {:ok, _, test_socket} = socket(StreamshoreWeb.UserSocket)
+    |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user_id: "test"})
+
+    assert_push "presence_state", %{"anon" => %{}}
+    assert_push "presence_diff", %{:joins => %{"test" => %{}}}
+
+    test_socket
+    |> leave
+  end
+
   test "ping replies with status ok", %{socket: socket} do
     ref = push socket, "ping", %{"msg" => "hello world"}
     assert_reply ref, :ok, %{"msg" => "hello world"}
