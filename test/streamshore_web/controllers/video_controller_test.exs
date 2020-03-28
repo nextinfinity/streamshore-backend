@@ -43,24 +43,24 @@ defmodule VideoControllerTest do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
     id3 = "9jzsr5wyG4o"
-    conn = post(conn, Routes.room_video_path(conn, :create, "progress"), %{id: id1, user: "anon"})
+    conn = post(conn, Routes.room_video_path(conn, :create, "front"), %{id: id1, user: "anon"})
     assert json_response(conn, 200) == %{"success" => true}
-    conn = post(conn, Routes.room_video_path(conn, :create, "progress"), %{id: id2, user: "anon"})
+    conn = post(conn, Routes.room_video_path(conn, :create, "front"), %{id: id2, user: "anon"})
     assert json_response(conn, 200) == %{"success" => true}
-    conn = post(conn, Routes.room_video_path(conn, :create, "progress"), %{id: id3, user: "anon"})
+    conn = post(conn, Routes.room_video_path(conn, :create, "front"), %{id: id3, user: "anon"})
     assert json_response(conn, 200) == %{"success" => true}
-    _conn = put(conn, Routes.room_video_path(conn, :update, "progress", "1"))
-    assert Enum.at(Videos.get("progress")[:queue], 0)[:id] == id3
+    _conn = put(conn, Routes.room_video_path(conn, :update, "front", "1"))
+    assert Enum.at(Videos.get("front")[:queue], 0)[:id] == id3
   end
 
   test "Removing video from queue", %{conn: conn} do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
-    conn = post(conn, Routes.room_video_path(conn, :create, "progress"), %{id: id1, user: "anon"})
+    conn = post(conn, Routes.room_video_path(conn, :create, "remove"), %{id: id1, user: "anon"})
     assert json_response(conn, 200) == %{"success" => true}
-    conn = post(conn, Routes.room_video_path(conn, :create, "progress"), %{id: id2, user: "anon"})
+    conn = post(conn, Routes.room_video_path(conn, :create, "remove"), %{id: id2, user: "anon"})
     assert json_response(conn, 200) == %{"success" => true}
-    _conn = delete(conn, Routes.room_video_path(conn, :delete, "progress", "0"))
-    assert Videos.get("progress")[:queue] == []
+    _conn = delete(conn, Routes.room_video_path(conn, :delete, "remove", "0"))
+    assert Videos.get("remove")[:queue] == []
   end
 end
