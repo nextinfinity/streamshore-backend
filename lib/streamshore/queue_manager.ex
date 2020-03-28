@@ -1,6 +1,8 @@
 defmodule Streamshore.QueueManager do
   @moduledoc false
   use GenServer
+  alias Streamshore.Repo
+  alias Streamshore.Room
 
   alias Streamshore.Videos
 
@@ -79,6 +81,13 @@ defmodule Streamshore.QueueManager do
       room_data
     end
     StreamshoreWeb.Endpoint.broadcast("room:" <> room, "video", %{video: room_data[:playing]})
+    thumbnail = case room_data[:playing] do
+      nil -> nil
+      video -> video[:thumbnail]
+    end
+    Repo.get_by(Room, %{route: room})
+    |> Room.changeset(%{thumbnail: thumbnail})
+    |> Repo.update
   end
 
   def timer() do
