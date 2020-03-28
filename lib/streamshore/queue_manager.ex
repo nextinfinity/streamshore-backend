@@ -45,6 +45,10 @@ defmodule Streamshore.QueueManager do
 
   def remove_from_queue(room, index) do
     room_data = Videos.get(room)
+    {_video, queue} = List.pop_at(room_data[:queue], String.to_integer(index))
+    room_data = Map.put(room_data, :queue, queue)
+    Videos.set(room, room_data)
+    StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
   end
 
   def move_to_front(room, index) do

@@ -9,7 +9,7 @@ defmodule StreamshoreWeb.RoomController do
   import Ecto.Query
 
   def index(conn, _params) do
-    query = from r in Room, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail}
+    query = from r in Room, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail, privacy: r.privacy}
     rooms = Repo.all(query)
     rooms = Enum.map(rooms, fn room -> Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route]))) end)
     json(conn, rooms)
