@@ -85,9 +85,12 @@ defmodule Streamshore.QueueManager do
       nil -> nil
       video -> video[:thumbnail]
     end
-    Repo.get_by(Room, %{route: room})
-    |> Room.changeset(%{thumbnail: thumbnail})
-    |> Repo.update
+    case Repo.get_by(Room, %{route: room}) do
+      nil -> nil
+      schema -> schema
+                |> Room.changeset(%{thumbnail: thumbnail})
+                |> Repo.update
+    end
   end
 
   def timer() do
