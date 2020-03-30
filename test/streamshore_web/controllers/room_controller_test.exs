@@ -9,14 +9,12 @@ defmodule RoomControllerTest do
            |> get(Routes.room_path(conn, :index))
            |> json_response(200)
     assert Enum.at(list, 0)["users"] == 0
-    {:ok, _, socket} = socket(StreamshoreWeb.UserSocket)
+    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket)
                  |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:name", %{user: "user", anon: true})
     list = conn
            |> get(Routes.room_path(conn, :index))
            |> json_response(200)
     assert Enum.at(list, 0)["users"] == 1
-    socket
-    |> leave
   end
 
 end
