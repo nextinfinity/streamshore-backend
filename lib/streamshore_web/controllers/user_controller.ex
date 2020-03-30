@@ -3,6 +3,7 @@ defmodule StreamshoreWeb.UserController do
   alias Streamshore.Repo
   alias Streamshore.User
   alias Streamshore.Util
+  import Ecto.Query
 
   def index(conn, _params) do
     users = Repo.all(User)
@@ -34,8 +35,10 @@ defmodule StreamshoreWeb.UserController do
     end
   end
 
-  def show(_conn, _params) do
-    # TODO: show user info
+  def show(conn, params) do
+    user = Repo.one(from(u in User, where: [username: ^params["id"]], select: %{username: u.username, room: u.room}))
+    user = Map.put(user, :online, user[:room] != nil)
+    json(conn, user)
   end
 
   def update(conn, params) do
