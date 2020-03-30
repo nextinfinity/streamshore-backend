@@ -3,6 +3,8 @@ defmodule StreamshoreWeb.RoomChannel do
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
+  alias Streamshore.Repo
+  alias Streamshore.User
   alias Streamshore.Videos
 
   def join("room:" <> room, payload, socket) do
@@ -25,6 +27,13 @@ defmodule StreamshoreWeb.RoomChannel do
       permission: socket.assigns.permission,
       online_at: inspect(System.system_time(:second))
     })
+    room = Enum.at(String.split(socket.topic, ":"), 1)
+    case Repo.get_by(User, %{username: socket.assigns.user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: room})
+                |> Repo.update()
+    end
     {:noreply, socket}
   end
 
@@ -60,5 +69,14 @@ defmodule StreamshoreWeb.RoomChannel do
   # Add authorization logic here as required.
   defp authorized?(payload, room) do
     PermissionController.get_perm(room, payload["user"]) > PermissionLevel.banned()
+  end
+
+  def terminate(_reason, socket) do
+    case Repo.get_by(User, %{username: socket.assigns.user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: nil})
+                |> Repo.update()
+    end
   end
 end
