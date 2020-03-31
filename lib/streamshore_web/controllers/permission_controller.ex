@@ -19,10 +19,16 @@ defmodule StreamshoreWeb.PermissionController do
   end
 
   def update(conn, params) do
-    success = update_perm(params["room_id"], params["id"], params["permission"])
+    room = params["room_id"]
+    user = params["id"]
+    perm = params["permission"]
+    success = update_perm(room, user, perm)
 
     case success do
       {:ok, _schema}->
+        if perm == 0 do
+          StreamshoreWeb.Endpoint.broadcast("room:" <> room, "ban", %{user: user})
+        end
         json(conn, %{success: true})
 
       {:error, changeset}->

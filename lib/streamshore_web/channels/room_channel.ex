@@ -3,12 +3,18 @@ defmodule StreamshoreWeb.RoomChannel do
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
+  alias Streamshore.Repo
+  alias Streamshore.User
   alias Streamshore.Videos
 
   def join("room:" <> room, payload, socket) do
     if authorized?(payload, room) do
       send(self(), :after_join)
-      {:ok, assign(socket, :user_id, payload["user_id"])}
+      perm = PermissionController.get_perm(room, payload["user"])
+      socket = assign(socket, :user, payload["user"])
+      socket = assign(socket, :anon, payload["anon"])
+      socket = assign(socket, :permission, perm)
+      {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
     end
@@ -16,9 +22,18 @@ defmodule StreamshoreWeb.RoomChannel do
 
   def handle_info(:after_join, socket) do
     push(socket, "presence_state", Presence.list(socket))
-    {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
+    {:ok, _} = Presence.track(socket, socket.assigns.user, %{
+      anon: socket.assigns.anon,
+      permission: socket.assigns.permission,
       online_at: inspect(System.system_time(:second))
     })
+    room = Enum.at(String.split(socket.topic, ":"), 1)
+    case Repo.get_by(User, %{username: socket.assigns.user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: room})
+                |> Repo.update()
+    end
     {:noreply, socket}
   end
 
@@ -32,9 +47,8 @@ defmodule StreamshoreWeb.RoomChannel do
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
     time = Timex.to_unix(Timex.now)
-    payload = Map.put(payload, :user, socket.assigns.user_id)
-    payload = Map.put(payload, :time, time)
-    payload = Map.put(payload, :uuid, UUID.uuid4())
+    uuid = UUID.uuid4()
+    payload = Map.merge(payload, %{user: socket.assigns.user, anon: socket.assigns.anon, time: time, uuid: uuid})
     broadcast socket, "chat", payload
     {:noreply, socket}
   end
@@ -54,6 +68,15 @@ defmodule StreamshoreWeb.RoomChannel do
 
   # Add authorization logic here as required.
   defp authorized?(payload, room) do
-    PermissionController.get_perm(room, payload["user_id"]) > PermissionLevel.banned()
+    PermissionController.get_perm(room, payload["user"]) > PermissionLevel.banned()
+  end
+
+  def terminate(_reason, socket) do
+    case Repo.get_by(User, %{username: socket.assigns.user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: nil})
+                |> Repo.update()
+    end
   end
 end

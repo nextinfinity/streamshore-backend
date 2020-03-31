@@ -4,20 +4,17 @@ defmodule StreamshoreWeb.RoomChannelTest do
   setup do
     {:ok, _, socket} =
       socket(StreamshoreWeb.UserSocket)
-      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user_id: "anon"})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user: "anon", anon: true})
 
     {:ok, socket: socket}
   end
 
   test "user list" do
-    {:ok, _, test_socket} = socket(StreamshoreWeb.UserSocket)
-    |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user_id: "test"})
+    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket)
+    |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user: "test", anon: true})
 
     assert_push "presence_state", %{"anon" => %{}}
     assert_push "presence_diff", %{:joins => %{"test" => %{}}}
-
-    test_socket
-    |> leave
   end
 
   test "ping replies with status ok", %{socket: socket} do

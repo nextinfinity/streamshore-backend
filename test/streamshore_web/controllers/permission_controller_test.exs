@@ -36,7 +36,7 @@ defmodule PermissionControllerTest do
            |> json_response(200)
     assert perm == PermissionLevel.banned()
     connection = socket(StreamshoreWeb.UserSocket)
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:ban-room2", %{user_id: "ban-user"})
+                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:ban-room2", %{user: "ban-user", anon: true})
     assert connection == {:error, %{reason: "unauthorized"}}
   end
 
