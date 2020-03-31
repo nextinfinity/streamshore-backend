@@ -26,10 +26,10 @@ defmodule StreamshoreWeb.FriendController do
         successful = Repo.insert(changeset)
 
         case successful do
-          {:ok, schema}->
+          {:ok, _schema}->
             json(conn, %{success: true})
 
-          {:error, changeset}->
+          {:error, _changeset}->
             json(conn, %{success: false})
         end
       else
@@ -50,14 +50,14 @@ defmodule StreamshoreWeb.FriendController do
         relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
         if relation do
           changeset = Friends.changeset(relation, params)
-          successful = Repo.update(changeset)
+          _successful = Repo.update(changeset)
           changeset = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nil, accepted: accepted})
           successful = Repo.insert(changeset)
           case successful do
-            {:ok, schema}->
+            {:ok, _schema}->
               json(conn, %{success: true})
 
-            {:error, changeset}->
+            {:error, _changeset}->
               json(conn, %{success: false})
           end
         else
@@ -68,8 +68,11 @@ defmodule StreamshoreWeb.FriendController do
         relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
         successful = Repo.delete(relation)
         case successful do
-          {:ok, schema}->
+          {:ok, _schema}->
             json(conn, %{success: true})
+
+          {:error, _changeset}->
+            json(conn, %{success: false})
          end
       end
     else
@@ -79,10 +82,10 @@ defmodule StreamshoreWeb.FriendController do
         changeset = Friends.changeset(relation, params)
         successful = Repo.update(changeset)
         case successful do
-          {:ok, schema}->
+          {:ok, _schema}->
             json(conn, %{success: true})
 
-          {:error, changeset}->
+          {:error, _changeset}->
             json(conn, %{success: false})
         end
       else
@@ -99,8 +102,11 @@ defmodule StreamshoreWeb.FriendController do
     relation2 = Friends |> Repo.get_by(friender: friendee, friendee: friender)
     successful2 = Repo.delete(relation2)
     case successful1 && successful2 do
-      {:ok, schema}->
+      {:ok, _schema}->
         json(conn, %{success: true})
+
+      {:error, _changeset}->
+        json(conn, %{success: false})
     end
   end
 end

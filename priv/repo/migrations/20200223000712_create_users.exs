@@ -9,7 +9,7 @@ defmodule Streamshore.Repo.Migrations.CreateUsers do
         add(:room, :string)
         # add(:token, :joken)
 
-        timestamps
+        timestamps()
     end
 
     create(unique_index(:users, [:username]))

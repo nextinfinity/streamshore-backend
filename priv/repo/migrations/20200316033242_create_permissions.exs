@@ -7,7 +7,7 @@ defmodule Streamshore.Repo.Migrations.CreatePermissions do
       add(:room, :string)
       add(:permission, :integer)
 
-      timestamps
+      timestamps()
     end
   end
 end
