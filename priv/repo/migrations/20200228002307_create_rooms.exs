@@ -9,7 +9,7 @@ defmodule Streamshore.Repo.Migrations.CreateRooms do
       add(:owner, :string)
       add(:route, :string)
       add(:thumbnail, :string)
-      timestamps
+      timestamps()
     end
 
     create(unique_index(:rooms, [:name]))

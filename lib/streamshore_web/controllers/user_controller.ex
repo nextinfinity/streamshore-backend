@@ -52,10 +52,10 @@ defmodule StreamshoreWeb.UserController do
       changeset = User.changeset(user, %{password: password})
       successful = Repo.update(changeset)
       case successful do
-        {:ok, schema}->
+        {:ok, _schema}->
           json(conn, %{success: true})
 
-        {:error, changeset}->
+        {:error, _changeset}->
           json(conn, %{success: false})
       end
     end
@@ -66,7 +66,9 @@ defmodule StreamshoreWeb.UserController do
     user = User |> Repo.get_by(username: username)
     successful = Repo.delete(user)
     case successful do
-      {:ok, schema}->
+      {:error, _changeset}->
+        json(conn, %{success: false})
+      {:ok, _schema}->
         json(conn, %{success: true})
     end
   end
