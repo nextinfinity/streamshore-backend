@@ -115,4 +115,5 @@ defmodule FriendsControllerTest do
         conn = get(conn, Routes.user_friend_path(conn, :index, friender))
         assert json_response(conn, 200) == %{"friends" => [%{"friendee" => "Tester2", "nickname" => "Replaced Nickname"}], "requests" => []}
     end
+
 end

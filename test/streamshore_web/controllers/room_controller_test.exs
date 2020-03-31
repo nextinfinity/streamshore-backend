@@ -19,4 +19,18 @@ defmodule RoomControllerTest do
     |> leave
   end
 
+
+test "Room creation is successful", %{conn: conn} do
+
+  #Creating Public Room
+  conn = post(Routes.room_path(conn, :create), %{name: "Name", description: "", privacy: 0, owner: "user"})
+  assert json_response(conn, 200) == %{"success" => true}
+
+  #Creating Private Room
+  conn = post(Routes.room_path(conn, :create), %{name: "Name", description: "", privacy: 1, owner: "user"})
+  assert json_response(conn, 200) == %{"success" => true}
+
+  end
+
+
 end
