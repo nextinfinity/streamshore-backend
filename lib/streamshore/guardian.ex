@@ -1,22 +1,23 @@
 defmodule Streamshore.Guardian do
-  use Guardian, otp_app: :myApi
+  use Guardian, otp_app: :streamshore
 
   def subject_for_token(user, _claims) do
-    sub = to_string(user.id)
+    sub = to_string(user)
     {:ok, sub}
   end
 
-  def subject_for_token(_, _) do
-    {:error, :reason_for_error}
-  end
+#  def subject_for_token(_, _) do
+#    {:error, :reason_for_error}
+#  end
 
   def resource_from_claims(claims) do
-    id = claims["sub"]
-    resource = MyApi.Accounts.get_user!(id)
+    user = claims["sub"]
+    anon = claims["anon"]
+    resource = %{user: user, anon: anon}
     {:ok,  resource}
   end
 
-  def resource_from_claims(_claims) do
-    {:error, :reason_for_error}
-  end
+#  def resource_from_claims(_claims) do
+#    {:error, :reason_for_error}
+#  end
 end

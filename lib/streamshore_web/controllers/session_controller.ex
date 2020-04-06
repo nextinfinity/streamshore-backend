@@ -2,6 +2,7 @@ defmodule StreamshoreWeb.SessionController do
   use StreamshoreWeb, :controller
   import Dictionary
 
+  alias Streamshore.Guardian
   alias Streamshore.Repo
   alias Streamshore.User
 
@@ -13,7 +14,8 @@ defmodule StreamshoreWeb.SessionController do
     if (Enum.count(params) != 0) do
       user = Repo.get_by(User, email: params["email"])
       if user && Bcrypt.verify_pass(params["password"], user.password) do
-        json(conn, %{name: user.username})
+        {:ok, token, claims} = Guardian.encode_and_sign(user.username, %{anon: false})
+        json(conn, %{token: token, user: claims["sub"], anon: claims["anon"]})
       else
         json(conn, %{})
       end
@@ -21,7 +23,8 @@ defmodule StreamshoreWeb.SessionController do
       username = String.capitalize(String.trim(random_adjective(), "\r")) <>
                  String.capitalize(String.trim(random_adjective(), "\r")) <>
                  String.capitalize(String.trim(random_animal(), "\r"))
-      json(conn, %{name: username})
+      {:ok, token, claims} = Guardian.encode_and_sign(username, %{anon: true})
+      json(conn, %{token: token, user: claims["sub"], anon: claims["anon"]})
     end
   end
 

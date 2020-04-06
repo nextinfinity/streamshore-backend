@@ -1,5 +1,7 @@
 defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
+
+  alias Streamshore.Guardian
   alias Streamshore.Repo
   alias Streamshore.User
   alias Streamshore.Util
@@ -24,7 +26,7 @@ defmodule StreamshoreWeb.UserController do
 
       case successful do
         {:ok, _schema}->
-          json(conn, %{success: true, username: username})
+          json(conn, %{success: true})
 
       {:error, changeset}->
         errors = Util.convert_changeset_errors(changeset)
