@@ -18,6 +18,11 @@ config :streamshore, StreamshoreWeb.Endpoint,
   pubsub: [name: Streamshore.PubSub, adapter: Phoenix.PubSub.PG2],
   live_view: [signing_salt: "n76/WXj5"]
 
+config :streamshore, Streamshore.Guardian,
+       issuer: "streamshore",
+       secret_key: "0CfBeMjI3pA3ZsZoV6EhZ0LgHDN/I46Nl/rUwWc15qbUmxCaOyaPiDMiQceWDPnP"
+# TODO: Does the secret key need to be hidden? I'm not sure as of creation whether that's the case or not
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
