@@ -11,11 +11,20 @@ defmodule StreamshoreWeb.SessionController do
 
   def create(conn, params) do
     if (Enum.count(params) != 0) do
-      user = Repo.get_by(User, email: params["email"])
-      if user && Bcrypt.verify_pass(params["password"], user.password) do
-        json(conn, %{name: user.username})
-      else
-        json(conn, %{})
+      user = Repo.get_by(User, email: params["id"])
+      if user do
+        if user && Bcrypt.verify_pass(params["password"], user.password) do
+          json(conn, %{name: user.username})
+        else
+          json(conn, %{})
+        end
+      else 
+        user = Repo.get_by(User, username: params["id"])
+        if user && Bcrypt.verify_pass(params["password"], user.password) do
+          json(conn, %{name: user.username})
+        else
+          json(conn, %{})
+        end
       end
     else
       username = String.capitalize(String.trim(random_adjective(), "\r")) <>
