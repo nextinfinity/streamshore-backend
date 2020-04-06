@@ -7,13 +7,13 @@ defmodule StreamshoreWeb.RoomController do
   alias Streamshore.Room
   alias Streamshore.Util
   import Ecto.Query
-  import Ecto.Query.WindowAPI
 
   def index(conn, params) do
     if (Enum.count(params) != 0) do
-      search = params["search"]
-      search = "%" <> search <> "%"
-      query = from r in Room, where: like(r.name, ^search), select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail, privacy: r.privacy}
+      route = String.downcase(String.replace(params["search"], " ", "-"))
+      route = Regex.replace(~r/[^A-Za-z0-9\-]/, route, "")
+      route = "%" <> route <> "%"
+      query = from r in Room, where: like(r.route, ^route), select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail, privacy: r.privacy}
       rooms = Repo.all(query)
       rooms = Enum.map(rooms, fn room -> Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route]))) end)
       json(conn, rooms)
