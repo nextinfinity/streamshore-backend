@@ -17,10 +17,14 @@ defmodule StreamshoreWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   def connect(params, socket, _connect_info) do
-    {:ok, claims} = Guardian.decode_and_verify(params["token"])
-    socket = assign(socket, :user, claims["sub"])
-    socket = assign(socket, :anon, claims["anon"])
-    {:ok, socket}
+    case Guardian.decode_and_verify(params["token"]) do
+      {:ok, claims} ->
+        socket = assign(socket, :user, claims["sub"])
+        socket = assign(socket, :anon, claims["anon"])
+        {:ok, socket}
+      {:error, reason} ->
+        :error
+    end
   end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:
