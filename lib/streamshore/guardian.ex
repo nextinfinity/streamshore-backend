@@ -17,6 +17,11 @@ defmodule Streamshore.Guardian do
     {:ok,  resource}
   end
 
+  def token_from_conn(conn) do
+    {_, "Bearer " <> token} = Enum.find(conn.req_headers, fn {key, value} -> key == "authorization" end)
+    token
+  end
+
 #  def resource_from_claims(_claims) do
 #    {:error, :reason_for_error}
 #  end
