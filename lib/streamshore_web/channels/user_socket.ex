@@ -1,5 +1,6 @@
 defmodule StreamshoreWeb.UserSocket do
   use Phoenix.Socket
+  alias Streamshore.Guardian
 
   ## Channels
   channel "room:*", StreamshoreWeb.RoomChannel
@@ -15,7 +16,10 @@ defmodule StreamshoreWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
-  def connect(_params, socket, _connect_info) do
+  def connect(params, socket, _connect_info) do
+    {:ok, claims} = Guardian.decode_and_verify(params["token"])
+    socket = assign(socket, :user, claims["sub"])
+    socket = assign(socket, :anon, claims["anon"])
     {:ok, socket}
   end
 

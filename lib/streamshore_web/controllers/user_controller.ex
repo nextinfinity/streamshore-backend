@@ -1,7 +1,6 @@
 defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
 
-  alias Streamshore.Guardian
   alias Streamshore.Repo
   alias Streamshore.User
   alias Streamshore.Util
@@ -13,7 +12,6 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def create(conn, params) do
-    username = params["username"]
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
