@@ -6,9 +6,9 @@ defmodule FriendsControllerTest do
         friendee = "Tester2"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}
@@ -22,7 +22,7 @@ defmodule FriendsControllerTest do
         friendee = "Tester2"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => false, "error" => "User does not exist"}
@@ -33,9 +33,9 @@ defmodule FriendsControllerTest do
         friendee = "Tester2"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}
@@ -53,11 +53,11 @@ defmodule FriendsControllerTest do
         tester3 = "Tester3"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Testing.com", username: tester3, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester3"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}
@@ -74,9 +74,9 @@ defmodule FriendsControllerTest do
         friendee = "Tester2"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}
@@ -96,9 +96,9 @@ defmodule FriendsControllerTest do
         friendee = "Tester2"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}
@@ -121,9 +121,9 @@ defmodule FriendsControllerTest do
         friendee = "Tester2"
         # insert users into database
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        assert json_response(conn, 200) == %{"success" => true}
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        assert json_response(conn, 200) == %{"success" => true}
         # send friend request
         conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
         assert json_response(conn, 200) == %{"success" => true}

@@ -71,13 +71,11 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def terminate(_reason, socket) do
-    if socket.assigns[:user] do
-      case Repo.get_by(User, %{username: socket.assigns.user}) do
-        nil -> nil
-        schema -> schema
-                  |> User.changeset(%{room: nil})
-                  |> Repo.update()
-      end
+    case Repo.get_by(User, %{username: socket.assigns.user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: nil})
+                |> Repo.update()
     end
   end
 end

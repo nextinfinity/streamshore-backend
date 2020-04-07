@@ -9,8 +9,8 @@ defmodule RoomControllerTest do
            |> get(Routes.room_path(conn, :index))
            |> json_response(200)
     assert Enum.at(list, 0)["users"] == 0
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket)
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:count", %{user: "user", anon: true})
+    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:count")
     list = conn
            |> get(Routes.room_path(conn, :index))
            |> json_response(200)
@@ -29,16 +29,16 @@ defmodule RoomControllerTest do
     # assert Enum.at(list, 0)["users"] == 0
 
     #user joins the room
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket)
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test", %{user: "user", anon: true})
+    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test")
     list = conn
            |> get(Routes.room_path(conn, :index))
            |> json_response(200)
     assert Enum.at(list, 0)["users"] == 1
 
     #another user joins
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket)
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test", %{user: "friend", anon: true})
+    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "friend", %{user: "friend", anon: true})
+                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test")
     list = conn
            |> get(Routes.room_path(conn, :index))
            |> json_response(200)
