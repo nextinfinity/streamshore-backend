@@ -8,7 +8,10 @@ defmodule StreamshoreWeb.SessionController do
 
   def create(conn, params) do
     if (Enum.count(params) != 0) do
-      user = Repo.get_by(User, email: params["email"])
+      user = case Repo.get_by(User, email: params["id"]) do
+        nil -> Repo.get_by(User, username: params["id"])
+        user -> user
+      end
       if user && Bcrypt.verify_pass(params["password"], user.password) do
         {:ok, token, claims} = Guardian.encode_and_sign(user.username, %{anon: false, admin: false})
         json(conn, %{token: token, user: claims["sub"], anon: claims["anon"]})

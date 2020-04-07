@@ -116,4 +116,28 @@ defmodule FriendsControllerTest do
         assert json_response(conn, 200) == %{"friends" => [%{"friendee" => "Tester2", "nickname" => "Replaced Nickname"}], "requests" => []}
     end
 
+    test "Removing a nickname", %{conn: conn} do
+        friender = "Tester1"
+        friendee = "Tester2"
+        # insert users into database
+        conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Test.com", username: friender, password: "$Test123"})
+        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester1"}
+        conn = post(conn, Routes.user_path(conn, :create), %{email: "Test@Tester.com", username: friendee, password: "$Test123"})
+        assert json_response(conn, 200) == %{"success" => true, "username" => "Tester2"}
+        # send friend request
+        conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
+        assert json_response(conn, 200) == %{"success" => true}
+        # accept friend request
+        conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
+        assert json_response(conn, 200) == %{"success" => true}
+        # set nickname
+        conn = put(conn, Routes.user_friend_path(conn, :update, friender, friendee), %{nickname: "Test Nickname"})
+        assert json_response(conn, 200) == %{"success" => true}
+        # update nickname
+        conn = put(conn, Routes.user_friend_path(conn, :update, friender, friendee), %{nickname: ""})
+        assert json_response(conn, 200) == %{"success" => true}
+        # get list of friends
+        conn = get(conn, Routes.user_friend_path(conn, :index, friender))
+        assert json_response(conn, 200) == %{"friends" => [%{"friendee" => "Tester2", "nickname" => nil}], "requests" => []}
+    end
 end

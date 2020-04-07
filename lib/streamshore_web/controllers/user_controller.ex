@@ -7,8 +7,9 @@ defmodule StreamshoreWeb.UserController do
   import Ecto.Query
 
   def index(conn, _params) do
-    users = Repo.all(User)
-    render(conn, "index.html", users: users)
+    query = from u in User, select: %{username: u.username, email: u.email}
+    users = Repo.all(query)
+    json(conn, users)
   end
 
   def create(conn, params) do
