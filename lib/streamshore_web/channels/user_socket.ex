@@ -22,7 +22,7 @@ defmodule StreamshoreWeb.UserSocket do
         socket = assign(socket, :user, claims["sub"])
         socket = assign(socket, :anon, claims["anon"])
         {:ok, socket}
-      {:error, reason} ->
+      {:error, _reason} ->
         :error
     end
   end

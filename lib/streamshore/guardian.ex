@@ -1,6 +1,8 @@
 defmodule Streamshore.Guardian do
   use Guardian, otp_app: :streamshore
 
+  alias StreamshoreWeb.PermissionController
+
   def subject_for_token(user, _claims) do
     sub = to_string(user)
     {:ok, sub}
@@ -18,8 +20,35 @@ defmodule Streamshore.Guardian do
   end
 
   def token_from_conn(conn) do
-    {_, "Bearer " <> token} = Enum.find(conn.req_headers, fn {key, value} -> key == "authorization" end)
-    token
+    case Enum.find(conn.req_headers, fn {key, _value} -> key == "authorization" end) do
+      nil -> nil
+      {_, "Bearer " <> token} -> token
+    end
+  end
+
+  def get_user(token) do
+    case token do
+      nil -> {:error, "No valid token provided"}
+      token ->
+        case decode_and_verify(token) do
+          {:error, _error} -> {:error, "Invalid token"}
+          {:ok, claims} ->
+            {:ok, claims["sub"], claims["anon"]}
+        end
+    end
+  end
+
+  def get_user_and_permission(token, room) do
+    case token do
+      nil -> {:error, "No valid token provided"}
+      token ->
+        case get_user(token) do
+          {:error, error} -> {:error, error}
+          {:ok, user, anon} ->
+            perm = PermissionController.get_perm(room, user)
+            {:ok, user, anon, perm}
+        end
+    end
   end
 
 #  def resource_from_claims(_claims) do

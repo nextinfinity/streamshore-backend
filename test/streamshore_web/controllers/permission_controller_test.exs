@@ -1,42 +1,53 @@
 defmodule PermissionControllerTest do
   use StreamshoreWeb.ConnCase
   import Phoenix.ChannelTest
+
+  alias Streamshore.Guardian
   alias Streamshore.PermissionLevel
+
+  setup %{conn: conn} do
+    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false, admin: false})
+
+    conn = conn
+           |> put_req_header("authorization", "Bearer " <> token)
+           |> post(Routes.room_path(conn, :create), %{name: "permissions", description: "", privacy: 0})
+    {:ok, conn: conn}
+  end
 
   test "default permission", %{conn: conn} do
     perm = conn
-           |> get(Routes.room_permission_path(conn, :show, "default-room", "default-user"))
+           |> get(Routes.room_permission_path(conn, :show, "permissions", "default-user"))
            |> json_response(200)
     assert perm == PermissionLevel.user()
   end
 
   test "set permission", %{conn: conn} do
     conn
-    |> put(Routes.room_permission_path(conn, :show, "set-room", "set-user"), %{permission: PermissionLevel.owner()})
+    |> put(Routes.room_permission_path(conn, :show, "permissions", "set-user"), %{permission: PermissionLevel.manager()})
     perm = conn
-           |> get(Routes.room_permission_path(conn, :show, "set-room", "set-user"))
+           |> get(Routes.room_permission_path(conn, :show, "permissions", "set-user"))
            |> json_response(200)
-    assert perm == PermissionLevel.owner()
+    assert perm == PermissionLevel.manager()
   end
 
   test "ban permission", %{conn: conn} do
     conn
-    |> put(Routes.room_permission_path(conn, :show, "ban-room", "ban-user"), %{permission: PermissionLevel.banned()})
+    |> put(Routes.room_permission_path(conn, :show, "permissions", "ban-user"), %{permission: PermissionLevel.banned()})
     perm = conn
-           |> get(Routes.room_permission_path(conn, :show, "ban-room", "ban-user"))
+           |> get(Routes.room_permission_path(conn, :show, "permissions", "ban-user"))
            |> json_response(200)
     assert perm == PermissionLevel.banned()
   end
 
   test "banned user can't join", %{conn: conn} do
     conn
-    |> put(Routes.room_permission_path(conn, :show, "ban-room2", "ban-user"), %{permission: PermissionLevel.banned()})
+    |> put(Routes.room_permission_path(conn, :show, "permissions", "ban-user2"), %{permission: PermissionLevel.banned()})
     perm = conn
-           |> get(Routes.room_permission_path(conn, :show, "ban-room2", "ban-user"))
+           |> get(Routes.room_permission_path(conn, :show, "permissions", "ban-user2"))
            |> json_response(200)
     assert perm == PermissionLevel.banned()
-    connection = socket(StreamshoreWeb.UserSocket, "ban-user", %{user: "ban-user", anon: true})
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:ban-room2")
+    connection = socket(StreamshoreWeb.UserSocket, "ban-user", %{user: "ban-user2", anon: true})
+                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:permissions")
     assert connection == {:error, %{reason: "unauthorized"}}
   end
 

@@ -1,8 +1,10 @@
 defmodule StreamshoreWeb.PermissionController do
   use StreamshoreWeb, :controller
-  alias Streamshore.Repo
+
+  alias Streamshore.Guardian
   alias Streamshore.Permission
   alias Streamshore.PermissionLevel
+  alias Streamshore.Repo
   alias Streamshore.Util
   import Ecto.Query
 
@@ -22,20 +24,26 @@ defmodule StreamshoreWeb.PermissionController do
     room = params["room_id"]
     user = params["id"]
     perm = params["permission"]
-    success = update_perm(room, user, perm)
+    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["room_id"]) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, _anon, permission} ->
+        if permission > perm && permission >= PermissionLevel.manager() do
+          case update_perm(room, user, perm) do
+            {:ok, _schema}->
+              if perm == 0 do
+                StreamshoreWeb.Endpoint.broadcast("room:" <> room, "ban", %{user: user})
+              end
+              json(conn, %{})
 
-    case success do
-      {:ok, _schema}->
-        if perm == 0 do
-          StreamshoreWeb.Endpoint.broadcast("room:" <> room, "ban", %{user: user})
+            {:error, changeset}->
+              errors = Util.convert_changeset_errors(changeset)
+              key = Enum.at(Map.keys(errors), 0)
+              err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
+              json(conn, %{error: String.capitalize(err)})
+          end
+        else
+          json(conn, %{error: "Insufficient permission"})
         end
-        json(conn, %{success: true})
-
-      {:error, changeset}->
-        errors = Util.convert_changeset_errors(changeset)
-        key = Enum.at(Map.keys(errors), 0)
-        err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-        json(conn, %{success: false, error_msg: String.capitalize(err)})
     end
   end
 

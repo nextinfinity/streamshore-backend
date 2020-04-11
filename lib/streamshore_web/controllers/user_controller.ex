@@ -1,22 +1,29 @@
 defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
 
+  alias Streamshore.Guardian
   alias Streamshore.Repo
   alias Streamshore.User
   alias Streamshore.Util
   import Ecto.Query
 
   def index(conn, _params) do
-    query = from u in User, select: %{username: u.username, email: u.email}
-    users = Repo.all(query)
-    json(conn, users)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, _anon} ->
+        # TODO: check if user is admin
+        query = from u in User, select: %{username: u.username, email: u.email}
+        users = Repo.all(query)
+        json(conn, users)
+    end
+
   end
 
   def create(conn, params) do
     password = params["password"]
     valid_pass = User.valid_password(password)
     if !valid_pass do
-      json(conn, %{success: false, error: "password: password is invalid"})
+      json(conn, %{error: "password: password is invalid"})
     else
       successful =
       %Streamshore.User{}
@@ -25,13 +32,13 @@ defmodule StreamshoreWeb.UserController do
 
       case successful do
         {:ok, _schema}->
-          json(conn, %{success: true})
+          json(conn, %{})
 
       {:error, changeset}->
         errors = Util.convert_changeset_errors(changeset)
         key = Enum.at(Map.keys(errors), 0)
         err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-        json(conn, %{success: false, error_msg: String.capitalize(err)})
+        json(conn, %{error: String.capitalize(err)})
       end
     end
   end
@@ -43,34 +50,50 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def update(conn, params) do
-    username = params["id"]
-    user = User |> Repo.get_by(username: username)
-    password = params["password"]
-    valid_pass = User.valid_password(password)
-    if !valid_pass do
-      json(conn, %{success: false, error: "password: password is invalid"})
-    else
-      changeset = User.changeset(user, %{password: password})
-      successful = Repo.update(changeset)
-      case successful do
-        {:ok, _schema}->
-          json(conn, %{success: true})
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, user, anon} ->
+        username = params["id"]
+        if user == username && !anon do
+          user_entry = User |> Repo.get_by(username: username)
+          password = params["password"]
+          valid_pass = User.valid_password(password)
+          if !valid_pass do
+            json(conn, %{error: "password: password is invalid"})
+          else
+            changeset = User.changeset(user_entry, %{password: password})
+            successful = Repo.update(changeset)
+            case successful do
+              {:ok, _schema}->
+                json(conn, %{})
 
-        {:error, _changeset}->
-          json(conn, %{success: false})
-      end
+              {:error, _changeset}->
+                # TODO: error msg
+                json(conn, %{error: ""})
+            end
+          end
+        else
+          json(conn, %{error: "Insufficient permission"})
+        end
     end
   end
 
   def delete(conn, params) do
-    username = params["username"]
-    user = User |> Repo.get_by(username: username)
-    successful = Repo.delete(user)
-    case successful do
-      {:error, _changeset}->
-        json(conn, %{success: false})
-      {:ok, _schema}->
-        json(conn, %{success: true})
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, user, anon} ->
+        username = params["id"]
+        if user == username && !anon do
+          user_entry = User |> Repo.get_by(username: username)
+          case Repo.delete(user_entry) do
+            {:error, _changeset}->
+              json(conn, %{error: "Unable to delete user"})
+            {:ok, _schema}->
+              json(conn, %{})
+          end
+        else
+          json(conn, %{error: "Insufficient permission"})
+        end
     end
   end
 end

@@ -16,7 +16,7 @@ defmodule StreamshoreWeb.SessionController do
         {:ok, token, claims} = Guardian.encode_and_sign(user.username, %{anon: false, admin: false})
         json(conn, %{token: token, user: claims["sub"], anon: claims["anon"]})
       else
-        json(conn, %{})
+        json(conn, %{error: "Invalid credentials"})
       end
     else
       username = String.capitalize(String.trim(random_adjective(), "\r")) <>
@@ -29,7 +29,7 @@ defmodule StreamshoreWeb.SessionController do
 
   def delete(conn, params) do
     Guardian.revoke(params["id"])
-    json(conn, %{success: true})
+    json(conn, %{})
   end
 
 end

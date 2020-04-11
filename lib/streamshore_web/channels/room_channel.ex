@@ -8,7 +8,7 @@ defmodule StreamshoreWeb.RoomChannel do
   alias Streamshore.User
   alias Streamshore.Videos
 
-  def join("room:" <> room, payload, socket) do
+  def join("room:" <> room, _payload, socket) do
     if authorized?(socket.assigns.user, room) do
       send(self(), :after_join)
       {:ok, socket}

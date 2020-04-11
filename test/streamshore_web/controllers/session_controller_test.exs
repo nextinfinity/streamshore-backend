@@ -23,23 +23,23 @@ defmodule SessionControllerTest do
     test "Username validation", %{conn: conn} do
         username = "Test Account"
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true}
-        conn = post(conn, Routes.session_path(conn, :create), %{id: "bad", password: "$Test123"})
         assert json_response(conn, 200) == %{}
+        conn = post(conn, Routes.session_path(conn, :create), %{id: "bad", password: "$Test123"})
+        assert json_response(conn, 200) == %{"error" => "Invalid credentials"}
     end
 
     test "Password validation", %{conn: conn} do
         username = "Test Account"
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true}
-        conn = post(conn, Routes.session_path(conn, :create), %{id: "Email@Test.com", password: "bad"})
         assert json_response(conn, 200) == %{}
+        conn = post(conn, Routes.session_path(conn, :create), %{id: "Email@Test.com", password: "bad"})
+        assert json_response(conn, 200) == %{"error" => "Invalid credentials"}
     end
 
     test "Logging in via username", %{conn: conn} do
         username = "Test Account"
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true}
+        assert json_response(conn, 200) == %{}
         conn = post(conn, Routes.session_path(conn, :create), %{id: "Test Account", password: "$Test123"})
         assert json_response(conn, 200)["user"] == "Test Account"
     end
@@ -47,8 +47,8 @@ defmodule SessionControllerTest do
     test "Attempting to log in with bad username", %{conn: conn} do
         username = "Test Account"
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
-        assert json_response(conn, 200) == %{"success" => true}
-        conn = post(conn, Routes.session_path(conn, :create), %{id: "Wrong Username", password: "$Test123"})
         assert json_response(conn, 200) == %{}
+        conn = post(conn, Routes.session_path(conn, :create), %{id: "Wrong Username", password: "$Test123"})
+        assert json_response(conn, 200) == %{"error" => "Invalid credentials"}
     end
 end
