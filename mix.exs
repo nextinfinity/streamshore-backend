@@ -52,7 +52,8 @@ defmodule Streamshore.MixProject do
       {:httpoison, "~> 1.6"},
       {:poison, "~> 3.1"},
       {:timex, "~> 3.5"},
-      {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      {:guardian, "~> 2.0"}
     ]
   end
 

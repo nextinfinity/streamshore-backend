@@ -1,5 +1,7 @@
 defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
+
+  alias Streamshore.Guardian
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
@@ -27,33 +29,43 @@ defmodule StreamshoreWeb.RoomController do
 
   def show(conn, params) do
     room = Repo.get_by(Room, route: params["id"])
-    success = if room do
-      true
+    if room do
+      json(conn, %{name: room.name})
     else
-      false
+      json(conn, %{error: "Room does not exist"})
     end
-    json(conn, %{success: success})
   end
 
   def create(conn, params) do
-    route = String.downcase(String.replace(params["name"], " ", "-"))
-    route = Regex.replace(~r/[^A-Za-z0-9\-]/, route, "")
-    params = Map.put(params, "route", route)
-    success = %Streamshore.Room{}
-    |> Room.changeset(params)
-    |> Repo.insert()
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, user, anon} ->
+        case anon do
+          false ->
+            route = String.downcase(String.replace(params["name"], " ", "-"))
+            route = Regex.replace(~r/[^A-Za-z0-9\-]/, route, "")
+            params = params
+                     |> Map.put("route", route)
+                     |> Map.put("owner", user)
+            success = %Streamshore.Room{}
+                      |> Room.changeset(params)
+                      |> Repo.insert()
 
-    case success do
-      {:ok, _schema}->
-        PermissionController.update_perm(params["route"], params["owner"], PermissionLevel.owner())
-        json(conn, %{success: true, route: route})
+            case success do
+              {:ok, _schema}->
+                PermissionController.update_perm(params["route"], user, PermissionLevel.owner())
+                json(conn, %{route: route})
 
-      {:error, changeset}->
-        errors = Util.convert_changeset_errors(changeset)
-        key = Enum.at(Map.keys(errors), 0)
-        err = "Room " <> Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-        json(conn, %{success: false, error_msg: err})
+              {:error, changeset}->
+                errors = Util.convert_changeset_errors(changeset)
+                key = Enum.at(Map.keys(errors), 0)
+                err = "Room " <> Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
+                json(conn, %{error: err})
+            end
+          true -> json(conn, %{error: "You must be logged in to create a room"})
+        end
     end
+
   end
 
   def update(_conn, _params) do

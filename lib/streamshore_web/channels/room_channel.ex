@@ -1,5 +1,6 @@
 defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
+
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
@@ -7,13 +8,9 @@ defmodule StreamshoreWeb.RoomChannel do
   alias Streamshore.User
   alias Streamshore.Videos
 
-  def join("room:" <> room, payload, socket) do
-    if authorized?(payload, room) do
+  def join("room:" <> room, _payload, socket) do
+    if authorized?(socket.assigns.user, room) do
       send(self(), :after_join)
-      perm = PermissionController.get_perm(room, payload["user"])
-      socket = assign(socket, :user, payload["user"])
-      socket = assign(socket, :anon, payload["anon"])
-      socket = assign(socket, :permission, perm)
       {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
@@ -22,9 +19,11 @@ defmodule StreamshoreWeb.RoomChannel do
 
   def handle_info(:after_join, socket) do
     push(socket, "presence_state", Presence.list(socket))
+    "room:" <> room = socket.topic
+    perm = PermissionController.get_perm(room, socket.assigns.user)
     {:ok, _} = Presence.track(socket, socket.assigns.user, %{
       anon: socket.assigns.anon,
-      permission: socket.assigns.permission,
+      permission: perm,
       online_at: inspect(System.system_time(:second))
     })
     room = Enum.at(String.split(socket.topic, ":"), 1)
@@ -67,18 +66,16 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   # Add authorization logic here as required.
-  defp authorized?(payload, room) do
-    PermissionController.get_perm(room, payload["user"]) > PermissionLevel.banned()
+  defp authorized?(user, room) do
+    PermissionController.get_perm(room, user) > PermissionLevel.banned()
   end
 
   def terminate(_reason, socket) do
-    if socket.assigns[:user] do
-      case Repo.get_by(User, %{username: socket.assigns.user}) do
-        nil -> nil
-        schema -> schema
-                  |> User.changeset(%{room: nil})
-                  |> Repo.update()
-      end
+    case Repo.get_by(User, %{username: socket.assigns.user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: nil})
+                |> Repo.update()
     end
   end
 end

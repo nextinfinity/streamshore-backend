@@ -39,9 +39,9 @@ defmodule Streamshore.QueueManager do
       if !room_data[:playing] do
         play_next(room)
       end
-      true
+      :ok
     else
-      false
+      :error
     end
   end
 

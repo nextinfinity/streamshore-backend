@@ -3,15 +3,15 @@ defmodule StreamshoreWeb.RoomChannelTest do
 
   setup do
     {:ok, _, socket} =
-      socket(StreamshoreWeb.UserSocket)
-      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user: "anon", anon: true})
+      socket(StreamshoreWeb.UserSocket, "anon", %{user: "anon", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby")
 
     {:ok, socket: socket}
   end
 
   test "user list" do
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket)
-    |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby", %{user: "test", anon: true})
+    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "test", %{user: "test", anon: true})
+    |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby")
 
     assert_push "presence_state", %{"anon" => %{}}
     assert_push "presence_diff", %{:joins => %{"test" => %{}}}
