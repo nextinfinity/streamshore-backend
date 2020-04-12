@@ -51,4 +51,26 @@ defmodule PermissionControllerTest do
     assert connection == {:error, %{reason: "unauthorized"}}
   end
 
+  test "mute permission", %{conn: conn} do
+    conn
+    |> put(Routes.room_permission_path(conn, :show, "permissions", "mute-user"), %{permission: PermissionLevel.muted()})
+    perm = conn
+           |> get(Routes.room_permission_path(conn, :show, "permissions", "mute-user"))
+           |> json_response(200)
+    assert perm == PermissionLevel.muted()
+  end
+
+  test "muted user can't chat", %{conn: conn} do
+    conn
+    |> put(Routes.room_permission_path(conn, :show, "permissions", "mute-user2"), %{permission: PermissionLevel.muted()})
+    perm = conn
+           |> get(Routes.room_permission_path(conn, :show, "permissions", "mute-user2"))
+           |> json_response(200)
+    assert perm == PermissionLevel.muted()
+    {:ok, _, connection} = socket(StreamshoreWeb.UserSocket, "mute-user2", %{user: "mute-user2", anon: true})
+                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:permissions")
+    Phoenix.ChannelTest.push connection, "chat", %{"msg" => "hello world"}
+    refute_broadcast "chat", %{"msg" => "hello world"}
+  end
+
 end

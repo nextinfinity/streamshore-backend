@@ -46,11 +46,11 @@ defmodule StreamshoreWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
+    "room:" <> room = socket.topic
     perm = PermissionController.get_perm(room, socket.assigns.user)
     if perm > PermissionLevel.muted() do
       time = Timex.to_unix(Timex.now)
       uuid = UUID.uuid4()
-      "room:" <> room = socket.topic
       # TODO: chat filter setting
       payload = if room do
         Map.put(payload, "msg", filter(payload["msg"]))
