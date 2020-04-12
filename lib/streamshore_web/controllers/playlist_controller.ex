@@ -25,13 +25,14 @@ defmodule StreamshoreWeb.PlaylistController do
 
       case successful do
         {:ok, _schema}->
-          json(conn, %{success: true})
+          json(conn, %{})
 
         {:error, _changeset}->
-          json(conn, %{success: false})
+          # TODO: error msg
+          json(conn, %{error: ""})
       end
     else 
-      json(conn, %{success: false, error: "Playlist already exists"})
+      json(conn, %{error: "Playlist already exists"})
     end
   end
 
@@ -46,13 +47,14 @@ defmodule StreamshoreWeb.PlaylistController do
 
       case successful do
         {:ok, _schema}->
-          json(conn, %{success: true})
+          json(conn, %{})
 
         {:error, _changeset}->
-          json(conn, %{success: false})
+          # TODO: error msg
+          json(conn, %{error: ""})
       end
     else 
-      json(conn, %{success: false, error: "Playlist doesn't exists"})
+      json(conn, %{error: "Playlist doesn't exists"})
     end
   end
 
@@ -66,10 +68,11 @@ defmodule StreamshoreWeb.PlaylistController do
     successful2 = Repo.delete(relation)
     case successful1 && successful2 do
       {:ok, _schema}->
-        json(conn, %{success: true})
+        json(conn, %{})
 
       {:error, _changeset}->
-        json(conn, %{success: false})
+          # TODO: error msg
+          json(conn, %{error: ""})
     end
   end
 

@@ -47,19 +47,20 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
           case successful do
             {:ok, _schema}->
-              json(conn, %{success: true})
+              json(conn, %{})
 
             {:error, _changeset}->
-              json(conn, %{success: false})
+              # TODO: error msg
+              json(conn, %{error: ""})
           end
         else
-          json(conn, %{success: false, error: "Invalid youtube video"})
+          json(conn, %{error: "Invalid youtube video"})
         end
       else 
-        json(conn, %{success: false, error: "Video is already in playlist"})
+        json(conn, %{error: "Video is already in playlist"})
       end
     else 
-      json(conn, %{success: false, error: "Playlist doesn't exists"})
+      json(conn, %{error: "Playlist doesn't exists"})
     end
   end
 
@@ -75,10 +76,11 @@ defmodule StreamshoreWeb.PlaylistVideoController do
     successful = Repo.delete(relation)
     case successful do
       {:ok, _schema}->
-        json(conn, %{success: true})
+        json(conn, %{})
 
       {:error, _changeset}->
-        json(conn, %{success: false})
+        # TODO: error msg
+        json(conn, %{error: ""})
     end
   end
 
