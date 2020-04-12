@@ -1,6 +1,7 @@
 defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
 
+  alias Streamshore.Filter
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
@@ -47,6 +48,13 @@ defmodule StreamshoreWeb.RoomChannel do
   def handle_in("chat", payload, socket) do
     time = Timex.to_unix(Timex.now)
     uuid = UUID.uuid4()
+    "room:" <> room = socket.topic
+    # TODO: chat filter setting
+    payload = if room do
+      Map.put(payload, "msg", filter(payload["msg"]))
+    else
+      payload
+    end
     payload = Map.merge(payload, %{user: socket.assigns.user, anon: socket.assigns.anon, time: time, uuid: uuid})
     broadcast socket, "chat", payload
     {:noreply, socket}
@@ -68,6 +76,13 @@ defmodule StreamshoreWeb.RoomChannel do
   # Add authorization logic here as required.
   defp authorized?(user, room) do
     PermissionController.get_perm(room, user) > PermissionLevel.banned()
+  end
+
+  defp filter(msg) do
+    regex_string = Enum.reduce(Filter.bad_words(), fn word, acc -> acc <> "|" <> word end)
+    {:ok, regex} = Regex.compile("\\b(" <> regex_string <> ")\\b", [:caseless, :extended])
+    IO.puts(inspect(regex))
+    String.replace(msg, regex, "*****")
   end
 
   def terminate(_reason, socket) do
