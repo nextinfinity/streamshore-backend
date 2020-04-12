@@ -19,7 +19,7 @@ defmodule StreamshoreWeb.VideoController do
             else
               json(conn, %{error: "Insufficient permission"})
             end
-          true -> json(conn, %{ error: "You must be logged in to submit a video"})
+          true -> json(conn, %{error: "You must be logged in to submit a video"})
         end
 
     end

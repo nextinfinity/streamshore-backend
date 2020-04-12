@@ -20,9 +20,9 @@ defmodule Streamshore.Guardian do
   end
 
   def token_from_conn(conn) do
-    case Enum.find(conn.req_headers, fn {key, _value} -> key == "authorization" end) do
-      nil -> nil
+    case Enum.find(conn.req_headers, fn {key, _value} -> String.downcase(key) == "authorization" end) do
       {_, "Bearer " <> token} -> token
+      _ -> nil
     end
   end
 

@@ -30,7 +30,7 @@ defmodule StreamshoreWeb.RoomController do
   def show(conn, params) do
     room = Repo.get_by(Room, route: params["id"])
     if room do
-      json(conn, room)
+      json(conn, %{name: room.name})
     else
       json(conn, %{error: "Room does not exist"})
     end
