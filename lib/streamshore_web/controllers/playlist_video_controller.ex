@@ -5,10 +5,6 @@ defmodule StreamshoreWeb.PlaylistVideoController do
     # TODO: list
   end
 
-  def show(_conn, _params) do
-    # TODO: show video info
-  end
-
   def create(_conn, _params) do
     # TODO: create video (add to list)
   end

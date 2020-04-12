@@ -1,9 +1,11 @@
 defmodule StreamshoreWeb.FriendController do
   import Ecto.Query, only: [from: 2]
   use StreamshoreWeb, :controller
+
+  alias Streamshore.Friends
+  alias Streamshore.Guardian
   alias Streamshore.Repo
   alias Streamshore.User
-  alias Streamshore.Friends
 
   def index(conn, params) do
     friender = params["user_id"]
@@ -16,27 +18,37 @@ defmodule StreamshoreWeb.FriendController do
   end
 
   def create(conn, params) do
-    friender = params["user_id"]
-    friendee = params["friendee"]
-    nickname = nil
-    accepted = 0
-    if User |> Repo.get_by(username: friendee) do 
-      if Friends |> Repo.get_by(friender: friendee, friendee: friender) || Friends |> Repo.get_by(friender: friender, friendee: friendee) do
-        json(conn, %{success: false, error: "Friend connection already exists"})
-      else
-        changeset = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname, accepted: accepted})
-        successful = Repo.insert(changeset)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, anon} ->
+        case anon do
+          false ->
+            friender = params["user_id"]
+            friendee = params["friendee"]
+            nickname = nil
+            accepted = 0
+            if User |> Repo.get_by(username: friendee) do
+              if Friends |> Repo.get_by(friender: friendee, friendee: friender) || Friends |> Repo.get_by(friender: friender, friendee: friendee) do
+                json(conn, %{error: "Friend connection already exists"})
+              else
+                changeset = Friends.changeset(%Friends{}, %{friender: friendee, friendee: friender, nickname: nickname, accepted: accepted})
+                successful = Repo.insert(changeset)
 
-        case successful do
-          {:ok, _schema}->
-            json(conn, %{success: true})
+                case successful do
+                  {:ok, _schema}->
+                    json(conn, %{})
 
-          {:error, _changeset}->
-            json(conn, %{success: false})
+                  {:error, _changeset}->
+                    # TODO: error msg
+                    json(conn, %{error: ""})
+                end
+              end
+            else
+              json(conn, %{error: "User does not exist"})
+            end
+          true ->
+            json(conn, %{error: "You must be logged in to add a friend"})
         end
-      end
-    else 
-      json(conn, %{success: false, error: "User does not exist"})
     end
   end
 
@@ -55,13 +67,15 @@ defmodule StreamshoreWeb.FriendController do
           successful = Repo.insert(changeset)
           case successful do
             {:ok, _schema}->
-              json(conn, %{success: true})
+              json(conn, %{})
 
             {:error, _changeset}->
-              json(conn, %{success: false})
+              # TODO: error msg
+              json(conn, %{error: ""})
           end
         else
-          json(conn, %{success: false})
+          # TODO: error msg
+          json(conn, %{error: ""})
         end
       else 
         # delete the input
@@ -69,10 +83,11 @@ defmodule StreamshoreWeb.FriendController do
         successful = Repo.delete(relation)
         case successful do
           {:ok, _schema}->
-            json(conn, %{success: true})
+            json(conn, %{})
 
           {:error, _changeset}->
-            json(conn, %{success: false})
+            # TODO: error msg
+            json(conn, %{error: ""})
          end
       end
     else
@@ -83,13 +98,15 @@ defmodule StreamshoreWeb.FriendController do
         successful = Repo.update(changeset)
         case successful do
           {:ok, _schema}->
-            json(conn, %{success: true})
+            json(conn, %{})
 
           {:error, _changeset}->
-            json(conn, %{success: false})
+            # TODO: error msg
+            json(conn, %{error: ""})
         end
       else
-        json(conn, %{success: false})
+        # TODO: error msg
+        json(conn, %{error: ""})
       end
     end
   end
@@ -103,10 +120,11 @@ defmodule StreamshoreWeb.FriendController do
     successful2 = Repo.delete(relation2)
     case successful1 && successful2 do
       {:ok, _schema}->
-        json(conn, %{success: true})
+        json(conn, %{})
 
       {:error, _changeset}->
-        json(conn, %{success: false})
+        # TODO: error msg
+        json(conn, %{error: ""})
     end
   end
 end
