@@ -30,9 +30,7 @@ defmodule StreamshoreWeb.PermissionController do
         if permission > perm && permission >= PermissionLevel.manager() do
           case update_perm(room, user, perm) do
             {:ok, _schema}->
-              if perm == 0 do
-                StreamshoreWeb.Endpoint.broadcast("room:" <> room, "ban", %{user: user})
-              end
+              StreamshoreWeb.Endpoint.broadcast("room:" <> room, "permission", %{user: user, permission: perm})
               json(conn, %{})
 
             {:error, changeset}->
