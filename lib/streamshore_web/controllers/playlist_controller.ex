@@ -4,6 +4,7 @@ defmodule StreamshoreWeb.PlaylistController do
   alias Streamshore.Repo
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
+  alias Streamshore.Guardian
 
   def index(conn, params) do
     user = params["user_id"]
@@ -17,22 +18,31 @@ defmodule StreamshoreWeb.PlaylistController do
   end
 
   def create(conn, params) do
-    name = params["name"]
-    owner = params["user_id"]
-    if !(Playlist |> Repo.get_by(name: name, owner: owner)) do 
-      changeset = Playlist.changeset(%Playlist{}, %{name: name, owner: owner})
-      successful = Repo.insert(changeset)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, anon} ->
+        case anon do
+          false ->
+            name = params["name"]
+            owner = params["user_id"]
+            if !(Playlist |> Repo.get_by(name: name, owner: owner)) do 
+              changeset = Playlist.changeset(%Playlist{}, %{name: name, owner: owner})
+              successful = Repo.insert(changeset)
 
-      case successful do
-        {:ok, _schema}->
-          json(conn, %{})
+              case successful do
+                {:ok, _schema}->
+                  json(conn, %{})
 
-        {:error, _changeset}->
-          # TODO: error msg
-          json(conn, %{error: ""})
-      end
-    else 
-      json(conn, %{error: "Playlist already exists"})
+                {:error, _changeset}->
+                  # TODO: error msg
+                  json(conn, %{error: ""})
+              end
+            else 
+              json(conn, %{error: "Playlist already exists"})
+            end
+          true ->
+            json(conn, %{error: "You must be logged in to create a playlist"})
+        end
     end
   end
 
