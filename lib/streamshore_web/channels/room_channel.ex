@@ -46,17 +46,20 @@ defmodule StreamshoreWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
-    time = Timex.to_unix(Timex.now)
-    uuid = UUID.uuid4()
     "room:" <> room = socket.topic
-    # TODO: chat filter setting
-    payload = if room do
-      Map.put(payload, "msg", filter(payload["msg"]))
-    else
-      payload
+    perm = PermissionController.get_perm(room, socket.assigns.user)
+    if perm > PermissionLevel.muted() do
+      time = Timex.to_unix(Timex.now)
+      uuid = UUID.uuid4()
+      # TODO: chat filter setting
+      payload = if room do
+        Map.put(payload, "msg", filter(payload["msg"]))
+      else
+        payload
+      end
+      payload = Map.merge(payload, %{user: socket.assigns.user, anon: socket.assigns.anon, time: time, uuid: uuid})
+      broadcast socket, "chat", payload
     end
-    payload = Map.merge(payload, %{user: socket.assigns.user, anon: socket.assigns.anon, time: time, uuid: uuid})
-    broadcast socket, "chat", payload
     {:noreply, socket}
   end
 
@@ -81,7 +84,6 @@ defmodule StreamshoreWeb.RoomChannel do
   defp filter(msg) do
     regex_string = Enum.reduce(Filter.bad_words(), fn word, acc -> acc <> "|" <> word end)
     {:ok, regex} = Regex.compile("\\b(" <> regex_string <> ")\\b", [:caseless, :extended])
-    IO.puts(inspect(regex))
     String.replace(msg, regex, "*****")
   end
 
