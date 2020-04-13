@@ -4,6 +4,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   alias Streamshore.Repo
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
+  alias Streamshore.Guardian
 
   def index(conn, params) do
     # TODO: Add fix for youtube video being valid (i.e. if video was valid but removed from youtube)
@@ -32,35 +33,44 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   end
 
   def create(conn, params) do
-    video = params["video"]
-    playlist = params["playlist_id"]
-    owner = params["user_id"]
-    relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
-    if relation do 
-      relation2 = PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video)
-      if !(relation2) do
-        data = HTTPoison.get! "https://www.googleapis.com/youtube/v3/videos?id=" <> video <> "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
-        body = Enum.at(Poison.decode!(data.body)["items"], 0)
-        if body do
-          changeset = PlaylistVideo.changeset(%PlaylistVideo{}, %{name: playlist, owner: owner, video: video})
-          successful = Repo.insert(changeset)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, anon} ->
+        case anon do
+          false ->
+            video = params["video"]
+                playlist = params["playlist_id"]
+                owner = params["user_id"]
+                relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
+                if relation do 
+                  relation2 = PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video)
+                  if !(relation2) do
+                    data = HTTPoison.get! "https://www.googleapis.com/youtube/v3/videos?id=" <> video <> "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
+                    body = Enum.at(Poison.decode!(data.body)["items"], 0)
+                    if body do
+                      changeset = PlaylistVideo.changeset(%PlaylistVideo{}, %{name: playlist, owner: owner, video: video})
+                      successful = Repo.insert(changeset)
 
-          case successful do
-            {:ok, _schema}->
-              json(conn, %{})
+                      case successful do
+                        {:ok, _schema}->
+                          json(conn, %{})
 
-            {:error, _changeset}->
-              # TODO: error msg
-              json(conn, %{error: ""})
-          end
-        else
-          json(conn, %{error: "Invalid youtube video"})
+                        {:error, _changeset}->
+                          # TODO: error msg
+                          json(conn, %{error: ""})
+                      end
+                    else
+                      json(conn, %{error: "Invalid youtube video"})
+                    end
+                  else 
+                    json(conn, %{error: "Video is already in playlist"})
+                  end
+                else 
+                  json(conn, %{error: "Playlist doesn't exists"})
+                end
+          true -> 
+            json(conn, %{error: "You must be logged in to add a video to a playlist"})
         end
-      else 
-        json(conn, %{error: "Video is already in playlist"})
-      end
-    else 
-      json(conn, %{error: "Playlist doesn't exists"})
     end
   end
 
