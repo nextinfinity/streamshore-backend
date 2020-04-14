@@ -13,6 +13,16 @@ defmodule StreamshoreWeb.FavoriteController do
     json(conn, list)
   end
 
+  def show(conn, params) do
+    user = params["user_id"]
+    room = params["id"]
+    if Favorites |> Repo.get_by(user: user, room: room) do
+      json(conn, true)
+    else
+      json(conn, false)
+    end
+  end
+
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} -> json(conn, %{error: error})
