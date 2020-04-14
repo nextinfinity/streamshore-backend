@@ -3,6 +3,7 @@ defmodule StreamshoreWeb.FavoriteController do
   use StreamshoreWeb, :controller
   alias Streamshore.Favorites
   alias Streamshore.Guardian
+  alias StreamshoreWeb.Presence
   alias Streamshore.Repo
   alias Streamshore.Room
 
@@ -10,7 +11,11 @@ defmodule StreamshoreWeb.FavoriteController do
     user = params["user_id"]
     query = from f in Favorites, where: f.user == ^user, select: %{room: f.room}
     list = Repo.all(query)
-    json(conn, list)
+    favorites = list |> Enum.map(fn a-> a.room end)
+    query = from r in Room, where: r.name in ^favorites, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail, privacy: r.privacy}
+    rooms = Repo.all(query)
+    rooms = Enum.map(rooms, fn room -> Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route]))) end)
+    json(conn, rooms)
   end
 
   def show(conn, params) do
