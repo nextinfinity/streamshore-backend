@@ -7,6 +7,7 @@ defmodule Streamshore.Repo.Migrations.CreateUsers do
         add(:email, :string)
         add(:password, :string)
         add(:room, :string)
+        add(:admin, :integer)
         # add(:token, :joken)
 
         timestamps()

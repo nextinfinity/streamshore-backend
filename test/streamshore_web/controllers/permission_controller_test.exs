@@ -10,7 +10,7 @@ defmodule PermissionControllerTest do
 
     conn = conn
            |> put_req_header("authorization", "Bearer " <> token)
-           |> post(Routes.room_path(conn, :create), %{name: "permissions", description: "", privacy: 0})
+           |> post(Routes.room_path(conn, :create), %{name: "permissions", motd: "", privacy: 0})
     {:ok, conn: conn}
   end
 
