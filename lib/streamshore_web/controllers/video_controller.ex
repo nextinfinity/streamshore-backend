@@ -4,24 +4,25 @@ defmodule StreamshoreWeb.VideoController do
   alias Streamshore.Guardian
   alias Streamshore.PermissionLevel
   alias Streamshore.QueueManager
+  alias StreamshoreWeb.RoomController
 
   def create(conn, params) do
-    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["room_id"]) do
+    room = params["room_id"]
+    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), room) do
       {:error, error} -> json(conn, %{error: error})
       {:ok, user, anon, perm} ->
-        case anon do
-          false ->
-            if perm >= PermissionLevel.user do
-              case QueueManager.add_to_queue(params["room_id"], params["id"], user) do
-                :ok -> json(conn, %{})
-                :error -> json(conn, %{error: "Invalid video"})
-              end
-            else
-              json(conn, %{error: "Insufficient permission"})
+        if perm >= RoomController.queue_perm(room) do
+          if RoomController.anon_queue?(room) || !anon do
+            case QueueManager.add_to_queue(room, params["id"], user) do
+              :ok -> json(conn, %{})
+              :error -> json(conn, %{error: "Invalid video"})
             end
-          true -> json(conn, %{error: "You must be logged in to submit a video"})
+          else
+            json(conn, %{error: "You must be logged in to submit a video"})
+          end
+        else
+          json(conn, %{error: "Insufficient permission"})
         end
-
     end
   end
 
