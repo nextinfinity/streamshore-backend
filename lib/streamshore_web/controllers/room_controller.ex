@@ -65,15 +65,36 @@ defmodule StreamshoreWeb.RoomController do
           true -> json(conn, %{error: "You must be logged in to create a room"})
         end
     end
-
   end
 
-  def update(_conn, _params) do
-    # TODO: room edit action
+  def update(conn, params) do
+    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, _anon, permission} ->
+        if permission >= PermissionLevel.manager() do
+          case Repo.get_by(Room, %{route: params["id"]}) do
+            nil -> nil
+            schema -> schema
+                      |> Room.changeset(params)
+                      |> Repo.update
+          end
+          json(conn, %{})
+        end
+    end
+
   end
 
   def delete(_conn, _params) do
     # TODO: delete room
+  end
+
+  def filter_enabled?(room) do
+    room = Repo.get_by(Room, route: room)
+    if room do
+      room.chat_filter == 1
+    else
+      false
+    end
   end
 
 end
