@@ -47,16 +47,18 @@ defmodule StreamshoreWeb.RoomChannel do
   def handle_in("chat", payload, socket) do
     "room:" <> room = socket.topic
     perm = PermissionController.get_perm(room, socket.assigns.user)
-    if perm > PermissionLevel.muted() do
-      time = Timex.to_unix(Timex.now)
-      uuid = UUID.uuid4()
-      payload = if RoomController.filter_enabled?(room) do
-        Map.put(payload, "msg", filter(payload["msg"]))
-      else
-        payload
+    if perm >= RoomController.chat_perm(room) do
+      if RoomController.anon_chat?(room) || !socket.assigns.anon do
+        time = Timex.to_unix(Timex.now)
+        uuid = UUID.uuid4()
+        payload = if RoomController.filter_enabled?(room) do
+          Map.put(payload, "msg", filter(payload["msg"]))
+        else
+          payload
+        end
+        payload = Map.merge(payload, %{user: socket.assigns.user, anon: socket.assigns.anon, time: time, uuid: uuid})
+        broadcast socket, "chat", payload
       end
-      payload = Map.merge(payload, %{user: socket.assigns.user, anon: socket.assigns.anon, time: time, uuid: uuid})
-      broadcast socket, "chat", payload
     end
     {:noreply, socket}
   end

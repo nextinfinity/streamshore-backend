@@ -97,12 +97,38 @@ defmodule StreamshoreWeb.RoomController do
     end
   end
 
+  def queue_perm(room) do
+    case Repo.get_by(Room, route: room) do
+      nil -> PermissionLevel.user()
+      room -> room.queue_level
+    end
+  end
+
+  def anon_queue?(room) do
+    case Repo.get_by(Room, route: room) do
+      nil -> ""
+      room -> room.anon_queue == 1
+    end
+  end
+
+  def chat_perm(room) do
+    case Repo.get_by(Room, route: room) do
+      nil -> PermissionLevel.user()
+      room -> room.chat_level
+    end
+  end
+
+  def anon_chat?(room) do
+    case Repo.get_by(Room, route: room) do
+      nil -> ""
+      room -> room.anon_chat == 1
+    end
+  end
+
   def get_motd(room) do
-    room = Repo.get_by(Room, route: room)
-    if room do
-      room.motd
-    else
-      ""
+    case Repo.get_by(Room, route: room) do
+      nil -> ""
+      room -> room.motd
     end
   end
 
