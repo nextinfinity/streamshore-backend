@@ -7,6 +7,7 @@ defmodule Streamshore.User do
         field(:email, :string, unique: true)
         field(:password, :string)
         field(:room, :string)
+        field(:admin, :integer, default: 0)
 
         timestamps()
         # field(:token, :joken)
@@ -14,7 +15,7 @@ defmodule Streamshore.User do
     
     def changeset(user, params \\ %{}) do
         user
-        |> cast(params, [:username, :email, :password, :room])
+        |> cast(params, [:username, :email, :password, :room, :admin])
         |> unique_constraint(:username)
         |> unique_constraint(:email)
         |> hash_pass

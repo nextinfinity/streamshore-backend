@@ -51,7 +51,7 @@ defmodule VideoControllerTest do
 
   test "Pushing video to front of queue", %{conn: conn} do
     conn = conn
-           |> post(Routes.room_path(conn, :create), %{name: "front", description: "", privacy: 0})
+           |> post(Routes.room_path(conn, :create), %{name: "front", motd: "", privacy: 0})
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
     id3 = "9jzsr5wyG4o"
@@ -67,7 +67,7 @@ defmodule VideoControllerTest do
 
   test "Removing video from queue", %{conn: conn} do
     conn = conn
-           |> post(Routes.room_path(conn, :create), %{name: "remove", description: "", privacy: 0})
+           |> post(Routes.room_path(conn, :create), %{name: "remove", motd: "", privacy: 0})
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
     conn = post(conn, Routes.room_video_path(conn, :create, "remove"), %{id: id1})

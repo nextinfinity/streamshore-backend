@@ -1,20 +1,28 @@
 defmodule Streamshore.Room do
     use Ecto.Schema
     import Ecto.Changeset
+    alias Streamshore.PermissionLevel
 
     schema "rooms" do
         field :name, :string, unique: true
-        field :description, :string
+        field :motd, :string
         field :privacy, :integer
         field :owner, :string
         field :route, :string, unique: true
-        field :thumbnail, :string
+        field :thumbnail, :string, default: nil
+        field :queue_level, :integer, default: PermissionLevel.user()
+        field :anon_queue, :integer, default: 1
+        field :chat_level, :integer, default: PermissionLevel.user()
+        field :anon_chat, :integer, default: 1
+        field :chat_filter, :integer, default: 0
+        field :vote_threshold, :integer, default: 50
+        field :vote_enable, :integer, default: 1
         timestamps()
     end
 
     def changeset(room, params \\ %{}) do
         room
-        |> cast(params, [:name, :description, :privacy, :owner, :route, :thumbnail])
+        |> cast(params, [:name, :motd, :privacy, :owner, :route, :thumbnail, :queue_level, :anon_queue, :chat_level, :anon_chat, :chat_filter, :vote_threshold])
         |> validate_required([:name])
         |> validate_required([:owner])
         |> validate_required([:route])
