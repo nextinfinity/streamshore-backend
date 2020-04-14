@@ -8,6 +8,8 @@ defmodule Streamshore.User do
         field(:password, :string)
         field(:room, :string)
         field(:admin, :integer, default: 0)
+        field(:verify-token, :string, default: nil)
+        field(:reset-token, :string, default: nil)
 
         timestamps()
         # field(:token, :joken)
