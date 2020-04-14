@@ -70,7 +70,7 @@ defmodule Streamshore.QueueManager do
       room_data = Videos.get(room)
       {next_video, queue} = List.pop_at(room_data[:queue], 0)
       next_video = Map.put(next_video, :start, get_seconds() + 1)
-      next_video = Map.put(next_video, :votes, MapSet.new())
+      next_video = Map.put(next_video, :votes, [])
       room_data = Map.put(room_data, :playing, next_video)
       room_data = Map.put(room_data, :queue, queue)
       Videos.set(room, room_data)
@@ -102,12 +102,12 @@ defmodule Streamshore.QueueManager do
     if room_entry.vote_enable do
       if playing do
         user_count = Enum.count(Presence.list("room:" <> room))
-        votes = MapSet.put(playing[:votes], user)
+        votes = MapSet.new(playing[:votes]) |> MapSet.put(user)
         threshold = room_entry.vote_threshold
         if MapSet.size(votes) > threshold / 100 * user_count do
           play_next(room)
         else
-          playing = Map.put(playing, :votes, votes)
+          playing = Map.put(playing, :votes, MapSet.to_list(votes))
           room_data = Map.put(room_data, :playing, playing)
           Videos.set(room, room_data)
         end
