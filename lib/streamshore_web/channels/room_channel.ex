@@ -6,6 +6,7 @@ defmodule StreamshoreWeb.RoomChannel do
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
   alias Streamshore.Repo
+  alias Streamshore.Room
   alias Streamshore.User
   alias Streamshore.Videos
 
@@ -19,8 +20,15 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def handle_info(:after_join, socket) do
-    push(socket, "presence_state", Presence.list(socket))
     "room:" <> room = socket.topic
+    room_entry = Repo.get_by(Room, %{route: room})
+    if room_entry do
+      motd = room_entry.motd
+      if motd != "" do
+        push(socket, "motd", %{message: motd})
+      end
+    end
+    push(socket, "presence_state", Presence.list(socket))
     perm = PermissionController.get_perm(room, socket.assigns.user)
     {:ok, _} = Presence.track(socket, socket.assigns.user, %{
       anon: socket.assigns.anon,
