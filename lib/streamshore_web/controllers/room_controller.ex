@@ -97,4 +97,13 @@ defmodule StreamshoreWeb.RoomController do
     end
   end
 
+  def get_motd(room) do
+    room = Repo.get_by(Room, route: room)
+    if room do
+      room.motd
+    else
+      ""
+    end
+  end
+
 end

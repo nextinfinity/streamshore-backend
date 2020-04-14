@@ -19,8 +19,12 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def handle_info(:after_join, socket) do
-    push(socket, "presence_state", Presence.list(socket))
     "room:" <> room = socket.topic
+    motd = RoomController.get_motd(room)
+    if motd != "" do
+      push(socket, "motd", %{message: motd})
+    end
+    push(socket, "presence_state", Presence.list(socket))
     perm = PermissionController.get_perm(room, socket.assigns.user)
     {:ok, _} = Presence.track(socket, socket.assigns.user, %{
       anon: socket.assigns.anon,
