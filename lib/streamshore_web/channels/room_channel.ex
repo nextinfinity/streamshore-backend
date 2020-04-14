@@ -20,12 +20,9 @@ defmodule StreamshoreWeb.RoomChannel do
 
   def handle_info(:after_join, socket) do
     "room:" <> room = socket.topic
-    room_entry = Repo.get_by(Room, %{route: room})
-    if room_entry do
-      motd = room_entry.motd
-      if motd != "" do
-        push(socket, "motd", %{message: motd})
-      end
+    motd = RoomController.get_motd(room)
+    if motd != "" do
+      push(socket, "motd", %{message: motd})
     end
     push(socket, "presence_state", Presence.list(socket))
     perm = PermissionController.get_perm(room, socket.assigns.user)
