@@ -1,9 +1,10 @@
 defmodule Streamshore.QueueManager do
   @moduledoc false
   use GenServer
+
+  alias StreamshoreWeb.Presence
   alias Streamshore.Repo
   alias Streamshore.Room
-
   alias Streamshore.Videos
 
   def start_link(default \\ []) do
@@ -69,6 +70,7 @@ defmodule Streamshore.QueueManager do
       room_data = Videos.get(room)
       {next_video, queue} = List.pop_at(room_data[:queue], 0)
       next_video = Map.put(next_video, :start, get_seconds() + 1)
+      next_video = Map.put(next_video, :votes, MapSet.new())
       room_data = Map.put(room_data, :playing, next_video)
       room_data = Map.put(room_data, :queue, queue)
       Videos.set(room, room_data)
@@ -91,6 +93,27 @@ defmodule Streamshore.QueueManager do
                 |> Room.changeset(%{thumbnail: thumbnail})
                 |> Repo.update
     end
+  end
+
+  def vote_skip(room, user) do
+    room_data = Videos.get(room)
+    playing = room_data[:playing]
+    room_entry = Repo.get_by(Room, %{route: room})
+    if room_entry.vote_enable do
+      if playing do
+        user_count = Enum.count(Presence.list("room:" <> room))
+        votes = MapSet.put(playing[:votes], user)
+        threshold = room_entry.vote_threshold
+        if MapSet.size(votes) > threshold / 100 * user_count do
+          play_next(room)
+        else
+          playing = Map.put(playing, :votes, votes)
+          room_data = Map.put(room_data, :playing, playing)
+          Videos.set(room, room_data)
+        end
+      end
+    end
+
   end
 
   def timer() do
