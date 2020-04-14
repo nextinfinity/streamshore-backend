@@ -8,7 +8,7 @@ defmodule StreamshoreWeb.FavoriteController do
 
   def index(conn, params) do
     user = params["user_id"]
-    query = from f in Favorites, where: f.user == ^user, select: %{room: f.romm}
+    query = from f in Favorites, where: f.user == ^user, select: %{room: f.room}
     list = Repo.all(query)
     json(conn, list)
   end
