@@ -96,4 +96,13 @@ defmodule StreamshoreWeb.UserController do
         end
     end
   end
+
+  def set_room(user, room) do
+    case Repo.get_by(User, %{username: user}) do
+      nil -> nil
+      schema -> schema
+                |> User.changeset(%{room: room})
+                |> Repo.update()
+    end
+  end
 end

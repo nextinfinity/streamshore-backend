@@ -5,8 +5,8 @@ defmodule StreamshoreWeb.RoomChannel do
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
-  alias Streamshore.Repo
-  alias Streamshore.User
+  alias StreamshoreWeb.RoomController
+  alias StreamshoreWeb.UserController
   alias Streamshore.Videos
 
   def join("room:" <> room, _payload, socket) do
@@ -27,13 +27,8 @@ defmodule StreamshoreWeb.RoomChannel do
       permission: perm,
       online_at: inspect(System.system_time(:second))
     })
-    room = Enum.at(String.split(socket.topic, ":"), 1)
-    case Repo.get_by(User, %{username: socket.assigns.user}) do
-      nil -> nil
-      schema -> schema
-                |> User.changeset(%{room: room})
-                |> Repo.update()
-    end
+    "room:" <> room = socket.topic
+    UserController.set_room(socket.assigns.user, room)
     {:noreply, socket}
   end
 
@@ -51,8 +46,7 @@ defmodule StreamshoreWeb.RoomChannel do
     if perm > PermissionLevel.muted() do
       time = Timex.to_unix(Timex.now)
       uuid = UUID.uuid4()
-      # TODO: chat filter setting
-      payload = if room do
+      payload = if RoomController.filter_enabled?(room) do
         Map.put(payload, "msg", filter(payload["msg"]))
       else
         payload
@@ -88,11 +82,6 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def terminate(_reason, socket) do
-    case Repo.get_by(User, %{username: socket.assigns.user}) do
-      nil -> nil
-      schema -> schema
-                |> User.changeset(%{room: nil})
-                |> Repo.update()
-    end
+    UserController.set_room(socket.assigns.user, nil)
   end
 end
