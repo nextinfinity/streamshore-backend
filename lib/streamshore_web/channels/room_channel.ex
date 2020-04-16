@@ -5,6 +5,7 @@ defmodule StreamshoreWeb.RoomChannel do
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
+  alias Streamshore.QueueManager
   alias StreamshoreWeb.RoomController
   alias StreamshoreWeb.UserController
   alias Streamshore.Videos
@@ -40,6 +41,15 @@ defmodule StreamshoreWeb.RoomChannel do
   # by sending replies to requests from the client
   def handle_in("ping", payload, socket) do
     {:reply, {:ok, payload}, socket}
+  end
+
+  def handle_in("skip", payload, socket) do
+    "room:" <> room = socket.topic
+    perm = PermissionController.get_perm(room, socket.assigns.user)
+    if perm >= PermissionLevel.manager() do
+      QueueManager.play_next(room)
+    end
+    {:noreply, socket}
   end
 
   # It is also common to receive messages from the client and
