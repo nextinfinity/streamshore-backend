@@ -77,4 +77,24 @@ defmodule VideoControllerTest do
     _conn = delete(conn, Routes.room_video_path(conn, :delete, "remove", "0"))
     assert Videos.get("remove")[:queue] == []
   end
+
+  test "queue permissions", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "QueuePerm", motd: "", queue_level: 101, privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "queueperm"}
+    id = "_-k6ppRkpcM"
+    conn = post(conn, Routes.room_video_path(conn, :create, "queueperm"), %{id: id})
+    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+  end
+
+  test "anonymous permissions", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "QueueAnon", motd: "", anon_queue: 0, privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "queueanon"}
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true, admin: false})
+
+    conn2 = build_conn()
+           |> put_req_header("authorization", "Bearer " <> token)
+    id = "_-k6ppRkpcM"
+    conn2 = post(conn2, Routes.room_video_path(conn2, :create, "queueanon"), %{id: id})
+    assert json_response(conn2, 200) == %{"error" => "You must be logged in to submit a video"}
+  end
 end
