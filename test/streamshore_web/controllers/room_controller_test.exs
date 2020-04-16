@@ -98,5 +98,23 @@ defmodule RoomControllerTest do
     assert Enum.at(list, 0)["users"] == 0
   end
 
+  test "chat permissions", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "ChatPerm", motd: "", chat_level: 101, privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "chatperm"}
+    {:ok, _, connection} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+                           |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:chatperm")
+    Phoenix.ChannelTest.push connection, "chat", %{"msg" => "hello world"}
+    refute_broadcast "chat", %{"msg" => "hello world"}
+  end
+
+  test "anonymous chat permissions", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "ChatAnon", motd: "", anon_chat: 0, privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "chatanon"}
+    {:ok, _, connection} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+                           |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:chatanon")
+    Phoenix.ChannelTest.push connection, "chat", %{"msg" => "hello world"}
+    refute_broadcast "chat", %{"msg" => "hello world"}
+  end
+
 
 end
