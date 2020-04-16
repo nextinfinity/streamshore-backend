@@ -5,7 +5,7 @@ defmodule Streamshore.Room do
 
     schema "rooms" do
         field :name, :string, unique: true
-        field :motd, :string
+        field :motd, :string, default: ""
         field :privacy, :integer
         field :owner, :string
         field :route, :string, unique: true
