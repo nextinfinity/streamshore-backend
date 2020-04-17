@@ -94,7 +94,6 @@ defmodule StreamshoreWeb.RoomController do
         list = Repo.all(query)
         room = list |> Enum.map(fn a-> a.owner end)
         owner = to_string(room)
-        IO.puts owner
         if to_string(user) == to_string(room) do
           query = from(f in Favorites, where: f.room == ^room_name)
           successful1 = Repo.delete_all(query)
