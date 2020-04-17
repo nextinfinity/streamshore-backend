@@ -11,28 +11,29 @@ defmodule StreamshoreWeb.RoomChannel do
   alias Streamshore.Videos
 
   def join("room:" <> room, _payload, socket) do
-    if authorized?(socket.assigns.user, room) do
-      send(self(), :after_join)
-      {:ok, socket}
-    else
-      {:error, %{reason: "unauthorized"}}
+    case RoomController.get_room(room) do
+      nil -> {:error, %{reason: "room does not exist"}}
+      room ->
+        perm = PermissionController.get_perm(room.route, socket.assigns.user)
+        if perm > PermissionLevel.banned() do
+          send(self(), {:after_join, perm})
+          videos = Videos.get(room.route)
+          {:ok, %{room: room, permission: perm, videos: videos}, socket}
+        else
+          {:error, %{reason: "unauthorized"}}
+        end
     end
+
   end
 
-  def handle_info(:after_join, socket) do
+  def handle_info({:after_join, perm}, socket) do
     "room:" <> room = socket.topic
-    motd = RoomController.get_motd(room)
-    if motd != "" do
-      push(socket, "motd", %{message: motd})
-    end
     push(socket, "presence_state", Presence.list(socket))
-    perm = PermissionController.get_perm(room, socket.assigns.user)
     {:ok, _} = Presence.track(socket, socket.assigns.user, %{
       anon: socket.assigns.anon,
       permission: perm,
       online_at: inspect(System.system_time(:second))
     })
-    "room:" <> room = socket.topic
     UserController.set_room(socket.assigns.user, room)
     {:noreply, socket}
   end
@@ -43,7 +44,7 @@ defmodule StreamshoreWeb.RoomChannel do
     {:reply, {:ok, payload}, socket}
   end
 
-  def handle_in("skip", payload, socket) do
+  def handle_in("skip", _payload, socket) do
     "room:" <> room = socket.topic
     perm = PermissionController.get_perm(room, socket.assigns.user)
     if perm >= PermissionLevel.manager() do
@@ -73,22 +74,9 @@ defmodule StreamshoreWeb.RoomChannel do
     {:noreply, socket}
   end
 
-  def handle_in("video", payload, socket) do
-    data = case Videos.get(payload["room"]) do
-      nil -> %{}
-      data -> data
-    end
-    {:reply, {:ok, data}, socket}
-  end
-
   def handle_in("delete", payload, socket) do
     broadcast socket, "delete", payload
     {:noreply, socket}
-  end
-
-  # Add authorization logic here as required.
-  defp authorized?(user, room) do
-    PermissionController.get_perm(room, user) > PermissionLevel.banned()
   end
 
   defp filter(msg) do

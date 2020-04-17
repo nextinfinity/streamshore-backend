@@ -1,9 +1,18 @@
 defmodule StreamshoreWeb.RoomChannelTest do
   use StreamshoreWeb.ChannelCase
+  import Phoenix.ConnTest
+  alias Plug.Conn
+  alias Streamshore.Guardian
 
   setup do
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false, admin: false})
+
+    conn = build_conn()
+            |> Conn.put_req_header("authorization", "Bearer " <> token)
+    post(conn, "/api/rooms", %{name: "Lobby", motd: "", privacy: 0})
+
     {:ok, _, socket} =
-      socket(StreamshoreWeb.UserSocket, "anon", %{user: "anon", anon: true})
+      socket(StreamshoreWeb.UserSocket, "anon", %{user: "anon", anon: false})
       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby")
 
     {:ok, socket: socket}

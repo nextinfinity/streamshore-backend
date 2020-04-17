@@ -30,22 +30,22 @@ defmodule RoomControllerTest do
   test "welcome message", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "motd"}
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+    {:ok, response, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
                         |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
-    assert_push("motd", %{:message => "Lorem Ipsum"})
+    assert response.room.motd == "Lorem Ipsum"
   end
 
   test "update welcome message", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "motd"}
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+    {:ok, response, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
                         |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
-    assert_push("motd", %{:message => "Lorem Ipsum"})
+    assert response.room.motd == "Lorem Ipsum"
     conn = put(conn, Routes.room_path(conn, :update, "MOTD"), %{motd: "Other Lorem Ipsum"})
     assert json_response(conn, 200) == %{}
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+    {:ok, response, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
                         |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
-    assert_push("motd", %{:message => "Other Lorem Ipsum"})
+    assert response.room.motd == "Other Lorem Ipsum"
   end
 
   test "creating a room", %{conn: conn} do
