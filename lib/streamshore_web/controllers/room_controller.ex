@@ -124,6 +124,13 @@ defmodule StreamshoreWeb.RoomController do
     end
   end
 
+  def get_room(room) do
+    query = from r in Room, where: r.route == ^room, select: %{name: r.name, motd: r.motd, owner: r.owner,
+      route: r.route, queue_level: r.queue_level, anon_queue: r.anon_queue, chat_level: r.chat_level,
+    anon_chat: r.anon_chat, vote_enable: r.vote_enable}
+    Repo.one(query)
+  end
+
   def queue_perm(room) do
     case Repo.get_by(Room, route: room) do
       nil -> PermissionLevel.user()
