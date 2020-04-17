@@ -1,10 +1,11 @@
 defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
-
   alias Streamshore.Guardian
   alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
+  alias Streamshore.Permission
+  alias Streamshore.Favorites
   alias Streamshore.Repo
   alias Streamshore.Room
   alias Streamshore.Util
@@ -84,8 +85,35 @@ defmodule StreamshoreWeb.RoomController do
 
   end
 
-  def delete(_conn, _params) do
-    # TODO: delete room
+  def delete(conn, params) do
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, user, anon} ->
+        room_name = params["id"]
+        query = from r in Room, where: r.name == ^room_name, select: %{owner: r.owner}
+        list = Repo.all(query)
+        room = list |> Enum.map(fn a-> a.owner end)
+        owner = to_string(room)
+        IO.puts owner
+        if to_string(user) == to_string(room) do
+          query = from(f in Favorites, where: f.room == ^room_name)
+          successful1 = Repo.delete_all(query)
+          query = from(p in Permission, where: p.room == ^room_name)
+          successful2 = Repo.delete_all(query)
+          relation = Room |> Repo.get_by(name: room_name)
+          successful3 = Repo.delete(relation)
+          case successful1 && successful2 && successful3 do
+              {:ok, _schema}->
+                json(conn, %{})
+
+              {:error, _changeset}->
+                # TODO: error msg
+                json(conn, %{error: ""})
+          end
+        else
+          json(conn, %{error: "Insufficient permission"})
+        end
+    end
   end
 
   def filter_enabled?(room) do
