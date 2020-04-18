@@ -44,6 +44,12 @@ defmodule StreamshoreWeb.RoomChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  def handle_in("vote", _payload, socket) do
+    "room:" <> room = socket.topic
+    QueueManager.vote_skip(room, socket.assigns.user)
+    {:noreply, socket}
+  end
+
   def handle_in("skip", _payload, socket) do
     "room:" <> room = socket.topic
     perm = PermissionController.get_perm(room, socket.assigns.user)

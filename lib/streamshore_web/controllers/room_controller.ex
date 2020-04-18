@@ -73,11 +73,14 @@ defmodule StreamshoreWeb.RoomController do
       {:error, error} -> json(conn, %{error: error})
       {:ok, _user, _anon, permission} ->
         if permission >= PermissionLevel.manager() do
-          case Repo.get_by(Room, %{route: params["id"]}) do
+          room = params["id"]
+          case Repo.get_by(Room, %{route: room}) do
             nil -> nil
-            schema -> schema
+            schema -> params = Map.delete(params, "id")
+                      schema
                       |> Room.changeset(params)
                       |> Repo.update
+                      StreamshoreWeb.Endpoint.broadcast("room:" <> room, "update", params)
           end
           json(conn, %{})
         end
