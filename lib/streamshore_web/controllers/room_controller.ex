@@ -91,12 +91,12 @@ defmodule StreamshoreWeb.RoomController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} -> json(conn, %{error: error})
-      {:ok, user, anon} ->
+      {:ok, user, _anon} ->
         room_name = params["id"]
         query = from r in Room, where: r.name == ^room_name, select: %{owner: r.owner}
         list = Repo.all(query)
         room = list |> Enum.map(fn a-> a.owner end)
-        owner = to_string(room)
+        _owner = to_string(room)
         if to_string(user) == to_string(room) do
           query = from(f in Favorites, where: f.room == ^room_name)
           successful1 = Repo.delete_all(query)
