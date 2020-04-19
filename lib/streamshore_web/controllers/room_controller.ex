@@ -93,11 +93,9 @@ defmodule StreamshoreWeb.RoomController do
       {:error, error} -> json(conn, %{error: error})
       {:ok, user, _anon} ->
         room_name = params["id"]
-        query = from r in Room, where: r.name == ^room_name, select: %{owner: r.owner}
-        list = Repo.all(query)
-        room = list |> Enum.map(fn a-> a.owner end)
-        _owner = to_string(room)
-        if to_string(user) == to_string(room) do
+        query = from r in Room, where: r.name == ^room_name, select: r.owner
+        owner = Repo.one(query)
+        if user == owner do
           query = from(f in Favorites, where: f.room == ^room_name)
           successful1 = Repo.delete_all(query)
           query = from(p in Permission, where: p.room == ^room_name)
@@ -105,12 +103,12 @@ defmodule StreamshoreWeb.RoomController do
           relation = Room |> Repo.get_by(name: room_name)
           successful3 = Repo.delete(relation)
           case successful1 && successful2 && successful3 do
-              {:ok, _schema}->
-                json(conn, %{})
+            {:ok, _schema}->
+              json(conn, %{})
 
-              {:error, _changeset}->
-                # TODO: error msg
-                json(conn, %{error: ""})
+            {:error, _changeset}->
+              # TODO: error msg
+              json(conn, %{error: ""})
           end
         else
           json(conn, %{error: "Insufficient permission"})
@@ -130,7 +128,7 @@ defmodule StreamshoreWeb.RoomController do
   def get_room(room) do
     query = from r in Room, where: r.route == ^room, select: %{name: r.name, motd: r.motd, owner: r.owner,
       route: r.route, queue_level: r.queue_level, anon_queue: r.anon_queue, chat_level: r.chat_level,
-    anon_chat: r.anon_chat, vote_enable: r.vote_enable}
+      anon_chat: r.anon_chat, vote_enable: r.vote_enable}
     Repo.one(query)
   end
 
