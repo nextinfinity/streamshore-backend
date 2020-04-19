@@ -86,7 +86,6 @@ defmodule StreamshoreWeb.UserController do
 
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
-      {:error, error} -> json(conn, %{error: error})
       {:ok, user, anon} ->
         username = params["id"]
         if user == username && !anon do
@@ -119,6 +118,8 @@ defmodule StreamshoreWeb.UserController do
         else
           json(conn, %{error: "Insufficient permission"})
         end
+
+        {:error, error} -> json(conn, %{error: error})
     end
   end
 
