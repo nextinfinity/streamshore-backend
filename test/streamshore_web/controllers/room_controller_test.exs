@@ -116,5 +116,11 @@ defmodule RoomControllerTest do
     refute_broadcast "chat", %{"msg" => "hello world"}
   end
 
+  test "Removing a room you own", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "create"}
+    conn = delete(conn, Routes.room_path(conn, :delete, "Create"))
+    assert json_response(conn, 200) == %{}
+  end
 
 end
