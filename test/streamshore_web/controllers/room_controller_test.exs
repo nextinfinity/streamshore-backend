@@ -123,4 +123,14 @@ defmodule RoomControllerTest do
     assert json_response(conn, 200) == %{}
   end
 
+  test "Removing a room you don't own", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "create"}
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true, admin: false})
+
+    conn2 = build_conn()
+           |> put_req_header("authorization", "Bearer " <> token)
+    conn2 = delete(conn2, Routes.room_path(conn2, :delete, "Create"))
+    assert json_response(conn2, 200) == %{"error" => "Insufficient permission"}
+  end
 end
