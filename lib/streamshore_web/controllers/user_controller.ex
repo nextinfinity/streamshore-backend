@@ -17,7 +17,6 @@ defmodule StreamshoreWeb.UserController do
     case Guardian.get_user_and_admin(Guardian.token_from_conn(conn)) do
       {:error, error} -> json(conn, %{error: error})
       {:ok, _user, _anon, admin} ->
-        IO.puts admin
         if admin do
           query = from u in User, select: %{username: u.username, email: u.email}
           users = Repo.all(query)
