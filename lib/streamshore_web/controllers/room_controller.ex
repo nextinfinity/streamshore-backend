@@ -93,29 +93,17 @@ defmodule StreamshoreWeb.RoomController do
       {:error, error} -> json(conn, %{error: error})
       {:ok, user, _anon} ->
         room_name = params["id"]
-        query = from r in Room, where: r.name == ^room_name, select: r.owner
+        query = from r in Room, where: r.route == ^room_name, select: r.owner
         owner = Repo.one(query)
         if user == owner do
           favorites = from(f in Favorites, where: f.room == ^room_name)
-          case Repo.delete_all(favorites) do
+          Repo.delete_all(favorites)
+          permissions = from(p in Permission, where: p.room == ^room_name)
+          Repo.delete_all(permissions)
+          room = Room |> Repo.get_by(route: room_name)
+          case Repo.delete(room) do
             {:ok, _schema}->
-              permissions = from(p in Permission, where: p.room == ^room_name)
-              case Repo.delete_all(permissions) do
-                {:ok, _schema}->
-                  room = Room |> Repo.get_by(route: room_name)
-                  case Repo.delete(room) do
-                    {:ok, _schema}->
-                      json(conn, %{})
-
-                    {:error, _changeset}->
-                      # TODO: error msg
-                      json(conn, %{error: ""})
-                  end
-
-                {:error, _changeset}->
-                  # TODO: error msg
-                  json(conn, %{error: ""})
-              end
+              json(conn, %{})
 
             {:error, _changeset}->
               # TODO: error msg

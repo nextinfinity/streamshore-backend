@@ -119,7 +119,7 @@ defmodule RoomControllerTest do
   test "Removing a room you own", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "create"}
-    conn = delete(conn, Routes.room_path(conn, :delete, "Create"))
+    conn = delete(conn, Routes.room_path(conn, :delete, "create"))
     assert json_response(conn, 200) == %{}
   end
 
