@@ -14,13 +14,17 @@ defmodule StreamshoreWeb.UserController do
   import Ecto.Query
 
   def index(conn, _params) do
-    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+    case Guardian.get_user_and_admin(Guardian.token_from_conn(conn)) do
       {:error, error} -> json(conn, %{error: error})
-      {:ok, _user, _anon} ->
-        # TODO: check if user is admin
-        query = from u in User, select: %{username: u.username, email: u.email}
-        users = Repo.all(query)
-        json(conn, users)
+      {:ok, _user, _anon, admin} ->
+        IO.puts admin
+        if admin do
+          query = from u in User, select: %{username: u.username, email: u.email}
+          users = Repo.all(query)
+          json(conn, users)
+        else 
+          json(conn, %{error: "Insufficient permission"})
+        end
     end
 
   end
@@ -129,6 +133,16 @@ defmodule StreamshoreWeb.UserController do
       schema -> schema
                 |> User.changeset(%{room: room})
                 |> Repo.update()
+    end
+  end
+
+  def get_admin(user) do
+    query = from u in User, where: u.username == ^user, select: u.admin
+    admin = Repo.one(query)
+    if admin == 1 do
+      true
+    else
+      false
     end
   end
 end
