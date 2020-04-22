@@ -57,4 +57,9 @@ defmodule UserControllerTest do
         conn = delete(conn, Routes.user_path(conn, :delete, username))
         assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
     end
+
+    test "Getting list of all users as non-admin", %{conn: conn} do
+        conn = get(conn, Routes.user_path(conn, :index))
+        assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    end
 end
