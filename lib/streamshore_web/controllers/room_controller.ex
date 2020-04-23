@@ -76,6 +76,20 @@ defmodule StreamshoreWeb.RoomController do
     end
   end
 
+  def edit(conn, params) do
+    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
+      {:error, error} -> json(conn, %{error: error})
+      {:ok, _user, _anon, permission} ->
+        if permission >= PermissionLevel.manager() do
+          query = from r in Room, where: r.route == ^params["id"], select: %{motd: r.motd, privacy: r.privacy,
+            queue_level: r.queue_level, anon_queue: r.anon_queue, queue_limit: r.queue_limit, chat_level: r.chat_level,
+            anon_chat: r.anon_chat, chat_filter: r.chat_filter, vote_enable: r.vote_enable, vote_threshold: r.vote_threshold}
+          room = Repo.one(query)
+          json(conn, room)
+        end
+    end
+  end
+
   def update(conn, params) do
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
       {:error, error} -> json(conn, %{error: error})
@@ -84,10 +98,11 @@ defmodule StreamshoreWeb.RoomController do
           room = params["id"]
           case Repo.get_by(Room, %{route: room}) do
             nil -> nil
-            schema -> params = Map.delete(params, "id")
+            schema -> params = params |> Map.delete("id")
                       schema
                       |> Room.changeset(params)
                       |> Repo.update
+                      params = params |> Map.take([:motd, :queue_level, :anon_queue, :queue_limit, :chat_level, :anon_chat, :vote_enable])
                       StreamshoreWeb.Endpoint.broadcast("room:" <> room, "update", params)
           end
           json(conn, %{})
@@ -135,7 +150,7 @@ defmodule StreamshoreWeb.RoomController do
   def get_room(room) do
     query = from r in Room, where: r.route == ^room, select: %{name: r.name, motd: r.motd, owner: r.owner,
       route: r.route, queue_level: r.queue_level, anon_queue: r.anon_queue, chat_level: r.chat_level,
-      anon_chat: r.anon_chat, vote_enable: r.vote_enable}
+      anon_chat: r.anon_chat, queue_limit: r.queue_limit, vote_enable: r.vote_enable}
     Repo.one(query)
   end
 

@@ -11,6 +11,7 @@ defmodule Streamshore.Repo.Migrations.CreateRooms do
       add(:thumbnail, :string)
       add(:queue_level, :integer)
       add(:anon_queue, :integer)
+      add(:queue_limit, :integer)
       add(:chat_level, :integer)
       add(:anon_chat, :integer)
       add(:chat_filter, :integer)

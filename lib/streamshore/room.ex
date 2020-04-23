@@ -23,7 +23,7 @@ defmodule Streamshore.Room do
 
     def changeset(room, params \\ %{}) do
         room
-        |> cast(params, [:name, :motd, :privacy, :owner, :route, :thumbnail, :queue_level, :anon_queue, :chat_level, :anon_chat, :chat_filter, :vote_threshold])
+        |> cast(params, [:name, :motd, :privacy, :owner, :route, :thumbnail, :queue_level, :anon_queue, :queue_limit, :chat_level, :anon_chat, :chat_filter, :vote_threshold, :vote_enable])
         |> validate_required([:name])
         |> validate_required([:owner])
         |> validate_required([:route])
