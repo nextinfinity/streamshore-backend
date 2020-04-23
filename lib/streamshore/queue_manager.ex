@@ -54,7 +54,7 @@ defmodule Streamshore.QueueManager do
         {:error, "Unable to retrieve video information."}
       end
     else
-      {:error, "You already have the maximum allowed videos in the queue."}
+      {:error, "You already have the maximum allowed amount of videos in the queue."}
     end
   end
 
