@@ -112,7 +112,7 @@ defmodule VideoControllerTest do
     {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
                         |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:votes")
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("votes")[:playing][:votes] == ["user"]
   end
 
@@ -129,7 +129,7 @@ defmodule VideoControllerTest do
     {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:skip")
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("skip")[:playing][:id] == id2
   end
 
@@ -146,7 +146,7 @@ defmodule VideoControllerTest do
     {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:no-votes")
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("no-votes")[:playing][:votes] == []
   end
 
@@ -163,14 +163,14 @@ defmodule VideoControllerTest do
     {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:update-votes")
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("update-votes")[:playing][:votes] == []
 
     conn = put(conn, Routes.room_path(conn, :update, "update-votes"), %{vote_threshold: 101, vote_enable: 1})
     assert json_response(conn, 200) == %{}
 
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("votes")[:playing][:votes] == ["user"]
   end
 
@@ -187,14 +187,14 @@ defmodule VideoControllerTest do
     {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:vote-threshold")
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("vote-threshold")[:playing][:id] == id2
 
     conn = put(conn, Routes.room_path(conn, :update, "vote-threshold"), %{vote_threshold: 101})
     assert json_response(conn, 200) == %{}
 
     Phoenix.ChannelTest.push socket, "vote", %{}
-    :timer.sleep(100)
+    :timer.sleep(200)
     assert Videos.get("vote-threshold")[:playing][:id] == id2
     assert Videos.get("vote-threshold")[:playing][:votes] == ["user"]
   end
