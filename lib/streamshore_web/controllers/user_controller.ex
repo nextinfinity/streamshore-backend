@@ -18,7 +18,7 @@ defmodule StreamshoreWeb.UserController do
       {:error, error} -> json(conn, %{error: error})
       {:ok, _user, _anon, admin} ->
         if admin do
-          query = from u in User, select: %{username: u.username, email: u.email}
+          query = from u in User, select: %{username: u.username, email: u.email, room: u.room, admin: u.admin, verify_token: u.verify_token}
           users = Repo.all(query)
           json(conn, users)
         else 
