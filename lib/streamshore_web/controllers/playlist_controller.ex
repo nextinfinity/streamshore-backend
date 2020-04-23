@@ -54,7 +54,8 @@ defmodule StreamshoreWeb.PlaylistController do
     if relation do 
       changeset = Playlist.changeset(relation, %{name: name, owner: owner})
       successful = Repo.update(changeset)
-
+      from(v in PlaylistVideo, where: v.name == ^playlist, update: [set: [name: ^name]])
+      |> Repo.update_all([])
       case successful do
         {:ok, _schema}->
           json(conn, %{})
