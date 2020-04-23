@@ -99,7 +99,7 @@ defmodule Streamshore.QueueManager do
     room_data = Videos.get(room)
     playing = room_data[:playing]
     room_entry = Repo.get_by(Room, %{route: room})
-    if room_entry.vote_enable do
+    if room_entry.vote_enable == 1 do
       if playing do
         user_count = Enum.count(Presence.list("room:" <> room))
         votes = MapSet.new(playing[:votes]) |> MapSet.put(user)
