@@ -12,6 +12,7 @@ defmodule Streamshore.Room do
         field :thumbnail, :string, default: nil
         field :queue_level, :integer, default: PermissionLevel.user()
         field :anon_queue, :integer, default: 1
+        field :queue_limit, :integer, default: 0
         field :chat_level, :integer, default: PermissionLevel.user()
         field :anon_chat, :integer, default: 1
         field :chat_filter, :integer, default: 0
