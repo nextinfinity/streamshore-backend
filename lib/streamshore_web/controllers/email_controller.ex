@@ -18,12 +18,14 @@ defmodule StreamshoreWeb.EmailController do
   end
 
   def send_email(to, subject, text) do
-    SendGrid.Email.build()
-    |> SendGrid.Email.add_to(to)
-    |> SendGrid.Email.put_from("admin@streamshore.tv", "Streamshore")
-    |> SendGrid.Email.put_subject("Streamshore | " <> subject)
-    |> SendGrid.Email.put_text(text)
-    |> SendGrid.Mail.send()
+    if System.get_env("SENDGRID_KEY") do
+      SendGrid.Email.build()
+      |> SendGrid.Email.add_to(to)
+      |> SendGrid.Email.put_from("admin@streamshore.tv", "Streamshore")
+      |> SendGrid.Email.put_subject("Streamshore | " <> subject)
+      |> SendGrid.Email.put_text(text)
+      |> SendGrid.Mail.send()
+    end
   end
 
 end
