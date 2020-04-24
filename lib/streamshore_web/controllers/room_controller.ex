@@ -104,7 +104,7 @@ defmodule StreamshoreWeb.RoomController do
                       schema
                       |> Room.changeset(params)
                       |> Repo.update
-                      params = params |> Map.take([:motd, :queue_level, :anon_queue, :queue_limit, :chat_level, :anon_chat, :vote_enable])
+                      params = params |> Map.take(["motd", "queue_level", "anon_queue", "queue_limit", "chat_level", "anon_chat", "vote_enable"])
                       StreamshoreWeb.Endpoint.broadcast("room:" <> room, "update", params)
           end
           json(conn, %{})
