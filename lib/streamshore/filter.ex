@@ -1,7 +1,7 @@
 defmodule Streamshore.Filter do
 
   def bad_words() do
-    ["IU", "Indiana University"]
+    ["IU"]
   end
 
 end

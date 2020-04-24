@@ -19,30 +19,42 @@ defmodule Streamshore.QueueManager do
   def schedule, do: Process.send_after(self(), :timer, 1000)
 
   def add_to_queue(room, id, user) do
-    room_data = Videos.get(room)
-    room_data = if (!room_data) do
-      %{queue: []}
-    else
-      room_data
+    room_data = case Videos.get(room) do
+      nil -> %{queue: []}
+      room_data -> room_data
     end
-    data = HTTPoison.get! "https://www.googleapis.com/youtube/v3/videos?id=" <> id <> "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
-    body = Enum.at(Poison.decode!(data.body)["items"], 0)
-    if body do
-      title = body["snippet"]["title"]
-      channel = body["snippet"]["channelTitle"]
-      thumbnail = body["snippet"]["thumbnails"]["high"]["url"]
-      length = body["contentDetails"]["duration"]
-      length = Timex.Duration.to_seconds(Timex.Duration.parse!(length))
-      video = [%{id: id, submittedBy: user, title: title, channel: channel, thumbnail: thumbnail, length: length}]
-      room_data = Map.put(room_data, :queue, room_data[:queue] ++ video)
-      Videos.set(room, room_data)
-      StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
-      if !room_data[:playing] do
-        play_next(room)
-      end
-      :ok
+    queue_limit = case Repo.get_by(Room, %{route: room}) do
+      nil -> 0
+      schema -> schema.queue_limit
+    end
+    allow = if queue_limit > 0 do
+      video_count = Enum.count(room_data[:queue], fn video -> video.submittedBy == user end)
+      video_count < queue_limit
     else
-      :error
+      true
+    end
+    if allow do
+      data = HTTPoison.get! "https://www.googleapis.com/youtube/v3/videos?id=" <> id <> "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
+      body = Enum.at(Poison.decode!(data.body)["items"], 0)
+      if body do
+        title = body["snippet"]["title"]
+        channel = body["snippet"]["channelTitle"]
+        thumbnail = body["snippet"]["thumbnails"]["high"]["url"]
+        length = body["contentDetails"]["duration"]
+        length = Timex.Duration.to_seconds(Timex.Duration.parse!(length))
+        video = [%{id: id, submittedBy: user, title: title, channel: channel, thumbnail: thumbnail, length: length}]
+        room_data = Map.put(room_data, :queue, room_data[:queue] ++ video)
+        Videos.set(room, room_data)
+        StreamshoreWeb.Endpoint.broadcast("room:" <> room, "queue", %{videos: room_data[:queue]})
+        if !room_data[:playing] do
+          play_next(room)
+        end
+        :ok
+      else
+        {:error, "Unable to retrieve video information."}
+      end
+    else
+      {:error, "You already have the maximum allowed amount of videos in the queue."}
     end
   end
 
@@ -99,7 +111,7 @@ defmodule Streamshore.QueueManager do
     room_data = Videos.get(room)
     playing = room_data[:playing]
     room_entry = Repo.get_by(Room, %{route: room})
-    if room_entry.vote_enable do
+    if room_entry.vote_enable == 1 do
       if playing do
         user_count = Enum.count(Presence.list("room:" <> room))
         votes = MapSet.new(playing[:votes]) |> MapSet.put(user)

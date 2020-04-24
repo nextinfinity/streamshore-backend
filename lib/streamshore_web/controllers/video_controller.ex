@@ -15,7 +15,7 @@ defmodule StreamshoreWeb.VideoController do
           if RoomController.anon_queue?(room) || !anon do
             case QueueManager.add_to_queue(room, params["id"], user) do
               :ok -> json(conn, %{})
-              :error -> json(conn, %{error: "Invalid video"})
+              {:error, error} -> json(conn, %{error: error})
             end
           else
             json(conn, %{error: "You must be logged in to submit a video"})

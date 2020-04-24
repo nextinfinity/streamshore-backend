@@ -12,7 +12,7 @@ defmodule StreamshoreWeb.FavoriteController do
     query = from f in Favorites, where: f.user == ^user, select: %{room: f.room}
     list = Repo.all(query)
     favorites = list |> Enum.map(fn a-> a.room end)
-    query = from r in Room, where: r.name in ^favorites, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail, privacy: r.privacy}
+    query = from r in Room, where: r.route in ^favorites, select: %{name: r.name, owner: r.owner, route: r.route, thumbnail: r.thumbnail, privacy: r.privacy}
     rooms = Repo.all(query)
     rooms = Enum.map(rooms, fn room -> Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route]))) end)
     json(conn, rooms)
@@ -36,7 +36,7 @@ defmodule StreamshoreWeb.FavoriteController do
           false ->
             room = params["room"]
             user = params["user_id"]
-            if Room |> Repo.get_by(name: room) do
+            if Room |> Repo.get_by(route: room) do
                 if !(Favorites |> Repo.get_by(user: user, room: room)) do 
                     changeset = Favorites.changeset(%Favorites{}, %{user: user, room: room})
                     successful = Repo.insert(changeset)
