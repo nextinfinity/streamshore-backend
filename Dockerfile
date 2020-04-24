@@ -8,6 +8,7 @@ ARG DB
 ARG SECRET
 ARG DOMAIN
 ARG FRONTEND
+ARG SENDGRID_KEY
 
 # Install NPM
 # install curl

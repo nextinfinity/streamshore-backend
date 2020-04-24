@@ -86,6 +86,8 @@ defmodule StreamshoreWeb.RoomController do
             anon_chat: r.anon_chat, chat_filter: r.chat_filter, vote_enable: r.vote_enable, vote_threshold: r.vote_threshold}
           room = Repo.one(query)
           json(conn, room)
+        else
+          json(conn, %{error: "Insufficient permission"})
         end
     end
   end
@@ -106,6 +108,8 @@ defmodule StreamshoreWeb.RoomController do
                       StreamshoreWeb.Endpoint.broadcast("room:" <> room, "update", params)
           end
           json(conn, %{})
+        else
+          json(conn, %{error: "Insufficient permission"})
         end
     end
 

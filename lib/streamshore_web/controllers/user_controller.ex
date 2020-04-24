@@ -101,23 +101,27 @@ defmodule StreamshoreWeb.UserController do
         {:error, error} -> json(conn, %{error: error})
         {:ok, user, anon} ->
           username = params["id"]
-          if user == username && !anon do
-            user_entry = User |> Repo.get_by(username: username)
-            password = params["password"]
-            valid_pass = User.valid_password(password)
-            if !valid_pass do
-              json(conn, %{error: "password: password is invalid"})
-            else
-              changeset = User.changeset(user_entry, %{password: password})
-              successful = Repo.update(changeset)
-              case successful do
-                {:ok, _schema}->
-                  json(conn, %{})
+          if !anon do
+            if user == username || user == "Reset-" <> username do
+              user_entry = User |> Repo.get_by(username: username)
+              password = params["password"]
+              valid_pass = User.valid_password(password)
+              if !valid_pass do
+                json(conn, %{error: "password: password is invalid"})
+              else
+                changeset = User.changeset(user_entry, %{password: password})
+                successful = Repo.update(changeset)
+                case successful do
+                  {:ok, _schema}->
+                    json(conn, %{})
 
-                {:error, _changeset}->
-                  # TODO: error msg
-                  json(conn, %{error: ""})
+                  {:error, _changeset}->
+                    # TODO: error msg
+                    json(conn, %{error: ""})
+                end
               end
+            else
+              json(conn, %{error: "Insufficient permission"})
             end
           else
             json(conn, %{error: "Insufficient permission"})
