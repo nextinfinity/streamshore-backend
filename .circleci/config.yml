@@ -55,7 +55,7 @@ workflows:
             - test
           repo: streamshore
           tag: '${CIRCLE_SHA1}'
-          extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE --build-arg DOMAIN=$DOMAIN --build-arg FRONTEND=$FRONTEND"
+          extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE --build-arg DOMAIN=$DOMAIN --build-arg FRONTEND=$FRONTEND --build-arg SENDGRID_KEY=$SENDGRID_KEY"
       - aws-ecs/deploy-service-update:
           requires:
             - aws-ecr/build-and-push-image

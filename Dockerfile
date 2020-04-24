@@ -36,6 +36,7 @@ ENV DATABASE_URL=$DB
 ENV SECRET_KEY_BASE=$SECRET
 ENV DOMAIN=$DOMAIN
 ENV FRONTEND=$FRONTEND
+ENV EMAIL_KEY=$SENDGRID_KEY
 # Install hex package manager
 # By using --force, we don’t need to type “Y” to confirm the installation
 RUN mix local.hex --force
