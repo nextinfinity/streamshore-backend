@@ -73,7 +73,7 @@ defmodule StreamshoreWeb.UserController do
         case user do
           nil -> json(conn, %{error: "User not found"})
           schema ->
-            case schema.reset_token do
+            case schema.verify_token do
               nil -> json(conn, %{error: "Email already verified"})
               token ->
                 EmailController.send_email(schema.email, "Reset your password!", "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> token)
