@@ -23,6 +23,10 @@ config :streamshore, Streamshore.Guardian,
        secret_key: "0CfBeMjI3pA3ZsZoV6EhZ0LgHDN/I46Nl/rUwWc15qbUmxCaOyaPiDMiQceWDPnP"
 # TODO: Does the secret key need to be hidden? I'm not sure as of creation whether that's the case or not
 
+config :sendgrid,
+       api_key: "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"
+# TODO: This shouldn't be here either. Strapped for time but these should both be removed
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

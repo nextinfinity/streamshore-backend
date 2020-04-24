@@ -1,16 +1,18 @@
 defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
 
+  alias StreamshoreWeb.EmailController
   alias Streamshore.Guardian
-  alias Streamshore.Repo
-  alias Streamshore.User
-  alias Streamshore.Util
-  alias Streamshore.Permission
   alias Streamshore.Favorites
   alias Streamshore.Friends
+  alias Streamshore.Permission
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
+  alias Streamshore.Repo
   alias Streamshore.Room
+  alias StreamshoreWeb.SessionController
+  alias Streamshore.User
+  alias Streamshore.Util
   import Ecto.Query
 
   def index(conn, _params) do
@@ -34,6 +36,8 @@ defmodule StreamshoreWeb.UserController do
     if !valid_pass do
       json(conn, %{error: "password: password is invalid"})
     else
+      verify_token = SessionController.create_token("Verify-" <> params["username"], false)
+      params = params |> Map.put("verify_token", verify_token)
       successful =
       %Streamshore.User{}
       |> User.changeset(params)
@@ -41,6 +45,7 @@ defmodule StreamshoreWeb.UserController do
 
       case successful do
         {:ok, _schema}->
+          EmailController.send_email(params["email"], "Verify your email!", "https://streamshore.tv/verify?token=" <> verify_token)
           json(conn, %{})
 
       {:error, changeset}->

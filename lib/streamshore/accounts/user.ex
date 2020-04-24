@@ -17,7 +17,7 @@ defmodule Streamshore.User do
     
     def changeset(user, params \\ %{}) do
         user
-        |> cast(params, [:username, :email, :password, :room, :admin])
+        |> cast(params, [:username, :email, :password, :room, :admin, :verify_token, :reset_token])
         |> unique_constraint(:username)
         |> unique_constraint(:email)
         |> hash_pass
