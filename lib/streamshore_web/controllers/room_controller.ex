@@ -126,6 +126,7 @@ defmodule StreamshoreWeb.RoomController do
           room = Room |> Repo.get_by(route: room_name)
           case Repo.delete(room) do
             {:ok, _schema}->
+              StreamshoreWeb.Endpoint.broadcast("room:" <> room_name, "room-deleted", %{})
               json(conn, %{})
 
             {:error, _changeset}->
