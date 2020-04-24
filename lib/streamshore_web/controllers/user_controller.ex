@@ -45,7 +45,7 @@ defmodule StreamshoreWeb.UserController do
 
       case successful do
         {:ok, _schema}->
-          EmailController.send_email(params["email"], "Verify your email!", "https://streamshore.tv/verify?token=" <> verify_token)
+          EmailController.send_email(params["email"], "Verify your email!", "https://streamshore.tv/verify?user=" <> params["username"] <> "&token=" <> verify_token)
           json(conn, %{})
 
       {:error, changeset}->
