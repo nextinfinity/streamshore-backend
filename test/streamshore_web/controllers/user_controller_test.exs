@@ -58,6 +58,19 @@ defmodule UserControllerTest do
         assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
     end
 
+    test "Getting list of all users as admin", %{conn: conn} do
+        username = "Test Account"
+        conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
+        assert json_response(conn, 200) == %{}
+
+        {:ok, token, _claims} = Guardian.encode_and_sign("admin", %{anon: false, admin: true})
+
+        conn2 = build_conn()
+            |> put_req_header("authorization", "Bearer " <> token)
+        conn2 = get(conn2, Routes.user_path(conn2, :index))
+        assert json_response(conn2, 200) == %{}
+    end
+
     test "Getting list of all users as non-admin", %{conn: conn} do
         conn = get(conn, Routes.user_path(conn, :index))
         assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
