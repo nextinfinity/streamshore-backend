@@ -65,7 +65,20 @@ defmodule StreamshoreWeb.UserController do
 
   def update(conn, params) do
     if params["reset_password"] do
-
+      case User |> Repo.get_by(email: params["id"]) do
+        nil -> json(conn, %{error: "User not found"})
+        schema ->
+          case schema.reset_token do
+            nil ->
+              reset_token = SessionController.create_token("Reset-" <> schema.username, false)
+              EmailController.send_email(params["id"], "Reset your password!", "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> reset_token)
+              schema
+              |> User.changeset(%{reset_token: reset_token})
+              |> Repo.update()
+              json(conn, %{})
+            _ -> json(conn, %{error: "Reset already requested"})
+          end
+      end
     end
     if params["verify_token"] do
       case User |> Repo.get_by(username: params["id"]) do
