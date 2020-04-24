@@ -69,7 +69,7 @@ defmodule UserControllerTest do
         conn2 = build_conn()
             |> put_req_header("authorization", "Bearer " <> token)
         conn2 = get(conn2, Routes.user_path(conn2, :index))
-        assert json_response(conn2, 200) == [%{"email" => "Email@Test.com", "username" => "Test Account"}]
+        assert json_response(conn2, 200) == [%{"email" => "Email@Test.com", "username" => "Test Account", "admin" => 1, "room" => nil, "verify_token" => nil}]
     end
 
     test "Getting list of all users as non-admin", %{conn: conn} do
