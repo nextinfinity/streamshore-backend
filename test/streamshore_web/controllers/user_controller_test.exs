@@ -63,7 +63,8 @@ defmodule UserControllerTest do
         username = "Test Account"
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
         assert json_response(conn, 200) == %{}
-        Ecto.Adapters.SQL.query!(Repo, "UPDATE `streamshore_test`.`users` SET `admin` = '1' WHERE (`username` = 'Test Account')")
+        Repo |> Ecto.Adapters.SQL.query!("UPDATE `streamshore_test`.`users` SET `admin` = '1' WHERE (`username` = 'Test Account')")
+        Repo |> Ecto.Adapters.SQL.query!("UPDATE `streamshore_test`.`users` SET `verify_token` = NULL WHERE (`username` = 'Test Account')")
         {:ok, token, _claims} = Guardian.encode_and_sign("Test Account", %{anon: false, admin: true})
 
         conn2 = build_conn()
