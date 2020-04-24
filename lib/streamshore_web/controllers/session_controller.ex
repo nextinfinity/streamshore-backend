@@ -13,7 +13,11 @@ defmodule StreamshoreWeb.SessionController do
         user -> user
       end
       if user && Bcrypt.verify_pass(params["password"], user.password) do
-        json(conn, %{token: create_token(user.username, false), user: user.username, anon: false})
+        case user.verify_token do
+          nil -> json(conn, %{token: create_token(user.username, false), user: user.username, anon: false})
+          _ -> json(conn, %{error: "Email address not verified"})
+        end
+
       else
         json(conn, %{error: "Invalid credentials"})
       end
