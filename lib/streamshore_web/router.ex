@@ -26,6 +26,8 @@ defmodule StreamshoreWeb.Router do
     # TODO: do we even need show here? trying to limit vulnerabilities
     resources "/session", SessionController, only: [:create, :delete]
 
+    resources "/emails", EmailController, only: [:create]
+
     resources "/users", UserController, except: [:new, :edit] do
       resources "/friends", FriendController, only: [:index, :create, :update, :delete]
       resources "/favorites", FavoriteController, only: [:index, :show, :create, :delete]

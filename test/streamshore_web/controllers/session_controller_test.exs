@@ -1,6 +1,8 @@
 defmodule SessionControllerTest do
     use StreamshoreWeb.ConnCase
 
+    alias Streamshore.Repo
+
     test "Getting an anonymous username", %{conn: conn} do
         session = conn
            |> post(Routes.session_path(conn, :create))
@@ -40,6 +42,7 @@ defmodule SessionControllerTest do
         username = "Test Account"
         conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
         assert json_response(conn, 200) == %{}
+        Repo |> Ecto.Adapters.SQL.query!("UPDATE `streamshore_test`.`users` SET `verify_token` = NULL WHERE (`username` = 'Test Account')")
         conn = post(conn, Routes.session_path(conn, :create), %{id: "Test Account", password: "$Test123"})
         assert json_response(conn, 200)["user"] == "Test Account"
     end

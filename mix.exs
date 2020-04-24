@@ -53,7 +53,8 @@ defmodule Streamshore.MixProject do
       {:poison, "~> 3.1"},
       {:timex, "~> 3.5"},
       {:uuid, "~> 1.1"},
-      {:guardian, "~> 2.0"}
+      {:guardian, "~> 2.0"},
+      {:sendgrid, "~> 2.0"}
     ]
   end
 
