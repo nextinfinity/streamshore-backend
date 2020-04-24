@@ -64,69 +64,84 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def update(conn, params) do
-    if params["reset_password"] do
-      case User |> Repo.get_by(email: params["id"]) do
-        nil -> json(conn, %{error: "User not found"})
-        schema ->
-          case schema.reset_token do
-            nil ->
-              reset_token = SessionController.create_token("Reset-" <> schema.username, false)
-              EmailController.send_email(params["id"], "Reset your password!", "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> reset_token)
-              schema
-              |> User.changeset(%{reset_token: reset_token})
-              |> Repo.update()
-              json(conn, %{})
-            _ -> json(conn, %{error: "Reset already requested"})
-          end
-      end
-    end
-    if params["verify_token"] do
-      case User |> Repo.get_by(username: params["id"]) do
-        nil -> json(conn, %{error: "User not found"})
-        schema ->
-          token = params["verify_token"]
-          case schema.verify_token do
-            nil -> json(conn, %{error: "Email already verified"})
-            ^token ->
-              schema
-              |> User.changeset(%{verify_token: nil})
-              |> Repo.update()
-              json(conn, %{})
-            _ -> json(conn, %{error: "Invalid token"})
-          end
-      end
-    end
-    if params["password"] do
-      case Guardian.get_user(Guardian.token_from_conn(conn)) do
-        {:error, error} -> json(conn, %{error: error})
-        {:ok, user, anon} ->
-          username = params["id"]
-          if !anon do
-            if user == username || user == "Reset-" <> username do
-              user_entry = User |> Repo.get_by(username: username)
-              password = params["password"]
-              valid_pass = User.valid_password(password)
-              if !valid_pass do
-                json(conn, %{error: "password: password is invalid"})
-              else
-                changeset = User.changeset(user_entry, %{password: password})
-                successful = Repo.update(changeset)
-                case successful do
-                  {:ok, _schema}->
-                    json(conn, %{})
+    cond do
+      params["resend_verification"] ->
+        user = case Repo.get_by(User, email: params["id"]) do
+          nil -> Repo.get_by(User, username: params["id"])
+          user -> user
+        end
+        case user do
+          nil -> json(conn, %{error: "User not found"})
+          schema ->
+            case schema.reset_token do
+              nil -> json(conn, %{error: "Email already verified"})
+              token ->
+                EmailController.send_email(schema.email, "Reset your password!", "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> token)
+                json(conn, %{})
+            end
+        end
 
-                  {:error, _changeset}->
-                    # TODO: error msg
-                    json(conn, %{error: ""})
+      params["reset_password"] ->
+        case User |> Repo.get_by(email: params["id"]) do
+          nil -> json(conn, %{error: "User not found"})
+          schema ->
+            reset_token = SessionController.create_token("Reset-" <> schema.username, false)
+            EmailController.send_email(params["id"], "Reset your password!", "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> reset_token)
+            schema
+            |> User.changeset(%{reset_token: reset_token})
+            |> Repo.update()
+            json(conn, %{})
+        end
+
+      params["verify_token"] ->
+        case User |> Repo.get_by(username: params["id"]) do
+          nil -> json(conn, %{error: "User not found"})
+          schema ->
+            token = params["verify_token"]
+            case schema.verify_token do
+              nil -> json(conn, %{error: "Email already verified"})
+              ^token ->
+                schema
+                |> User.changeset(%{verify_token: nil})
+                |> Repo.update()
+                json(conn, %{})
+              _ -> json(conn, %{error: "Invalid token"})
+            end
+        end
+
+      params["password"] ->
+        case Guardian.get_user(Guardian.token_from_conn(conn)) do
+          {:error, error} -> json(conn, %{error: error})
+          {:ok, user, anon} ->
+            username = params["id"]
+            if !anon do
+              if user == username || user == "Reset-" <> username do
+                user_entry = User |> Repo.get_by(username: username)
+                password = params["password"]
+                valid_pass = User.valid_password(password)
+                if !valid_pass do
+                  json(conn, %{error: "password: password is invalid"})
+                else
+                  changeset = User.changeset(user_entry, %{password: password, reset_token: nil})
+                  successful = Repo.update(changeset)
+                  case successful do
+                    {:ok, _schema}->
+                      json(conn, %{})
+
+                    {:error, _changeset}->
+                      # TODO: error msg
+                      json(conn, %{error: ""})
+                  end
                 end
+              else
+                json(conn, %{error: "Insufficient permission"})
               end
             else
               json(conn, %{error: "Insufficient permission"})
             end
-          else
-            json(conn, %{error: "Insufficient permission"})
-          end
-      end
+        end
+
+      true -> json(conn, %{error: "No valid options specified"})
     end
   end
 
