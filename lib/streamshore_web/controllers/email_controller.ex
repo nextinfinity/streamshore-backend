@@ -2,6 +2,7 @@ defmodule StreamshoreWeb.EmailController do
   use StreamshoreWeb, :controller
 
   alias Streamshore.Guardian
+  alias StreamshoreWeb.UserController
 
   def create(conn, params) do
     case Guardian.get_user_and_admin(Guardian.token_from_conn(conn)) do
@@ -9,7 +10,7 @@ defmodule StreamshoreWeb.EmailController do
       {:ok, _user, _anon, admin} ->
         case admin do
           true ->
-            send_email(params["to"], params["subject"], params["message"])
+            UserController.emails() |> Enum.each(fn email -> send_email(email, params["subject"], params["message"]) end)
             json(conn, %{})
           false -> json(conn, %{error: "Insufficient permission"})
         end

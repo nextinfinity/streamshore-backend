@@ -152,6 +152,11 @@ defmodule StreamshoreWeb.UserController do
     end
   end
 
+  def emails() do
+    query = from u in User, select: u.email
+    Repo.all(query)
+  end
+
   def set_room(user, room) do
     case Repo.get_by(User, %{username: user}) do
       nil -> nil
