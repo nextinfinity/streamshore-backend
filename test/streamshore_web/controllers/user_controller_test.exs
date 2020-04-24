@@ -2,6 +2,7 @@ defmodule UserControllerTest do
     use StreamshoreWeb.ConnCase
 
     alias Streamshore.Guardian
+    alias Streamshore.Repo
 
     setup %{conn: conn} do
         {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false, admin: false})
@@ -56,6 +57,19 @@ defmodule UserControllerTest do
         assert json_response(conn, 200) == %{}
         conn = delete(conn, Routes.user_path(conn, :delete, username))
         assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    end
+
+    test "Getting list of all users as admin", %{conn: conn} do
+        username = "Test Account"
+        conn = post(conn, Routes.user_path(conn, :create), %{email: "Email@Test.com", username: username, password: "$Test123"})
+        assert json_response(conn, 200) == %{}
+        Ecto.Adapters.SQL.query!(Repo, "UPDATE `streamshore_test`.`users` SET `admin` = '1' WHERE (`username` = 'Test Account')")
+        {:ok, token, _claims} = Guardian.encode_and_sign("Test Account", %{anon: false, admin: true})
+
+        conn2 = build_conn()
+            |> put_req_header("authorization", "Bearer " <> token)
+        conn2 = get(conn2, Routes.user_path(conn2, :index))
+        assert json_response(conn2, 200) == [%{"email" => "Email@Test.com", "username" => "Test Account", "admin" => 1, "room" => nil, "verify_token" => nil}]
     end
 
     test "Getting list of all users as non-admin", %{conn: conn} do

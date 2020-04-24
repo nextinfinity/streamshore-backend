@@ -16,7 +16,7 @@ defmodule VideoControllerTest do
 
   test "Add invalid video", %{conn: conn} do
     conn = post(conn, Routes.room_video_path(conn, :create, "invalid"), %{id: "abc"})
-    assert json_response(conn, 200) == %{"error" => "Invalid video"}
+    assert json_response(conn, 200) == %{"error" => "Unable to retrieve video information."}
   end
 
   test "Add valid video", %{conn: conn} do

@@ -36,7 +36,7 @@ defmodule StreamshoreWeb.Router do
       end
     end
 
-    resources "/rooms", RoomController, except: [:new, :edit] do
+    resources "/rooms", RoomController, except: [:new] do
       resources "/videos", VideoController, only: [:create, :update, :delete]
       resources "/permissions", PermissionController, only: [:index, :show, :update]
     end
