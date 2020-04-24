@@ -34,7 +34,7 @@ config :streamshore,
 config :logger, level: :info
 
 config :sendgrid,
-       api_key: {:system, "SENDGRID_KEY"}
+       api_key: {:system, "EMAIL_KEY"}
 
 # ## SSL Support
 #

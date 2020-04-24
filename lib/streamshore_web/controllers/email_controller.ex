@@ -18,7 +18,7 @@ defmodule StreamshoreWeb.EmailController do
   end
 
   def send_email(to, subject, text) do
-    if System.get_env("SENDGRID_KEY") do
+    if System.get_env("EMAIL_KEY") do
       SendGrid.Email.build()
       |> SendGrid.Email.add_to(to)
       |> SendGrid.Email.put_from("admin@streamshore.tv", "Streamshore")
