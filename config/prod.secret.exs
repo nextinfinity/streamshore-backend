@@ -26,6 +26,17 @@ secret_key_base =
 config :streamshore, StreamshoreWeb.Endpoint,
   secret_key_base: secret_key_base
 
+guardian_secret =
+  System.get_env("GUARDIAN_SECRET") ||
+    raise """
+    environment variable GUARDIAN_SECRET is missing.
+    You can generate one by calling: mix guardian.gen.secret
+    """
+
+config :streamshore, Streamshore.Guardian,
+       issuer: "streamshore",
+       secret_key: guardian_secret
+
 # ## Using releases (Elixir v1.9+)
 #
 # If you are doing OTP releases, you need to instruct Phoenix
