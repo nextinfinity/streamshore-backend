@@ -77,7 +77,7 @@ defmodule UserControllerTest do
 
     assert json_response(conn, 200) == %{}
     conn = put(conn, Routes.user_path(conn, :update, username), %{password: "BadPass"})
-    assert json_response(conn, 200) == %{"error" => "password: password is invalid"}
+    assert json_response(conn, 200) == %{"error" => "Password is invalid"}
   end
 
   test "Deleting account", %{conn: conn} do
