@@ -34,8 +34,7 @@ guardian_secret =
     """
 
 config :streamshore, Streamshore.Guardian,
-       issuer: "streamshore",
-       secret_key: guardian_secret
+  secret_key: guardian_secret
 
 # ## Using releases (Elixir v1.9+)
 #
