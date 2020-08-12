@@ -19,11 +19,9 @@ defmodule StreamshoreWeb.Router do
     get "/", PageController, :index
   end
 
-
   scope "/api", StreamshoreWeb do
     pipe_through :api
 
-    # TODO: do we even need show here? trying to limit vulnerabilities
     resources "/session", SessionController, only: [:create, :delete]
 
     resources "/emails", EmailController, only: [:create]
@@ -31,7 +29,8 @@ defmodule StreamshoreWeb.Router do
     resources "/users", UserController, except: [:new, :edit] do
       resources "/friends", FriendController, only: [:index, :create, :update, :delete]
       resources "/favorites", FavoriteController, only: [:index, :show, :create, :delete]
-      resources "/playlists", PlaylistController, except: [:new, :edit]  do
+
+      resources "/playlists", PlaylistController, except: [:new, :edit] do
         resources "/videos", PlaylistVideoController, only: [:index, :create, :update, :delete]
       end
     end
@@ -41,5 +40,4 @@ defmodule StreamshoreWeb.Router do
       resources "/permissions", PermissionController, only: [:index, :show, :update]
     end
   end
-
 end

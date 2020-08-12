@@ -9,6 +9,8 @@ ARG SECRET
 ARG DOMAIN
 ARG FRONTEND
 ARG SENDGRID_KEY
+ARG YOUTUBE_KEY
+ARG GUARDIAN_SECRET
 
 # Install NPM
 # install curl
@@ -38,6 +40,8 @@ ENV SECRET_KEY_BASE=$SECRET
 ENV DOMAIN=$DOMAIN
 ENV FRONTEND=$FRONTEND
 ENV EMAIL_KEY=$SENDGRID_KEY
+ENV YOUTUBE_KEY=$YOUTUBE_KEY
+ENV GUARDIAN_SECRET=$GUARDIAN_SECRET
 # Install hex package manager
 # By using --force, we don’t need to type “Y” to confirm the installation
 RUN mix local.hex --force

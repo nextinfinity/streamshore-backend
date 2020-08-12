@@ -7,44 +7,67 @@ defmodule RoomControllerTest do
   setup %{conn: conn} do
     {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false, admin: false})
 
-    conn = conn
-           |> put_req_header("authorization", "Bearer " <> token)
+    conn =
+      conn
+      |> put_req_header("authorization", "Bearer " <> token)
+
     {:ok, conn: conn}
   end
 
   test "room counts", %{conn: conn} do
     conn
     |> post(Routes.room_path(conn, :create), %{name: "Count", iodescriptn: "", privacy: 0})
-    list = conn
-           |> get(Routes.room_path(conn, :index))
-           |> json_response(200)
+
+    list =
+      conn
+      |> get(Routes.room_path(conn, :index))
+      |> json_response(200)
+
     assert Enum.at(list, 0)["users"] == 0
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:count")
-    list = conn
-           |> get(Routes.room_path(conn, :index))
-           |> json_response(200)
+
+    {:ok, _, _socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:count")
+
+    list =
+      conn
+      |> get(Routes.room_path(conn, :index))
+      |> json_response(200)
+
     assert Enum.at(list, 0)["users"] == 1
   end
 
   test "welcome message", %{conn: conn} do
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
+
     assert json_response(conn, 200) == %{"route" => "motd"}
-    {:ok, response, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
-                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
+
+    {:ok, response, _socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
+
     assert response.room.motd == "Lorem Ipsum"
   end
 
   test "update welcome message", %{conn: conn} do
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
+
     assert json_response(conn, 200) == %{"route" => "motd"}
-    {:ok, response, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
-                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
+
+    {:ok, response, _socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
+
     assert response.room.motd == "Lorem Ipsum"
     conn = put(conn, Routes.room_path(conn, :update, "MOTD"), %{motd: "Other Lorem Ipsum"})
     assert json_response(conn, 200) == %{}
-    {:ok, response, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
-                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
+
+    {:ok, response, _socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:motd")
+
     assert response.room.motd == "Other Lorem Ipsum"
   end
 
@@ -54,42 +77,54 @@ defmodule RoomControllerTest do
   end
 
   test "get room from username", %{conn: conn} do
-    #making room
+    # making room
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Test", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "test"}
     # assert Enum.at(list, 0)["users"] == 0
 
-    #user joins the room
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test")
-    list = conn
-           |> get(Routes.room_path(conn, :index))
-           |> json_response(200)
+    # user joins the room
+    {:ok, _, _socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test")
+
+    list =
+      conn
+      |> get(Routes.room_path(conn, :index))
+      |> json_response(200)
+
     assert Enum.at(list, 0)["users"] == 1
 
-    #another user joins
-    {:ok, _, _socket} = socket(StreamshoreWeb.UserSocket, "friend", %{user: "friend", anon: true})
-                 |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test")
-    list = conn
-           |> get(Routes.room_path(conn, :index))
-           |> json_response(200)
+    # another user joins
+    {:ok, _, _socket} =
+      socket(StreamshoreWeb.UserSocket, "friend", %{user: "friend", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:test")
+
+    list =
+      conn
+      |> get(Routes.room_path(conn, :index))
+      |> json_response(200)
+
     assert Enum.at(list, 0)["users"] == 2
 
-    #getting room from database to show it's the users'
-    list = conn
-           |> get(Routes.room_path(conn, :index))
-           |> json_response(200)
+    # getting room from database to show it's the users'
+    list =
+      conn
+      |> get(Routes.room_path(conn, :index))
+      |> json_response(200)
+
     assert Enum.at(list, 0)["owner"] == "user"
     assert Enum.at(list, 0)["users"] == 2
   end
 
-
   test "getting a room from database", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Name", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "name"}
-    list = conn
-           |> get(Routes.room_path(conn, :index))
-           |> json_response(200)
+
+    list =
+      conn
+      |> get(Routes.room_path(conn, :index))
+      |> json_response(200)
+
     assert Enum.at(list, 0)["name"] == "Name"
     assert Enum.at(list, 0)["owner"] == "user"
     assert Enum.at(list, 0)["route"] == "name"
@@ -99,20 +134,40 @@ defmodule RoomControllerTest do
   end
 
   test "chat permissions", %{conn: conn} do
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "ChatPerm", motd: "", chat_level: 101, privacy: 0})
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "ChatPerm",
+        motd: "",
+        chat_level: 101,
+        privacy: 0
+      })
+
     assert json_response(conn, 200) == %{"route" => "chatperm"}
-    {:ok, _, connection} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
-                           |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:chatperm")
-    Phoenix.ChannelTest.push connection, "chat", %{"msg" => "hello world"}
+
+    {:ok, _, connection} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:chatperm")
+
+    Phoenix.ChannelTest.push(connection, "chat", %{"msg" => "hello world"})
     refute_broadcast "chat", %{"msg" => "hello world"}
   end
 
   test "anonymous chat permissions", %{conn: conn} do
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "ChatAnon", motd: "", anon_chat: 0, privacy: 0})
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "ChatAnon",
+        motd: "",
+        anon_chat: 0,
+        privacy: 0
+      })
+
     assert json_response(conn, 200) == %{"route" => "chatanon"}
-    {:ok, _, connection} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
-                           |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:chatanon")
-    Phoenix.ChannelTest.push connection, "chat", %{"msg" => "hello world"}
+
+    {:ok, _, connection} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:chatanon")
+
+    Phoenix.ChannelTest.push(connection, "chat", %{"msg" => "hello world"})
     refute_broadcast "chat", %{"msg" => "hello world"}
   end
 
@@ -128,8 +183,10 @@ defmodule RoomControllerTest do
     assert json_response(conn, 200) == %{"route" => "create"}
     {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true, admin: false})
 
-    conn2 = build_conn()
-           |> put_req_header("authorization", "Bearer " <> token)
+    conn2 =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> token)
+
     conn2 = delete(conn2, Routes.room_path(conn2, :delete, "Create"))
     assert json_response(conn2, 200) == %{"error" => "Insufficient permission"}
   end

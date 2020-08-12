@@ -17,6 +17,7 @@ defmodule Streamshore.Repo.Migrations.CreateRooms do
       add(:chat_filter, :integer)
       add(:vote_threshold, :integer)
       add(:vote_enable, :integer)
+
       timestamps()
     end
 

@@ -10,7 +10,12 @@ defmodule StreamshoreWeb.PermissionController do
 
   def index(conn, params) do
     room = params["room_id"]
-    query = from p in Permission, where: [room: ^room], select: %{user: p.username, permission: p.permission}
+
+    query =
+      from p in Permission,
+        where: [room: ^room],
+        select: %{user: p.username, permission: p.permission}
+
     perms = Repo.all(query)
     json(conn, perms)
   end
@@ -24,16 +29,23 @@ defmodule StreamshoreWeb.PermissionController do
     room = params["room_id"]
     user = params["id"]
     perm = params["permission"]
+
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["room_id"]) do
-      {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
+
       {:ok, _user, _anon, permission} ->
         if permission > perm && permission >= PermissionLevel.manager() do
           case update_perm(room, user, perm) do
-            {:ok, _schema}->
-              StreamshoreWeb.Endpoint.broadcast("room:" <> room, "permission", %{user: user, permission: perm})
+            {:ok, _schema} ->
+              StreamshoreWeb.Endpoint.broadcast("room:" <> room, "permission", %{
+                user: user,
+                permission: perm
+              })
+
               json(conn, %{})
 
-            {:error, changeset}->
+            {:error, changeset} ->
               errors = Util.convert_changeset_errors(changeset)
               key = Enum.at(Map.keys(errors), 0)
               err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
@@ -47,6 +59,7 @@ defmodule StreamshoreWeb.PermissionController do
 
   def get_perm(room, user) do
     perm = Repo.get_by(Permission, %{room: room, username: user})
+
     if perm do
       perm.permission
     else
@@ -56,11 +69,10 @@ defmodule StreamshoreWeb.PermissionController do
 
   def update_perm(room, user, perm) do
     case Repo.get_by(Permission, %{room: room, username: user}) do
-      nil  -> %Permission{room: room, username: user}
+      nil -> %Permission{room: room, username: user}
       perm -> perm
     end
     |> Permission.changeset(%{permission: perm})
-    |> Repo.insert_or_update
+    |> Repo.insert_or_update()
   end
-
 end

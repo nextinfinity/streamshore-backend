@@ -10,7 +10,6 @@ defmodule Streamshore.Repo.Migrations.CreateUsers do
         add(:admin, :integer)
         add(:verify_token, :text)
         add(:reset_token, :text)
-        # add(:token, :joken)
 
         timestamps()
     end

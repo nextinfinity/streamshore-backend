@@ -9,8 +9,10 @@ defmodule VideoControllerTest do
   setup %{conn: conn} do
     {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false, admin: false})
 
-    conn = conn
-           |> put_req_header("authorization", "Bearer " <> token)
+    conn =
+      conn
+      |> put_req_header("authorization", "Bearer " <> token)
+
     {:ok, conn: conn}
   end
 
@@ -51,8 +53,10 @@ defmodule VideoControllerTest do
   end
 
   test "Pushing video to front of queue", %{conn: conn} do
-    conn = conn
-           |> post(Routes.room_path(conn, :create), %{name: "front", motd: "", privacy: 0})
+    conn =
+      conn
+      |> post(Routes.room_path(conn, :create), %{name: "front", motd: "", privacy: 0})
+
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
     id3 = "9jzsr5wyG4o"
@@ -67,8 +71,10 @@ defmodule VideoControllerTest do
   end
 
   test "Removing video from queue", %{conn: conn} do
-    conn = conn
-           |> post(Routes.room_path(conn, :create), %{name: "remove", motd: "", privacy: 0})
+    conn =
+      conn
+      |> post(Routes.room_path(conn, :create), %{name: "remove", motd: "", privacy: 0})
+
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
     conn = post(conn, Routes.room_video_path(conn, :create, "remove"), %{id: id1})
@@ -80,7 +86,14 @@ defmodule VideoControllerTest do
   end
 
   test "queue permissions", %{conn: conn} do
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "QueuePerm", motd: "", queue_level: 101, privacy: 0})
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "QueuePerm",
+        motd: "",
+        queue_level: 101,
+        privacy: 0
+      })
+
     assert json_response(conn, 200) == %{"route" => "queueperm"}
     id = "_-k6ppRkpcM"
     conn = post(conn, Routes.room_video_path(conn, :create, "queueperm"), %{id: id})
@@ -88,12 +101,21 @@ defmodule VideoControllerTest do
   end
 
   test "anonymous permissions", %{conn: conn} do
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "QueueAnon", motd: "", anon_queue: 0, privacy: 0})
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "QueueAnon",
+        motd: "",
+        anon_queue: 0,
+        privacy: 0
+      })
+
     assert json_response(conn, 200) == %{"route" => "queueanon"}
     {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true, admin: false})
 
-    conn2 = build_conn()
-           |> put_req_header("authorization", "Bearer " <> token)
+    conn2 =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> token)
+
     id = "_-k6ppRkpcM"
     conn2 = post(conn2, Routes.room_video_path(conn2, :create, "queueanon"), %{id: id})
     assert json_response(conn2, 200) == %{"error" => "You must be logged in to submit a video"}
@@ -102,16 +124,26 @@ defmodule VideoControllerTest do
   test "votes tracked", %{conn: conn} do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "Votes", motd: "", privacy: 0, vote_threshold: 101})
+
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "Votes",
+        motd: "",
+        privacy: 0,
+        vote_threshold: 101
+      })
+
     assert json_response(conn, 200) == %{"route" => "votes"}
     conn = post(conn, Routes.room_video_path(conn, :create, "votes"), %{id: id1})
     assert json_response(conn, 200) == %{}
     conn = post(conn, Routes.room_video_path(conn, :create, "votes"), %{id: id2})
     assert json_response(conn, 200) == %{}
 
-    {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
-                        |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:votes")
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    {:ok, _, socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:votes")
+
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("votes")[:playing][:votes] == ["user"]
   end
@@ -119,16 +151,26 @@ defmodule VideoControllerTest do
   test "vote skip", %{conn: conn} do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "Skip", motd: "", privacy: 0, vote_threshold: 50})
+
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "Skip",
+        motd: "",
+        privacy: 0,
+        vote_threshold: 50
+      })
+
     assert json_response(conn, 200) == %{"route" => "skip"}
     conn = post(conn, Routes.room_video_path(conn, :create, "skip"), %{id: id1})
     assert json_response(conn, 200) == %{}
     conn = post(conn, Routes.room_video_path(conn, :create, "skip"), %{id: id2})
     assert json_response(conn, 200) == %{}
 
-    {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
-                       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:skip")
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    {:ok, _, socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:skip")
+
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("skip")[:playing][:id] == id2
   end
@@ -136,16 +178,26 @@ defmodule VideoControllerTest do
   test "no votes", %{conn: conn} do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "No Votes", motd: "", privacy: 0, vote_enable: 0})
+
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "No Votes",
+        motd: "",
+        privacy: 0,
+        vote_enable: 0
+      })
+
     assert json_response(conn, 200) == %{"route" => "no-votes"}
     conn = post(conn, Routes.room_video_path(conn, :create, "no-votes"), %{id: id1})
     assert json_response(conn, 200) == %{}
     conn = post(conn, Routes.room_video_path(conn, :create, "no-votes"), %{id: id2})
     assert json_response(conn, 200) == %{}
 
-    {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
-                       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:no-votes")
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    {:ok, _, socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:no-votes")
+
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("no-votes")[:playing][:votes] == []
   end
@@ -153,23 +205,38 @@ defmodule VideoControllerTest do
   test "update vote enable", %{conn: conn} do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "Update Votes", motd: "", privacy: 0, vote_enable: 0})
+
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "Update Votes",
+        motd: "",
+        privacy: 0,
+        vote_enable: 0
+      })
+
     assert json_response(conn, 200) == %{"route" => "update-votes"}
     conn = post(conn, Routes.room_video_path(conn, :create, "update-votes"), %{id: id1})
     assert json_response(conn, 200) == %{}
     conn = post(conn, Routes.room_video_path(conn, :create, "update-votes"), %{id: id2})
     assert json_response(conn, 200) == %{}
 
-    {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
-                       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:update-votes")
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    {:ok, _, socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:update-votes")
+
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("update-votes")[:playing][:votes] == []
 
-    conn = put(conn, Routes.room_path(conn, :update, "update-votes"), %{vote_threshold: 101, vote_enable: 1})
+    conn =
+      put(conn, Routes.room_path(conn, :update, "update-votes"), %{
+        vote_threshold: 101,
+        vote_enable: 1
+      })
+
     assert json_response(conn, 200) == %{}
 
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("update-votes")[:playing][:votes] == ["user"]
   end
@@ -177,23 +244,33 @@ defmodule VideoControllerTest do
   test "vote threshold", %{conn: conn} do
     id1 = "_-k6ppRkpcM"
     id2 = "VlbtLvZqMsI"
-    conn = post(conn, Routes.room_path(conn, :create), %{name: "Vote Threshold", motd: "", privacy: 0, vote_threshold: 50})
+
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "Vote Threshold",
+        motd: "",
+        privacy: 0,
+        vote_threshold: 50
+      })
+
     assert json_response(conn, 200) == %{"route" => "vote-threshold"}
     conn = post(conn, Routes.room_video_path(conn, :create, "vote-threshold"), %{id: id1})
     assert json_response(conn, 200) == %{}
     conn = post(conn, Routes.room_video_path(conn, :create, "vote-threshold"), %{id: id2})
     assert json_response(conn, 200) == %{}
 
-    {:ok, _, socket} = socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
-                       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:vote-threshold")
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    {:ok, _, socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:vote-threshold")
+
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("vote-threshold")[:playing][:id] == id2
 
     conn = put(conn, Routes.room_path(conn, :update, "vote-threshold"), %{vote_threshold: 101})
     assert json_response(conn, 200) == %{}
 
-    Phoenix.ChannelTest.push socket, "vote", %{}
+    Phoenix.ChannelTest.push(socket, "vote", %{})
     :timer.sleep(100)
     assert Videos.get("vote-threshold")[:playing][:id] == id2
     assert Videos.get("vote-threshold")[:playing][:votes] == ["user"]

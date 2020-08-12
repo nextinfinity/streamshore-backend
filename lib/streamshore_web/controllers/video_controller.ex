@@ -8,8 +8,11 @@ defmodule StreamshoreWeb.VideoController do
 
   def create(conn, params) do
     room = params["room_id"]
+
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), room) do
-      {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
+
       {:ok, user, anon, perm} ->
         if perm >= RoomController.queue_perm(room) do
           if RoomController.anon_queue?(room) || !anon do
@@ -28,7 +31,9 @@ defmodule StreamshoreWeb.VideoController do
 
   def update(conn, params) do
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["room_id"]) do
-      {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
+
       {:ok, _user, _anon, perm} ->
         if perm >= PermissionLevel.manager() do
           QueueManager.move_to_front(params["room_id"], params["id"])
@@ -41,7 +46,9 @@ defmodule StreamshoreWeb.VideoController do
 
   def delete(conn, params) do
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["room_id"]) do
-      {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
+
       {:ok, _user, _anon, perm} ->
         if perm >= PermissionLevel.manager() do
           QueueManager.remove_from_queue(params["room_id"], params["id"])
@@ -51,5 +58,4 @@ defmodule StreamshoreWeb.VideoController do
         end
     end
   end
-
 end
