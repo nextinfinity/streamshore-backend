@@ -27,7 +27,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
         data =
           HTTPoison.get!(
             "https://www.googleapis.com/youtube/v3/videos?id=" <>
-              id <> "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
+              id <> "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
           )
 
         body = Enum.at(Poison.decode!(data.body)["items"], 0)
@@ -68,7 +68,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
                   HTTPoison.get!(
                     "https://www.googleapis.com/youtube/v3/videos?id=" <>
                       video <>
-                      "&key=AIzaSyBWO0zsG8H5Uf4PTXMVPvTNNUxp__cTMO0&part=snippet,contentDetails"
+                      "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
                   )
 
                 body = Enum.at(Poison.decode!(data.body)["items"], 0)
