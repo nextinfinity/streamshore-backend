@@ -2,6 +2,8 @@
 
 This is the backend for Streamshore, a web application for synchronized YouTube video playback. Streamshore's backend is written in Elixir, and contains support for video playback syncing, live chat, rooms, accounts, and more.
 
+Documentation for this repository is a work in progress.
+
 #### [Frontend Repository](https://github.com/sethmaxwl/streamshore)
 
 ## Running
