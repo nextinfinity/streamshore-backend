@@ -17,48 +17,73 @@ defmodule StreamshoreWeb.UserController do
 
   def index(conn, _params) do
     case Guardian.get_user_and_admin(Guardian.token_from_conn(conn)) do
-      {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
+
       {:ok, _user, _anon, admin} ->
         if admin do
-          query = from u in User, select: %{username: u.username, email: u.email, room: u.room, admin: u.admin, verify_token: u.verify_token}
+          query =
+            from u in User,
+              select: %{
+                username: u.username,
+                email: u.email,
+                room: u.room,
+                admin: u.admin,
+                verify_token: u.verify_token
+              }
+
           users = Repo.all(query)
           json(conn, users)
-        else 
+        else
           json(conn, %{error: "Insufficient permission"})
         end
     end
-
   end
 
   def create(conn, params) do
     password = params["password"]
     valid_pass = User.valid_password(password)
+
     if !valid_pass do
       json(conn, %{error: "password: password is invalid"})
     else
       verify_token = SessionController.create_token("Verify-" <> params["username"], false)
       params = params |> Map.put("verify_token", verify_token)
+
       successful =
-      %Streamshore.User{}
-      |> User.changeset(params)
-      |> Repo.insert()
+        %Streamshore.User{}
+        |> User.changeset(params)
+        |> Repo.insert()
 
       case successful do
-        {:ok, _schema}->
-          EmailController.send_email(params["email"], "Verify your email!", "https://streamshore.tv/verify?user=" <> params["username"] <> "&token=" <> verify_token)
+        {:ok, _schema} ->
+          EmailController.send_email(
+            params["email"],
+            "Verify your email!",
+            "https://streamshore.tv/verify?user=" <>
+              params["username"] <> "&token=" <> verify_token
+          )
+
           json(conn, %{})
 
-      {:error, changeset}->
-        errors = Util.convert_changeset_errors(changeset)
-        key = Enum.at(Map.keys(errors), 0)
-        err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-        json(conn, %{error: String.capitalize(err)})
+        {:error, changeset} ->
+          errors = Util.convert_changeset_errors(changeset)
+          key = Enum.at(Map.keys(errors), 0)
+          err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
+          json(conn, %{error: String.capitalize(err)})
       end
     end
   end
 
   def show(conn, params) do
-    user = Repo.one(from(u in User, where: [username: ^params["id"]], select: %{username: u.username, room: u.room}))
+    user =
+      Repo.one(
+        from(u in User,
+          where: [username: ^params["id"]],
+          select: %{username: u.username, room: u.room}
+        )
+      )
+
     user = Map.put(user, :online, user[:room] != nil)
     json(conn, user)
   end
@@ -66,69 +91,102 @@ defmodule StreamshoreWeb.UserController do
   def update(conn, params) do
     cond do
       params["resend_verification"] ->
-        user = case Repo.get_by(User, email: params["id"]) do
-          nil -> Repo.get_by(User, username: params["id"])
-          user -> user
-        end
+        user =
+          case Repo.get_by(User, email: params["id"]) do
+            nil -> Repo.get_by(User, username: params["id"])
+            user -> user
+          end
+
         case user do
-          nil -> json(conn, %{error: "User not found"})
+          nil ->
+            json(conn, %{error: "User not found"})
+
           schema ->
             case schema.verify_token do
-              nil -> json(conn, %{error: "Email already verified"})
+              nil ->
+                json(conn, %{error: "Email already verified"})
+
               token ->
-                EmailController.send_email(schema.email, "Verify your email!", "https://streamshore.tv/verify?user=" <> schema.username <> "&token=" <> token)
+                EmailController.send_email(
+                  schema.email,
+                  "Verify your email!",
+                  "https://streamshore.tv/verify?user=" <> schema.username <> "&token=" <> token
+                )
+
                 json(conn, %{})
             end
         end
 
       params["reset_password"] ->
         case User |> Repo.get_by(email: params["id"]) do
-          nil -> json(conn, %{error: "User not found"})
+          nil ->
+            json(conn, %{error: "User not found"})
+
           schema ->
             reset_token = SessionController.create_token("Reset-" <> schema.username, false)
-            EmailController.send_email(params["id"], "Reset your password!", "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> reset_token)
+
+            EmailController.send_email(
+              params["id"],
+              "Reset your password!",
+              "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> reset_token
+            )
+
             schema
             |> User.changeset(%{reset_token: reset_token})
             |> Repo.update()
+
             json(conn, %{})
         end
 
       params["verify_token"] ->
         case User |> Repo.get_by(username: params["id"]) do
-          nil -> json(conn, %{error: "User not found"})
+          nil ->
+            json(conn, %{error: "User not found"})
+
           schema ->
             token = params["verify_token"]
+
             case schema.verify_token do
-              nil -> json(conn, %{error: "Email already verified"})
+              nil ->
+                json(conn, %{error: "Email already verified"})
+
               ^token ->
                 schema
                 |> User.changeset(%{verify_token: nil})
                 |> Repo.update()
+
                 json(conn, %{})
-              _ -> json(conn, %{error: "Invalid token"})
+
+              _ ->
+                json(conn, %{error: "Invalid token"})
             end
         end
 
       params["password"] ->
         case Guardian.get_user(Guardian.token_from_conn(conn)) do
-          {:error, error} -> json(conn, %{error: error})
+          {:error, error} ->
+            json(conn, %{error: error})
+
           {:ok, user, anon} ->
             username = params["id"]
+
             if !anon do
               if user == username || user == "Reset-" <> username do
                 user_entry = User |> Repo.get_by(username: username)
                 password = params["password"]
                 valid_pass = User.valid_password(password)
+
                 if !valid_pass do
                   json(conn, %{error: "password: password is invalid"})
                 else
                   changeset = User.changeset(user_entry, %{password: password, reset_token: nil})
                   successful = Repo.update(changeset)
+
                   case successful do
-                    {:ok, _schema}->
+                    {:ok, _schema} ->
                       json(conn, %{})
 
-                    {:error, _changeset}->
+                    {:error, _changeset} ->
                       # TODO: error msg
                       json(conn, %{error: ""})
                   end
@@ -141,7 +199,8 @@ defmodule StreamshoreWeb.UserController do
             end
         end
 
-      true -> json(conn, %{error: "No valid options specified"})
+      true ->
+        json(conn, %{error: "No valid options specified"})
     end
   end
 
@@ -149,6 +208,7 @@ defmodule StreamshoreWeb.UserController do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:ok, user, anon} ->
         username = params["id"]
+
         if user == username && !anon do
           query = from(f in Favorites, where: f.user == ^user)
           successful1 = Repo.delete_all(query)
@@ -156,7 +216,7 @@ defmodule StreamshoreWeb.UserController do
           successful2 = Repo.delete_all(query)
           query = from r in Room, where: r.owner == ^user, select: %{name: r.name}
           list = Repo.all(query)
-          rooms = list |> Enum.map(fn a-> a.name end)
+          rooms = list |> Enum.map(fn a -> a.name end)
           query = from(f in Favorites, where: f.room in ^rooms)
           successful7 = Repo.delete_all(query)
           query = from(r in Room, where: r.owner == ^user)
@@ -169,18 +229,21 @@ defmodule StreamshoreWeb.UserController do
           successful6 = Repo.delete_all(query)
           user_entry = User |> Repo.get_by(username: username)
           successful8 = Repo.delete(user_entry)
-          case successful1 && successful2 && successful3 && successful4 && successful5 && successful6 && successful7 && successful8 do
-            {:ok, _schema}->
+
+          case successful1 && successful2 && successful3 && successful4 && successful5 &&
+                 successful6 && successful7 && successful8 do
+            {:ok, _schema} ->
               json(conn, %{})
 
-            {:error, _changeset}->
+            {:error, _changeset} ->
               json(conn, %{error: "Unable to delete user"})
           end
         else
           json(conn, %{error: "Insufficient permission"})
         end
 
-        {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
     end
   end
 
@@ -191,16 +254,20 @@ defmodule StreamshoreWeb.UserController do
 
   def set_room(user, room) do
     case Repo.get_by(User, %{username: user}) do
-      nil -> nil
-      schema -> schema
-                |> User.changeset(%{room: room})
-                |> Repo.update()
+      nil ->
+        nil
+
+      schema ->
+        schema
+        |> User.changeset(%{room: room})
+        |> Repo.update()
     end
   end
 
   def get_admin(user) do
     query = from u in User, where: u.username == ^user, select: u.admin
     admin = Repo.one(query)
+
     if admin == 1 do
       true
     else

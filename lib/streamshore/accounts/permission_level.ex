@@ -1,5 +1,4 @@
 defmodule Streamshore.PermissionLevel do
-
   def owner do
     100
   end
@@ -23,5 +22,4 @@ defmodule Streamshore.PermissionLevel do
   def banned do
     0
   end
-
 end

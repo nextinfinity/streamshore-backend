@@ -19,27 +19,31 @@ defmodule StreamshoreWeb.PlaylistController do
 
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
-      {:error, error} -> json(conn, %{error: error})
+      {:error, error} ->
+        json(conn, %{error: error})
+
       {:ok, _user, anon} ->
         case anon do
           false ->
             name = params["name"]
             owner = params["user_id"]
-            if !(Playlist |> Repo.get_by(name: name, owner: owner)) do 
+
+            if !(Playlist |> Repo.get_by(name: name, owner: owner)) do
               changeset = Playlist.changeset(%Playlist{}, %{name: name, owner: owner})
               successful = Repo.insert(changeset)
 
               case successful do
-                {:ok, _schema}->
+                {:ok, _schema} ->
                   json(conn, %{})
 
-                {:error, _changeset}->
+                {:error, _changeset} ->
                   # TODO: error msg
                   json(conn, %{error: ""})
               end
-            else 
+            else
               json(conn, %{error: "Playlist already exists"})
             end
+
           true ->
             json(conn, %{error: "You must be logged in to create a playlist"})
         end
@@ -51,20 +55,23 @@ defmodule StreamshoreWeb.PlaylistController do
     playlist = params["id"]
     owner = params["user_id"]
     relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
-    if relation do 
+
+    if relation do
       changeset = Playlist.changeset(relation, %{name: name, owner: owner})
       successful = Repo.update(changeset)
+
       from(v in PlaylistVideo, where: v.name == ^playlist, update: [set: [name: ^name]])
       |> Repo.update_all([])
+
       case successful do
-        {:ok, _schema}->
+        {:ok, _schema} ->
           json(conn, %{})
 
-        {:error, _changeset}->
+        {:error, _changeset} ->
           # TODO: error msg
           json(conn, %{error: ""})
       end
-    else 
+    else
       json(conn, %{error: "Playlist doesn't exists"})
     end
   end
@@ -77,14 +84,14 @@ defmodule StreamshoreWeb.PlaylistController do
     successful1 = Repo.delete_all(query)
     relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
     successful2 = Repo.delete(relation)
+
     case successful1 && successful2 do
-      {:ok, _schema}->
+      {:ok, _schema} ->
         json(conn, %{})
 
-      {:error, _changeset}->
-          # TODO: error msg
-          json(conn, %{error: ""})
+      {:error, _changeset} ->
+        # TODO: error msg
+        json(conn, %{error: ""})
     end
   end
-
 end

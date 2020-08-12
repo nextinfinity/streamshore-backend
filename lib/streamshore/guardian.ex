@@ -9,19 +9,21 @@ defmodule Streamshore.Guardian do
     {:ok, sub}
   end
 
-#  def subject_for_token(_, _) do
-#    {:error, :reason_for_error}
-#  end
+  #  def subject_for_token(_, _) do
+  #    {:error, :reason_for_error}
+  #  end
 
   def resource_from_claims(claims) do
     user = claims["sub"]
     anon = claims["anon"]
     resource = %{user: user, anon: anon}
-    {:ok,  resource}
+    {:ok, resource}
   end
 
   def token_from_conn(conn) do
-    case Enum.find(conn.req_headers, fn {key, _value} -> String.downcase(key) == "authorization" end) do
+    case Enum.find(conn.req_headers, fn {key, _value} ->
+           String.downcase(key) == "authorization"
+         end) do
       {_, "Bearer " <> token} -> token
       _ -> nil
     end
@@ -29,10 +31,14 @@ defmodule Streamshore.Guardian do
 
   def get_user(token) do
     case token do
-      nil -> {:error, "No valid token provided"}
+      nil ->
+        {:error, "No valid token provided"}
+
       token ->
         case decode_and_verify(token) do
-          {:error, _error} -> {:error, "Invalid token"}
+          {:error, _error} ->
+            {:error, "Invalid token"}
+
           {:ok, claims} ->
             {:ok, claims["sub"], claims["anon"]}
         end
@@ -41,10 +47,14 @@ defmodule Streamshore.Guardian do
 
   def get_user_and_permission(token, room) do
     case token do
-      nil -> {:error, "No valid token provided"}
+      nil ->
+        {:error, "No valid token provided"}
+
       token ->
         case get_user(token) do
-          {:error, error} -> {:error, error}
+          {:error, error} ->
+            {:error, error}
+
           {:ok, user, anon} ->
             perm = PermissionController.get_perm(room, user)
             {:ok, user, anon, perm}
@@ -52,12 +62,16 @@ defmodule Streamshore.Guardian do
     end
   end
 
-   def get_user_and_admin(token) do
+  def get_user_and_admin(token) do
     case token do
-      nil -> {:error, "No valid token provided"}
+      nil ->
+        {:error, "No valid token provided"}
+
       token ->
         case get_user(token) do
-          {:error, error} -> {:error, error}
+          {:error, error} ->
+            {:error, error}
+
           {:ok, user, anon} ->
             admin = UserController.get_admin(user)
             {:ok, user, anon, admin}
@@ -65,7 +79,7 @@ defmodule Streamshore.Guardian do
     end
   end
 
-#  def resource_from_claims(_claims) do
-#    {:error, :reason_for_error}
-#  end
+  #  def resource_from_claims(_claims) do
+  #    {:error, :reason_for_error}
+  #  end
 end

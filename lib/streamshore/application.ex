@@ -10,7 +10,7 @@ defmodule Streamshore.Application do
     children = [
       # Start the Ecto repository
       Streamshore.Repo,
-      
+
       # Start the endpoint when the application starts
       StreamshoreWeb.Endpoint,
       # Starts a worker by calling: Streamshore.Worker.start_link(arg)
