@@ -7,7 +7,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   alias Streamshore.Guardian
 
   def index(conn, params) do
-    # TODO: Add fix for youtube video being valid (i.e. if video was valid but removed from youtube)
+    # TODO: Add fix for youtube video being invalid (i.e. if video was valid but removed from youtube)
     user = params["user_id"]
     playlist = params["playlist_id"]
 
@@ -88,8 +88,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
                       json(conn, %{})
 
                     {:error, _changeset} ->
-                      # TODO: error msg
-                      json(conn, %{error: ""})
+                      json(conn, %{error: "Unable to create video in database"})
                   end
                 else
                   json(conn, %{error: "Invalid youtube video"})
@@ -123,8 +122,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
         json(conn, %{})
 
       {:error, _changeset} ->
-        # TODO: error msg
-        json(conn, %{error: ""})
+        json(conn, %{error: "Unable to delete video from database"})
     end
   end
 end

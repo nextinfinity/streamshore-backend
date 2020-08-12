@@ -177,7 +177,7 @@ defmodule StreamshoreWeb.UserController do
                 valid_pass = User.valid_password(password)
 
                 if !valid_pass do
-                  json(conn, %{error: "password: password is invalid"})
+                  json(conn, %{error: "Password is invalid"})
                 else
                   changeset = User.changeset(user_entry, %{password: password, reset_token: nil})
                   successful = Repo.update(changeset)
@@ -187,8 +187,7 @@ defmodule StreamshoreWeb.UserController do
                       json(conn, %{})
 
                     {:error, _changeset} ->
-                      # TODO: error msg
-                      json(conn, %{error: ""})
+                      json(conn, %{error: "Unable to save new password to database"})
                   end
                 end
               else

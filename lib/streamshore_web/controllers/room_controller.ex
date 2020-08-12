@@ -227,8 +227,7 @@ defmodule StreamshoreWeb.RoomController do
               json(conn, %{})
 
             {:error, _changeset} ->
-              # TODO: error msg
-              json(conn, %{error: ""})
+              json(conn, %{error: "Unable to delete room from database"})
           end
         else
           json(conn, %{error: "Insufficient permission"})

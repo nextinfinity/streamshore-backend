@@ -66,8 +66,7 @@ defmodule StreamshoreWeb.FavoriteController do
                     json(conn, %{})
 
                   {:error, _changeset} ->
-                    # TODO: error msg
-                    json(conn, %{error: ""})
+                    json(conn, %{error: "Unable to create favorite in database"})
                 end
               else
                 json(conn, %{error: "Room is already a favorite room"})
@@ -93,8 +92,7 @@ defmodule StreamshoreWeb.FavoriteController do
         json(conn, %{})
 
       {:error, _changeset} ->
-        # TODO: error msg
-        json(conn, %{error: ""})
+        json(conn, %{error: "Unable to delete favorite from database"})
     end
   end
 end

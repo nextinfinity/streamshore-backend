@@ -22,7 +22,6 @@ defmodule StreamshoreWeb.Router do
   scope "/api", StreamshoreWeb do
     pipe_through :api
 
-    # TODO: do we even need show here? trying to limit vulnerabilities
     resources "/session", SessionController, only: [:create, :delete]
 
     resources "/emails", EmailController, only: [:create]

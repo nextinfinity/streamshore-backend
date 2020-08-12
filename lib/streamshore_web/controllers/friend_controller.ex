@@ -60,8 +60,7 @@ defmodule StreamshoreWeb.FriendController do
                     json(conn, %{})
 
                   {:error, _changeset} ->
-                    # TODO: error msg
-                    json(conn, %{error: ""})
+                    json(conn, %{error: "Unable to create friend request in database"})
                 end
               end
             else
@@ -77,15 +76,13 @@ defmodule StreamshoreWeb.FriendController do
   def update(conn, params) do
     friender = params["user_id"]
     friendee = params["id"]
-
-    if params["accepted"] do
-      accepted = params["accepted"]
-
-      if accepted == "1" do
-        # change accepted to 1 for one user and insert the other user
-        relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-
-        if relation do
+    relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
+    if !relation do
+      json(conn, %{error: "Friendship not found"})
+    else
+      if params["accepted"] do
+        if params["accepted"] == "1" do
+          # change accepted to 1 for one user and insert the other user+
           changeset = Friends.changeset(relation, params)
           _successful = Repo.update(changeset)
 
@@ -94,7 +91,7 @@ defmodule StreamshoreWeb.FriendController do
               friender: friendee,
               friendee: friender,
               nickname: nil,
-              accepted: accepted
+              accepted: 1
             })
 
           successful = Repo.insert(changeset)
@@ -104,32 +101,22 @@ defmodule StreamshoreWeb.FriendController do
               json(conn, %{})
 
             {:error, _changeset} ->
-              # TODO: error msg
-              json(conn, %{error: ""})
+              json(conn, %{error: "Unable to create friendship in database"})
           end
         else
-          # TODO: error msg
-          json(conn, %{error: ""})
+          # delete the input
+          successful = Repo.delete(relation)
+
+          case successful do
+            {:ok, _schema} ->
+              json(conn, %{})
+
+            {:error, _changeset} ->
+              json(conn, %{error: "Unable to delete friendship from database"})
+          end
         end
       else
-        # delete the input
-        relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-        successful = Repo.delete(relation)
-
-        case successful do
-          {:ok, _schema} ->
-            json(conn, %{})
-
-          {:error, _changeset} ->
-            # TODO: error msg
-            json(conn, %{error: ""})
-        end
-      end
-    else
-      # update nickname
-      relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-
-      if relation do
+        # update nickname
         changeset = Friends.changeset(relation, params)
         successful = Repo.update(changeset)
 
@@ -138,12 +125,8 @@ defmodule StreamshoreWeb.FriendController do
             json(conn, %{})
 
           {:error, _changeset} ->
-            # TODO: error msg
-            json(conn, %{error: ""})
+            json(conn, %{error: "Unable to update friendship in database"})
         end
-      else
-        # TODO: error msg
-        json(conn, %{error: ""})
       end
     end
   end
@@ -161,8 +144,7 @@ defmodule StreamshoreWeb.FriendController do
         json(conn, %{})
 
       {:error, _changeset} ->
-        # TODO: error msg
-        json(conn, %{error: ""})
+        json(conn, %{error: "Unable to delete friendship from database"})
     end
   end
 end

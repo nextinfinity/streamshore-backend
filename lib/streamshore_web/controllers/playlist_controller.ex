@@ -37,8 +37,7 @@ defmodule StreamshoreWeb.PlaylistController do
                   json(conn, %{})
 
                 {:error, _changeset} ->
-                  # TODO: error msg
-                  json(conn, %{error: ""})
+                  json(conn, %{error: "Unable to create playlist in database"})
               end
             else
               json(conn, %{error: "Playlist already exists"})
@@ -68,16 +67,14 @@ defmodule StreamshoreWeb.PlaylistController do
           json(conn, %{})
 
         {:error, _changeset} ->
-          # TODO: error msg
-          json(conn, %{error: ""})
+          json(conn, %{error: "Unable to update playlist in database"})
       end
     else
-      json(conn, %{error: "Playlist doesn't exists"})
+      json(conn, %{error: "Playlist doesn't exist"})
     end
   end
 
   def delete(conn, params) do
-    # TODO: delete playlist
     playlist = params["id"]
     owner = params["user_id"]
     query = from(v in PlaylistVideo, where: v.owner == ^owner and v.name == ^playlist)
@@ -90,8 +87,7 @@ defmodule StreamshoreWeb.PlaylistController do
         json(conn, %{})
 
       {:error, _changeset} ->
-        # TODO: error msg
-        json(conn, %{error: ""})
+        json(conn, %{error: "Unable to delete playlist from database"})
     end
   end
 end
