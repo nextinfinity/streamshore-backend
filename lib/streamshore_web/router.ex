@@ -13,12 +13,6 @@ defmodule StreamshoreWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", StreamshoreWeb do
-    pipe_through :browser
-
-    get "/", PageController, :index
-  end
-
   scope "/api", StreamshoreWeb do
     pipe_through :api
 
