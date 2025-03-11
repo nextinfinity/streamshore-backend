@@ -22,7 +22,6 @@ defmodule StreamshoreWeb do
       use Phoenix.Controller, namespace: StreamshoreWeb
 
       import Plug.Conn
-      import StreamshoreWeb.Gettext
       alias StreamshoreWeb.Router.Helpers, as: Routes
     end
   end
@@ -40,7 +39,6 @@ defmodule StreamshoreWeb do
       use Phoenix.HTML
 
       import StreamshoreWeb.ErrorHelpers
-      import StreamshoreWeb.Gettext
       alias StreamshoreWeb.Router.Helpers, as: Routes
     end
   end
@@ -56,7 +54,6 @@ defmodule StreamshoreWeb do
   def channel do
     quote do
       use Phoenix.Channel
-      import StreamshoreWeb.Gettext
     end
   end
 

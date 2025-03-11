@@ -16,6 +16,7 @@ defmodule Streamshore.Application do
       # Starts a worker by calling: Streamshore.Worker.start_link(arg)
       Streamshore.Videos,
       Streamshore.QueueManager,
+      {Phoenix.PubSub, [name: Streamshore.PubSub, adapter: Phoenix.PubSub.PG2]},
       StreamshoreWeb.Presence
     ]
 

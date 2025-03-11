@@ -3,8 +3,8 @@ defmodule Streamshore.User do
   import Ecto.Changeset
 
   schema "users" do
-    field(:username, :string, unique: true)
-    field(:email, :string, unique: true)
+    field(:username, :string)
+    field(:email, :string)
     field(:password, :string)
     field(:room, :string)
     field(:admin, :integer, default: 0)
@@ -29,7 +29,7 @@ defmodule Streamshore.User do
   def hash_pass(changeset) do
     case changeset do
       %Ecto.Changeset{valid?: true, changes: %{password: pass}} ->
-        put_change(changeset, :password, Bcrypt.hash_pwd_salt(pass))
+        put_change(changeset, :password, Pbkdf2.hash_pwd_salt(pass))
 
       _ ->
         changeset

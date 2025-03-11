@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # Configure your database
 # Dev password is deliberately insecure and should NOT be used for production.

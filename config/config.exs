@@ -1,11 +1,11 @@
 # This file is responsible for configuring your application
-# and its dependencies with the aid of the Mix.Config module.
+# and its dependencies with the aid of the Config module.
 #
 # This configuration file is loaded before any dependency and
 # is restricted to this project.
 
 # General application configuration
-use Mix.Config
+import Config
 
 config :streamshore,
   ecto_repos: [Streamshore.Repo]
@@ -14,8 +14,7 @@ config :streamshore,
 config :streamshore, StreamshoreWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "QrqZj1palDcW+pPZm346iKQkCYq4JvMK7WoSCRaT9T/E4FhHAY4jVX8fPXmabd/z",
-  render_errors: [view: StreamshoreWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Streamshore.PubSub, adapter: Phoenix.PubSub.PG2],
+  pubsub_server: Streamshore.PubSub,
   live_view: [signing_salt: "n76/WXj5"]
 
 config :streamshore, Streamshore.Guardian,
