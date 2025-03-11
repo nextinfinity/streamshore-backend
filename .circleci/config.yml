@@ -2,24 +2,16 @@
 #
 # Check https://circleci.com/docs/2.0/language-elixir/ for more details
 version: 2.1
-orbs:
-  aws-ecr: circleci/aws-ecr@6.7.1
-  aws-ecs: circleci/aws-ecs@1.1.0
 
 jobs:
   test:
     docker:
       # specify the version here
-      - image: circleci/elixir:1.10.1
-      - image: circleci/mysql:8.0.19
+      - image: cimg/elixir:1.18-erlang-26.2.1
+      - image: cimg/mysql:8.0
         environment:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: streamshore_test
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
 
     working_directory: ~/repo
     steps:
@@ -44,21 +36,6 @@ jobs:
       - run: mix test
 
 workflows:
-  build-and-deploy:
+  commit:
     jobs:
       - test
-      - aws-ecr/build-and-push-image:
-          filters:
-            branches:
-              only: master
-          requires:
-            - test
-          repo: streamshore
-          tag: '${CIRCLE_SHA1}'
-          extra-build-args: "--build-arg DB=$DATABASE_URL --build-arg SECRET=$SECRET_KEY_BASE --build-arg DOMAIN=$DOMAIN --build-arg FRONTEND=$FRONTEND --build-arg SENDGRID_KEY=$SENDGRID_KEY --build-arg YOUTUBE_KEY=$YOUTUBE_KEY --build-arg GUARDIAN_SECRET=$GUARDIAN_SECRET"
-      - aws-ecs/deploy-service-update:
-          requires:
-            - aws-ecr/build-and-push-image
-          family: 'streamshore'
-          cluster-name: 'streamshore'
-          container-image-name-updates: 'container=streamshore,tag=${CIRCLE_SHA1}'
