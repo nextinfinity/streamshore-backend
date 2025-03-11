@@ -11,7 +11,6 @@ Documentation for this repository is a work in progress.
 **The environment variable YOUTUBE_KEY must be set to a Google API key with YouTube access for Streamshore to run.**
 
 In order to run in production, the following additional environment variables must be set:
-- AWS_ACCESS_KEY_ID, AWS_ECR_ACCOUNT_URL, AWS_REGION, and AWS_SECRET_ACCESS_KEY set to AWS credentials (ECR and ECS used).
 - DATABASE_URL	set to the URL of a MySQL database login, formatted as ecto://USER:PASS@HOST/DATABASE
 - DOMAIN and FRONTEND set to the backend and frontend domains, respectively
 - GUARDIAN_SECRET set to the secret JWT key
