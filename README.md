@@ -1,4 +1,4 @@
-# Streamshore Backend [![CircleCI](https://circleci.com/gh/nextinfinity/streamshore-backend.svg?style=shield&circle-token=04368b5676827c2ede46717553395b3a9f2e0796)](https://circleci.com/gh/nextinfinity/streamshore-backend)
+# Streamshore Backend [![CircleCI](https://dl.circleci.com/status-badge/img/gh/nextinfinity/streamshore-backend/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/nextinfinity/streamshore-backend/tree/master)
 
 This is the backend for Streamshore, a web application for synchronized YouTube video playback. Streamshore's backend is written in Elixir, and contains support for video playback syncing, live chat, rooms, accounts, and more.
 
