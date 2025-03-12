@@ -25,12 +25,12 @@ defmodule StreamshoreWeb.PlaylistVideoController do
         id = item
 
         data =
-          HTTPoison.get!(
+          Req.get!(
             "https://www.googleapis.com/youtube/v3/videos?id=" <>
               id <> "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
           )
 
-        body = Enum.at(Poison.decode!(data.body)["items"], 0)
+        body = Enum.at(data.body["items"], 0)
 
         if body do
           title = body["snippet"]["title"]
@@ -65,13 +65,13 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
               if !relation2 do
                 data =
-                  HTTPoison.get!(
+                  Req.get!(
                     "https://www.googleapis.com/youtube/v3/videos?id=" <>
                       video <>
                       "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
                   )
 
-                body = Enum.at(Poison.decode!(data.body)["items"], 0)
+                body = Enum.at(data.body["items"], 0)
 
                 if body do
                   changeset =

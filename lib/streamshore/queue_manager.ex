@@ -41,12 +41,12 @@ defmodule Streamshore.QueueManager do
 
     if allow do
       data =
-        HTTPoison.get!(
+        Req.get!(
           "https://www.googleapis.com/youtube/v3/videos?id=" <>
             id <> "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
         )
 
-      body = Enum.at(Poison.decode!(data.body)["items"], 0)
+      body = Enum.at(data.body["items"], 0)
 
       if body do
         title = body["snippet"]["title"]
