@@ -8,7 +8,7 @@ youtube_key = System.get_env("YOUTUBE_KEY") ||
 
 # Database config
 database_test_suffix = if Mix.env() == :test do "_test" else "" end
-database_url = (System.get_env("DATABASE_URL") || "ecto://root:password@localhost/") <> database_test_suffix
+database_url = (System.get_env("DATABASE_URL") || "ecto://root:password@localhost/streamshore") <> database_test_suffix
 database_pool_size = String.to_integer(System.get_env("DATABASE_POOL_SIZE") || "10")
 
 # HTTP endpoint config
