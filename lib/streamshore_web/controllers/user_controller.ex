@@ -48,7 +48,9 @@ defmodule StreamshoreWeb.UserController do
       json(conn, %{error: "password: password is invalid"})
     else
       verify_token = SessionController.create_token("Verify-" <> params["username"], false)
-      params = params |> Map.put("verify_token", verify_token)
+      if System.get_env("EMAIL_KEY") && System.get_env("EMAIL_ADDRESS") do
+        ^params = params |> Map.put("verify_token", verify_token)
+      end
 
       successful =
         %Streamshore.User{}
