@@ -39,7 +39,6 @@ defmodule Streamshore.MixProject do
       {:ecto_sql, "~> 3.12"},
       {:myxql, "~> 0.7.1"},
       {:phoenix_html, "~> 4.2"},
-      {:phoenix_live_reload, "~> 1.5", only: :dev},
       {:jason, "~> 1.4"},
       {:plug_cowboy, "~> 2.7"},
       {:dictionary, github: "nextinfinity/dictionary"},
