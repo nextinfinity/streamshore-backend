@@ -34,6 +34,8 @@ jobs:
       - run: mix local.rebar --force
       - run: mix deps.get
       - run: mix test
+      - store_test_results:
+          path: output
 
 workflows:
   commit:

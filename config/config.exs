@@ -29,6 +29,15 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Test junit output configuration
+config :junit_formatter,
+      report_dir: "/output",
+      print_report_file: true,
+      prepend_project_name?: true,
+      include_filename?: true,
+      include_file_line?: true,
+      automatic_create_dir?: true
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

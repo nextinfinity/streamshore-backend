@@ -52,7 +52,8 @@ defmodule Streamshore.MixProject do
       {:timex, "~> 3.7"},
       {:uuid, "~> 1.1"},
       {:guardian, "~> 2.3"},
-      {:sendgrid, "~> 2.0"}
+      {:sendgrid, "~> 2.0"},
+      {:junit_formatter, "~> 3.4", only: [:test]}
     ]
   end
 
