@@ -4,7 +4,7 @@ defmodule FavoritesControllerTest do
   alias Streamshore.Guardian
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
 
     conn =
       conn

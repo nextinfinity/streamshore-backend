@@ -4,7 +4,7 @@ defmodule FriendsControllerTest do
   alias Streamshore.Guardian
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("Tester1", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("Tester1", %{anon: false})
 
     conn =
       conn
