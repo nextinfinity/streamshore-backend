@@ -35,7 +35,7 @@ jobs:
       - run: mix deps.get
       - run: mix test
       - store_test_results:
-          path: output
+          path: _build/test/lib/streamshore/output
 
 workflows:
   commit:

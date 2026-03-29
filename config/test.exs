@@ -9,7 +9,7 @@ config :logger, level: :warning
 
 # Test junit output configuration
 config :junit_formatter,
-  report_dir: "/output",
+  report_dir: Mix.Project.app_path() <> "/output",
   print_report_file: true,
   prepend_project_name?: true,
   include_filename?: true,
