@@ -5,7 +5,7 @@ defmodule Streamshore.User do
   schema "users" do
     field(:username, :string)
     field(:email, :string)
-    field(:password, :string)
+    field(:password, :string, redact: true)
     field(:room, :string)
     field(:admin, :integer, default: 0)
     field(:verify_token, :string, default: nil)

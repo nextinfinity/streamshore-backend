@@ -10,5 +10,6 @@ defmodule Streamshore.Playlist do
   def changeset(playlist, params \\ %{}) do
     playlist
     |> cast(params, [:name, :owner])
+    |> validate_required([:name, :owner])
   end
 end

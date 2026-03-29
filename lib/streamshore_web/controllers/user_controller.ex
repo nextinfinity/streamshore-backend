@@ -48,6 +48,7 @@ defmodule StreamshoreWeb.UserController do
       json(conn, %{error: "password: password is invalid"})
     else
       verify_token = SessionController.create_token("Verify-" <> params["username"], false)
+
       if System.get_env("EMAIL_KEY") && System.get_env("EMAIL_ADDRESS") do
         ^params = params |> Map.put("verify_token", verify_token)
       end
@@ -86,8 +87,13 @@ defmodule StreamshoreWeb.UserController do
         )
       )
 
-    user = Map.put(user, :online, user[:room] != nil)
-    json(conn, user)
+    case user do
+      nil ->
+        json(conn, %{error: "User not found"})
+
+      user ->
+        json(conn, Map.put(user, :online, user[:room] != nil))
+    end
   end
 
   def update(conn, params) do

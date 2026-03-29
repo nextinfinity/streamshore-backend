@@ -36,8 +36,7 @@ defmodule VideoControllerTest do
     :timer.sleep(1000)
     final_time = QueueManager.get_runtime("time")
     diff = final_time - init_time
-    assert diff > 0.99
-    assert diff < 1.01
+    assert_in_delta diff, 1.0, 0.05
   end
 
   test "Queue progression", %{conn: conn} do

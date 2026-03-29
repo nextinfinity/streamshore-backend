@@ -1,10 +1,10 @@
 defmodule StreamshoreWeb.PlaylistController do
   use StreamshoreWeb, :controller
   import Ecto.Query, only: [from: 2]
-  alias Streamshore.Repo
+  alias Streamshore.Guardian
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
-  alias Streamshore.Guardian
+  alias Streamshore.Repo
 
   def index(conn, params) do
     user = params["user_id"]
@@ -22,72 +22,109 @@ defmodule StreamshoreWeb.PlaylistController do
       {:error, error} ->
         json(conn, %{error: error})
 
-      {:ok, _user, anon} ->
-        case anon do
-          false ->
-            name = params["name"]
-            owner = params["user_id"]
+      {:ok, user, anon} ->
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to create a playlist"})
 
-            if !(Playlist |> Repo.get_by(name: name, owner: owner)) do
-              changeset = Playlist.changeset(%Playlist{}, %{name: name, owner: owner})
-              successful = Repo.insert(changeset)
+          user != params["user_id"] ->
+            json(conn, %{error: "Insufficient permission"})
+
+          Playlist |> Repo.get_by(name: params["name"], owner: params["user_id"]) ->
+            json(conn, %{error: "Playlist already exists"})
+
+          true ->
+            changeset =
+              Playlist.changeset(%Playlist{}, %{name: params["name"], owner: params["user_id"]})
+
+            case Repo.insert(changeset) do
+              {:ok, _schema} ->
+                json(conn, %{})
+
+              {:error, _changeset} ->
+                json(conn, %{error: "Unable to create playlist in database"})
+            end
+        end
+    end
+  end
+
+  def update(conn, params) do
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        json(conn, %{error: error})
+
+      {:ok, user, anon} ->
+        playlist = params["id"]
+        owner = params["user_id"]
+
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to update a playlist"})
+
+          user != owner ->
+            json(conn, %{error: "Insufficient permission"})
+
+          true ->
+            relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
+
+            if relation do
+              changeset = Playlist.changeset(relation, %{name: params["name"], owner: owner})
+              successful = Repo.update(changeset)
+
+              from(v in PlaylistVideo,
+                where: v.name == ^playlist,
+                update: [set: [name: ^params["name"]]]
+              )
+              |> Repo.update_all([])
 
               case successful do
                 {:ok, _schema} ->
                   json(conn, %{})
 
                 {:error, _changeset} ->
-                  json(conn, %{error: "Unable to create playlist in database"})
+                  json(conn, %{error: "Unable to update playlist in database"})
               end
             else
-              json(conn, %{error: "Playlist already exists"})
+              json(conn, %{error: "Playlist doesn't exist"})
             end
-
-          true ->
-            json(conn, %{error: "You must be logged in to create a playlist"})
         end
     end
   end
 
-  def update(conn, params) do
-    name = params["name"]
-    playlist = params["id"]
-    owner = params["user_id"]
-    relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
-
-    if relation do
-      changeset = Playlist.changeset(relation, %{name: name, owner: owner})
-      successful = Repo.update(changeset)
-
-      from(v in PlaylistVideo, where: v.name == ^playlist, update: [set: [name: ^name]])
-      |> Repo.update_all([])
-
-      case successful do
-        {:ok, _schema} ->
-          json(conn, %{})
-
-        {:error, _changeset} ->
-          json(conn, %{error: "Unable to update playlist in database"})
-      end
-    else
-      json(conn, %{error: "Playlist doesn't exist"})
-    end
-  end
-
   def delete(conn, params) do
-    playlist = params["id"]
-    owner = params["user_id"]
-    query = from(v in PlaylistVideo, where: v.owner == ^owner and v.name == ^playlist)
-    successful1 = Repo.delete_all(query)
-    relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
-    successful2 = Repo.delete(relation)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        json(conn, %{error: error})
 
-    case successful1 && successful2 do
-      {:ok, _schema} ->
-        json(conn, %{})
+      {:ok, user, anon} ->
+        playlist = params["id"]
+        owner = params["user_id"]
 
-      {:error, _changeset} ->
-        json(conn, %{error: "Unable to delete playlist from database"})
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to delete a playlist"})
+
+          user != owner ->
+            json(conn, %{error: "Insufficient permission"})
+
+          true ->
+            query = from(v in PlaylistVideo, where: v.owner == ^owner and v.name == ^playlist)
+            Repo.delete_all(query)
+
+            case Playlist |> Repo.get_by(name: playlist, owner: owner) do
+              nil ->
+                json(conn, %{error: "Playlist doesn't exist"})
+
+              relation ->
+                case Repo.delete(relation) do
+                  {:ok, _schema} ->
+                    json(conn, %{})
+
+                  {:error, _changeset} ->
+                    json(conn, %{error: "Unable to delete playlist from database"})
+                end
+            end
+        end
     end
   end
 end

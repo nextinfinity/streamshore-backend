@@ -1,13 +1,13 @@
 defmodule StreamshoreWeb.PlaylistVideoController do
   use StreamshoreWeb, :controller
   import Ecto.Query, only: [from: 2]
-  alias Streamshore.Repo
+  alias Streamshore.Guardian
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
-  alias Streamshore.Guardian
+  alias Streamshore.Repo
+  alias Streamshore.YouTube
 
   def index(conn, params) do
-    # TODO: Add fix for youtube video being invalid (i.e. if video was valid but removed from youtube)
     user = params["user_id"]
     playlist = params["playlist_id"]
 
@@ -17,28 +17,19 @@ defmodule StreamshoreWeb.PlaylistVideoController do
         select: %{video: v.video}
 
     list = Repo.all(query)
-    _video_list = %{videos: []}
     video_ids = list |> Enum.map(fn a -> a.video end)
 
     video_list =
       Enum.map(video_ids, fn item ->
-        id = item
+        case YouTube.fetch_video(item) do
+          {:ok, video} ->
+            [Map.take(video, [:id, :title, :channel, :thumbnail])]
 
-        data =
-          Req.get!(
-            "https://www.googleapis.com/youtube/v3/videos?id=" <>
-              id <> "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
-          )
-
-        body = Enum.at(data.body["items"], 0)
-
-        if body do
-          title = body["snippet"]["title"]
-          channel = body["snippet"]["channelTitle"]
-          thumbnail = body["snippet"]["thumbnails"]["high"]["url"]
-          _video = [%{id: id, title: title, channel: channel, thumbnail: thumbnail}]
+          {:error, _error} ->
+            nil
         end
       end)
+      |> Enum.reject(&is_nil/1)
 
     json(conn, video_list)
   end
@@ -52,56 +43,45 @@ defmodule StreamshoreWeb.PlaylistVideoController do
       {:error, error} ->
         json(conn, %{error: error})
 
-      {:ok, _user, anon} ->
-        case anon do
-          false ->
-            video = params["video"]
-            playlist = params["playlist_id"]
-            owner = params["user_id"]
-            relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
+      {:ok, user, anon} ->
+        video = params["video"]
+        playlist = params["playlist_id"]
+        owner = params["user_id"]
 
-            if relation do
-              relation2 = PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video)
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to add a video to a playlist"})
 
-              if !relation2 do
-                data =
-                  Req.get!(
-                    "https://www.googleapis.com/youtube/v3/videos?id=" <>
-                      video <>
-                      "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
-                  )
+          user != owner ->
+            json(conn, %{error: "Insufficient permission"})
 
-                body = Enum.at(data.body["items"], 0)
+          !(Playlist |> Repo.get_by(name: playlist, owner: owner)) ->
+            json(conn, %{error: "Playlist doesn't exists"})
 
-                if body do
-                  changeset =
-                    PlaylistVideo.changeset(%PlaylistVideo{}, %{
-                      name: playlist,
-                      owner: owner,
-                      video: video
-                    })
-
-                  successful = Repo.insert(changeset)
-
-                  case successful do
-                    {:ok, _schema} ->
-                      json(conn, %{})
-
-                    {:error, _changeset} ->
-                      json(conn, %{error: "Unable to create video in database"})
-                  end
-                else
-                  json(conn, %{error: "Invalid youtube video"})
-                end
-              else
-                json(conn, %{error: "Video is already in playlist"})
-              end
-            else
-              json(conn, %{error: "Playlist doesn't exists"})
-            end
+          PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video) ->
+            json(conn, %{error: "Video is already in playlist"})
 
           true ->
-            json(conn, %{error: "You must be logged in to add a video to a playlist"})
+            case YouTube.fetch_video(video) do
+              {:ok, _video} ->
+                changeset =
+                  PlaylistVideo.changeset(%PlaylistVideo{}, %{
+                    name: playlist,
+                    owner: owner,
+                    video: video
+                  })
+
+                case Repo.insert(changeset) do
+                  {:ok, _schema} ->
+                    json(conn, %{})
+
+                  {:error, _changeset} ->
+                    json(conn, %{error: "Unable to create video in database"})
+                end
+
+              {:error, _error} ->
+                json(conn, %{error: "Invalid youtube video"})
+            end
         end
     end
   end
@@ -111,18 +91,37 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   end
 
   def delete(conn, params) do
-    video = params["id"]
-    playlist = params["playlist_id"]
-    owner = params["user_id"]
-    relation = PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video)
-    successful = Repo.delete(relation)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        json(conn, %{error: error})
 
-    case successful do
-      {:ok, _schema} ->
-        json(conn, %{})
+      {:ok, user, anon} ->
+        video = params["id"]
+        playlist = params["playlist_id"]
+        owner = params["user_id"]
 
-      {:error, _changeset} ->
-        json(conn, %{error: "Unable to delete video from database"})
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to delete a video from a playlist"})
+
+          user != owner ->
+            json(conn, %{error: "Insufficient permission"})
+
+          true ->
+            case PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video) do
+              nil ->
+                json(conn, %{error: "Video doesn't exist in playlist"})
+
+              relation ->
+                case Repo.delete(relation) do
+                  {:ok, _schema} ->
+                    json(conn, %{})
+
+                  {:error, _changeset} ->
+                    json(conn, %{error: "Unable to delete video from database"})
+                end
+            end
+        end
     end
   end
 end

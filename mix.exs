@@ -5,7 +5,7 @@ defmodule Streamshore.MixProject do
     [
       app: :streamshore,
       version: "0.1.0",
-      elixir: "~> 1.5",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -41,7 +41,6 @@ defmodule Streamshore.MixProject do
       {:phoenix_html, "~> 4.2"},
       {:jason, "~> 1.4"},
       {:plug_cowboy, "~> 2.7"},
-      {:dictionary, github: "nextinfinity/dictionary"},
       {:plug, "~> 1.16"},
       {:corsica, "~> 2.1"},
       {:joken, "~> 2.6"},

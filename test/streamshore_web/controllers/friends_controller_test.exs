@@ -3,6 +3,13 @@ defmodule FriendsControllerTest do
 
   alias Streamshore.Guardian
 
+  defp authorized_conn(username) do
+    {:ok, token, _claims} = Guardian.encode_and_sign(username, %{anon: false})
+
+    build_conn()
+    |> put_req_header("authorization", "Bearer " <> token)
+  end
+
   setup %{conn: conn} do
     {:ok, token, _claims} = Guardian.encode_and_sign("Tester1", %{anon: false})
 
@@ -37,9 +44,13 @@ defmodule FriendsControllerTest do
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
     assert json_response(conn, 200) == %{}
+
+    conn2 = authorized_conn(friendee)
     # accept friend request
-    conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
-    assert json_response(conn, 200) == %{}
+    conn2 =
+      put(conn2, Routes.user_friend_path(conn2, :update, friendee, friender), %{accepted: "1"})
+
+    assert json_response(conn2, 200) == %{}
   end
 
   test "No existing user", %{conn: conn} do
@@ -83,9 +94,12 @@ defmodule FriendsControllerTest do
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
     assert json_response(conn, 200) == %{}
+    conn2 = authorized_conn(friendee)
     # accept friend request
-    conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
-    assert json_response(conn, 200) == %{}
+    conn2 =
+      put(conn2, Routes.user_friend_path(conn2, :update, friendee, friender), %{accepted: "1"})
+
+    assert json_response(conn2, 200) == %{}
     # get list of friends
     conn = get(conn, Routes.user_friend_path(conn, :index, friender))
 
@@ -129,9 +143,12 @@ defmodule FriendsControllerTest do
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
     assert json_response(conn, 200) == %{}
+    conn2 = authorized_conn(friendee)
     # accept friend request
-    conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
-    assert json_response(conn, 200) == %{}
+    conn2 =
+      put(conn2, Routes.user_friend_path(conn2, :update, friendee, friender), %{accepted: "1"})
+
+    assert json_response(conn2, 200) == %{}
     # get friends of 3rd user
     conn = get(conn, Routes.user_friend_path(conn, :index, tester3))
     assert json_response(conn, 200) == %{"friends" => [], "requests" => []}
@@ -161,9 +178,12 @@ defmodule FriendsControllerTest do
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
     assert json_response(conn, 200) == %{}
+    conn2 = authorized_conn(friendee)
     # accept friend request
-    conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
-    assert json_response(conn, 200) == %{}
+    conn2 =
+      put(conn2, Routes.user_friend_path(conn2, :update, friendee, friender), %{accepted: "1"})
+
+    assert json_response(conn2, 200) == %{}
     # set nickname
     conn =
       put(conn, Routes.user_friend_path(conn, :update, friender, friendee), %{
@@ -204,9 +224,12 @@ defmodule FriendsControllerTest do
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
     assert json_response(conn, 200) == %{}
+    conn2 = authorized_conn(friendee)
     # accept friend request
-    conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
-    assert json_response(conn, 200) == %{}
+    conn2 =
+      put(conn2, Routes.user_friend_path(conn2, :update, friendee, friender), %{accepted: "1"})
+
+    assert json_response(conn2, 200) == %{}
     # set nickname
     conn =
       put(conn, Routes.user_friend_path(conn, :update, friender, friendee), %{
@@ -254,9 +277,12 @@ defmodule FriendsControllerTest do
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
     assert json_response(conn, 200) == %{}
+    conn2 = authorized_conn(friendee)
     # accept friend request
-    conn = put(conn, Routes.user_friend_path(conn, :update, friendee, friender), %{accepted: "1"})
-    assert json_response(conn, 200) == %{}
+    conn2 =
+      put(conn2, Routes.user_friend_path(conn2, :update, friendee, friender), %{accepted: "1"})
+
+    assert json_response(conn2, 200) == %{}
     # set nickname
     conn =
       put(conn, Routes.user_friend_path(conn, :update, friender, friendee), %{
@@ -274,5 +300,19 @@ defmodule FriendsControllerTest do
              "friends" => [%{"friendee" => "Tester2", "nickname" => nil}],
              "requests" => []
            }
+  end
+
+  test "Users cannot create friend requests for another user", %{conn: conn} do
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "owner@test.com",
+        username: "Tester2",
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.user_friend_path(conn, :create, "Tester2"), %{friendee: "Tester1"})
+    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
   end
 end

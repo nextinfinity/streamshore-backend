@@ -11,6 +11,7 @@ defmodule Streamshore.Friends do
 
   def changeset(friend, params \\ %{}) do
     friend
-    |> cast(params, [:friender, :friendee, :nickname, :accepted])
+    |> cast(params, [:friender, :friendee, :nickname, :accepted], empty_values: [""])
+    |> validate_required([:friender, :friendee, :accepted])
   end
 end
