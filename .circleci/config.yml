@@ -39,8 +39,8 @@ jobs:
           name: Get dependencies
           command: mix deps.get
       - run: 
-          name: Compile files
-          command: mix compile
+          name: Compile test files
+          command: MIX_ENV=test mix compile
       - run: 
           name: Run tests
           command: mix test --no-compile
