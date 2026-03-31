@@ -4,11 +4,11 @@ defmodule Streamshore.Room do
   alias Streamshore.PermissionLevel
 
   schema "rooms" do
-    field :name, :string, unique: true
+    field :name, :string
     field :motd, :string, default: ""
     field :privacy, :integer
     field :owner, :string
-    field :route, :string, unique: true
+    field :route, :string
     field :thumbnail, :string, default: nil
     field :queue_level, :integer, default: PermissionLevel.user()
     field :anon_queue, :integer, default: 1

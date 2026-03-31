@@ -5,7 +5,7 @@ defmodule RoomControllerTest do
   alias Streamshore.Guardian
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
 
     conn =
       conn
@@ -181,7 +181,7 @@ defmodule RoomControllerTest do
   test "Removing a room you don't own", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "create"}
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true})
 
     conn2 =
       build_conn()

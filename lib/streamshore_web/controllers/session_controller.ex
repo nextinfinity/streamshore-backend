@@ -14,7 +14,7 @@ defmodule StreamshoreWeb.SessionController do
           user -> user
         end
 
-      if user && Bcrypt.verify_pass(params["password"], user.password) do
+      if user && Pbkdf2.verify_pass(params["password"], user.password) do
         case user.verify_token do
           nil ->
             json(conn, %{

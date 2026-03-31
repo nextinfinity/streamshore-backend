@@ -10,5 +10,6 @@ defmodule Streamshore.Favorites do
   def changeset(favorite, params \\ %{}) do
     favorite
     |> cast(params, [:user, :room])
+    |> validate_required([:user, :room])
   end
 end

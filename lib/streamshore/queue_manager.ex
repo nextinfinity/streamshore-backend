@@ -6,6 +6,7 @@ defmodule Streamshore.QueueManager do
   alias Streamshore.Repo
   alias Streamshore.Room
   alias Streamshore.Videos
+  alias Streamshore.YouTube
 
   def start_link(default \\ []) do
     GenServer.start_link(__MODULE__, default)
@@ -40,31 +41,8 @@ defmodule Streamshore.QueueManager do
       end
 
     if allow do
-      data =
-        HTTPoison.get!(
-          "https://www.googleapis.com/youtube/v3/videos?id=" <>
-            id <> "&key=" <> System.get_env("YOUTUBE_KEY") <> "&part=snippet,contentDetails"
-        )
-
-      body = Enum.at(Poison.decode!(data.body)["items"], 0)
-
-      if body do
-        title = body["snippet"]["title"]
-        channel = body["snippet"]["channelTitle"]
-        thumbnail = body["snippet"]["thumbnails"]["high"]["url"]
-        length = body["contentDetails"]["duration"]
-        length = Timex.Duration.to_seconds(Timex.Duration.parse!(length))
-
-        video = [
-          %{
-            id: id,
-            submittedBy: user,
-            title: title,
-            channel: channel,
-            thumbnail: thumbnail,
-            length: length
-          }
-        ]
+      with {:ok, video} <- YouTube.fetch_video(id) do
+        video = [Map.put(video, :submittedBy, user)]
 
         room_data = Map.put(room_data, :queue, room_data[:queue] ++ video)
         Videos.set(room, room_data)
@@ -76,7 +54,7 @@ defmodule Streamshore.QueueManager do
 
         :ok
       else
-        {:error, "Unable to retrieve video information."}
+        {:error, error} -> {:error, error}
       end
     else
       {:error, "You already have the maximum allowed amount of videos in the queue."}

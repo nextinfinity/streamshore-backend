@@ -5,7 +5,7 @@ defmodule UserControllerTest do
   alias Streamshore.Repo
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
 
     conn =
       conn
@@ -132,7 +132,7 @@ defmodule UserControllerTest do
       "UPDATE `streamshore_test`.`users` SET `verify_token` = NULL WHERE (`username` = 'Test Account')"
     )
 
-    {:ok, token, _claims} = Guardian.encode_and_sign("Test Account", %{anon: false, admin: true})
+    {:ok, token, _claims} = Guardian.encode_and_sign("Test Account", %{anon: false})
 
     conn2 =
       build_conn()

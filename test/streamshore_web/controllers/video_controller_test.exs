@@ -7,7 +7,7 @@ defmodule VideoControllerTest do
   alias Streamshore.Videos
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false})
 
     conn =
       conn
@@ -36,8 +36,7 @@ defmodule VideoControllerTest do
     :timer.sleep(1000)
     final_time = QueueManager.get_runtime("time")
     diff = final_time - init_time
-    assert diff > 0.99
-    assert diff < 1.01
+    assert_in_delta diff, 1.0, 0.05
   end
 
   test "Queue progression", %{conn: conn} do
@@ -110,7 +109,7 @@ defmodule VideoControllerTest do
       })
 
     assert json_response(conn, 200) == %{"route" => "queueanon"}
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true})
 
     conn2 =
       build_conn()

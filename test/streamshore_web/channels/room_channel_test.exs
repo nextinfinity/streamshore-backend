@@ -5,7 +5,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
   alias Streamshore.Guardian
 
   setup do
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false})
 
     conn =
       build_conn()
@@ -68,7 +68,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
   end
 
   test "no chat filter" do
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false})
 
     conn =
       build_conn()
@@ -87,7 +87,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
   end
 
   test "update chat filter" do
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false, admin: false})
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false})
 
     conn =
       build_conn()

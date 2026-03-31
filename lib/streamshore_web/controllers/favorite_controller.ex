@@ -50,49 +50,68 @@ defmodule StreamshoreWeb.FavoriteController do
       {:error, error} ->
         json(conn, %{error: error})
 
-      {:ok, _user, anon} ->
-        case anon do
-          false ->
-            room = params["room"]
-            user = params["user_id"]
+      {:ok, current_user, anon} ->
+        room = params["room"]
+        user = params["user_id"]
 
-            if Room |> Repo.get_by(route: room) do
-              if !(Favorites |> Repo.get_by(user: user, room: room)) do
-                changeset = Favorites.changeset(%Favorites{}, %{user: user, room: room})
-                successful = Repo.insert(changeset)
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to add a room to favorites"})
 
-                case successful do
-                  {:ok, _schema} ->
-                    json(conn, %{})
+          current_user != user ->
+            json(conn, %{error: "Insufficient permission"})
 
-                  {:error, _changeset} ->
-                    json(conn, %{error: "Unable to create favorite in database"})
-                end
-              else
-                json(conn, %{error: "Room is already a favorite room"})
-              end
-            else
-              json(conn, %{error: "Room does not exist"})
-            end
+          !(Room |> Repo.get_by(route: room)) ->
+            json(conn, %{error: "Room does not exist"})
+
+          Favorites |> Repo.get_by(user: user, room: room) ->
+            json(conn, %{error: "Room is already a favorite room"})
 
           true ->
-            json(conn, %{error: "You must be logged in to add a room to favorites"})
+            changeset = Favorites.changeset(%Favorites{}, %{user: user, room: room})
+
+            case Repo.insert(changeset) do
+              {:ok, _schema} ->
+                json(conn, %{})
+
+              {:error, _changeset} ->
+                json(conn, %{error: "Unable to create favorite in database"})
+            end
         end
     end
   end
 
   def delete(conn, params) do
-    room = params["id"]
-    user = params["user_id"]
-    relation = Favorites |> Repo.get_by(user: user, room: room)
-    successful = Repo.delete(relation)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        json(conn, %{error: error})
 
-    case successful do
-      {:ok, _schema} ->
-        json(conn, %{})
+      {:ok, current_user, anon} ->
+        room = params["id"]
+        user = params["user_id"]
 
-      {:error, _changeset} ->
-        json(conn, %{error: "Unable to delete favorite from database"})
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to remove a room from favorites"})
+
+          current_user != user ->
+            json(conn, %{error: "Insufficient permission"})
+
+          true ->
+            case Favorites |> Repo.get_by(user: user, room: room) do
+              nil ->
+                json(conn, %{error: "Favorite does not exist"})
+
+              relation ->
+                case Repo.delete(relation) do
+                  {:ok, _schema} ->
+                    json(conn, %{})
+
+                  {:error, _changeset} ->
+                    json(conn, %{error: "Unable to delete favorite from database"})
+                end
+            end
+        end
     end
   end
 end

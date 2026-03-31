@@ -13,5 +13,6 @@ defmodule Streamshore.Permission do
   def changeset(permission, params \\ %{}) do
     permission
     |> cast(params, [:username, :room, :permission])
+    |> validate_required([:username, :room, :permission])
   end
 end

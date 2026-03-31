@@ -1,26 +1,12 @@
-# This file is responsible for configuring your application
-# and its dependencies with the aid of the Mix.Config module.
-#
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
-
-# General application configuration
-use Mix.Config
+import Config
 
 config :streamshore,
   ecto_repos: [Streamshore.Repo]
 
 # Configures the endpoint
-config :streamshore, StreamshoreWeb.Endpoint,
-  url: [host: "localhost"],
-  secret_key_base: "QrqZj1palDcW+pPZm346iKQkCYq4JvMK7WoSCRaT9T/E4FhHAY4jVX8fPXmabd/z",
-  render_errors: [view: StreamshoreWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Streamshore.PubSub, adapter: Phoenix.PubSub.PG2],
-  live_view: [signing_salt: "n76/WXj5"]
+config :streamshore, StreamshoreWeb.Endpoint, pubsub_server: Streamshore.PubSub
 
-config :streamshore, Streamshore.Guardian,
-       issuer: "streamshore",
-       secret_key: "0CfBeMjI3pA3ZsZoV6EhZ0LgHDN/I46Nl/rUwWc15qbUmxCaOyaPiDMiQceWDPnP"
+config :streamshore, Streamshore.Guardian, issuer: "streamshore"
 
 # Configures Elixir's Logger
 config :logger, :console,

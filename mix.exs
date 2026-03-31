@@ -5,9 +5,9 @@ defmodule Streamshore.MixProject do
     [
       app: :streamshore,
       version: "0.1.0",
-      elixir: "~> 1.5",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+      compilers: Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
@@ -33,28 +33,25 @@ defmodule Streamshore.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.4.13"},
-      {:phoenix_pubsub, "~> 1.1"},
-      {:phoenix_ecto, "~> 4.0"},
-      {:ecto_sql, "~> 3.1"},
-      {:myxql, ">= 0.0.0"},
-      {:phoenix_html, "~> 2.11"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:gettext, "~> 0.11"},
-      {:jason, "~> 1.0"},
-      {:plug_cowboy, "~> 2.0"},
-      {:dictionary, github: "nextinfinity/dictionary"},
-      {:plug, "~> 1.0"},
-      {:corsica, "~> 1.0"},
-      {:joken, "~> 2.0-rc0"},
-      {:comeonin, "~> 5.1"},
-      {:bcrypt_elixir, "~> 2.0"},
-      {:httpoison, "~> 1.6"},
-      {:poison, "~> 3.1"},
-      {:timex, "~> 3.5"},
+      {:phoenix, "~> 1.7"},
+      {:phoenix_pubsub, "~> 2.1"},
+      {:phoenix_ecto, "~> 4.6"},
+      {:ecto_sql, "~> 3.12"},
+      {:myxql, "~> 0.7.1"},
+      {:phoenix_html, "~> 4.2"},
+      {:jason, "~> 1.4"},
+      {:plug_cowboy, "~> 2.7"},
+      {:plug, "~> 1.16"},
+      {:corsica, "~> 2.1"},
+      {:joken, "~> 2.6"},
+      {:comeonin, "~> 5.5"},
+      {:pbkdf2_elixir, "~> 2.3"},
+      {:req, "~> 0.5.8"},
+      {:timex, "~> 3.7"},
       {:uuid, "~> 1.1"},
-      {:guardian, "~> 2.0"},
-      {:sendgrid, "~> 2.0"}
+      {:guardian, "~> 2.3"},
+      {:sendgrid, "~> 2.0"},
+      {:junit_formatter, "~> 3.4", only: [:test]}
     ]
   end
 

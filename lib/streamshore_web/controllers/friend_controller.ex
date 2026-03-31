@@ -32,119 +32,136 @@ defmodule StreamshoreWeb.FriendController do
       {:error, error} ->
         json(conn, %{error: error})
 
-      {:ok, _user, anon} ->
-        case anon do
-          false ->
-            friender = params["user_id"]
-            friendee = params["friendee"]
-            nickname = nil
-            accepted = 0
+      {:ok, user, anon} ->
+        friender = params["user_id"]
+        friendee = params["friendee"]
 
-            if User |> Repo.get_by(username: friendee) do
-              if Friends |> Repo.get_by(friender: friendee, friendee: friender) ||
-                   Friends |> Repo.get_by(friender: friender, friendee: friendee) do
-                json(conn, %{error: "Friend connection already exists"})
-              else
-                changeset =
-                  Friends.changeset(%Friends{}, %{
-                    friender: friendee,
-                    friendee: friender,
-                    nickname: nickname,
-                    accepted: accepted
-                  })
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to add a friend"})
 
-                successful = Repo.insert(changeset)
+          user != friender ->
+            json(conn, %{error: "Insufficient permission"})
 
-                case successful do
-                  {:ok, _schema} ->
-                    json(conn, %{})
+          !(User |> Repo.get_by(username: friendee)) ->
+            json(conn, %{error: "User does not exist"})
 
-                  {:error, _changeset} ->
-                    json(conn, %{error: "Unable to create friend request in database"})
-                end
-              end
-            else
-              json(conn, %{error: "User does not exist"})
-            end
+          Friends |> Repo.get_by(friender: friendee, friendee: friender) ||
+              Friends |> Repo.get_by(friender: friender, friendee: friendee) ->
+            json(conn, %{error: "Friend connection already exists"})
 
           true ->
-            json(conn, %{error: "You must be logged in to add a friend"})
+            changeset =
+              Friends.changeset(%Friends{}, %{
+                friender: friendee,
+                friendee: friender,
+                nickname: nil,
+                accepted: 0
+              })
+
+            case Repo.insert(changeset) do
+              {:ok, _schema} ->
+                json(conn, %{})
+
+              {:error, _changeset} ->
+                json(conn, %{error: "Unable to create friend request in database"})
+            end
         end
     end
   end
 
   def update(conn, params) do
-    friender = params["user_id"]
-    friendee = params["id"]
-    relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-    if !relation do
-      json(conn, %{error: "Friendship not found"})
-    else
-      if params["accepted"] do
-        if params["accepted"] == "1" do
-          # change accepted to 1 for one user and insert the other user+
-          changeset = Friends.changeset(relation, params)
-          _successful = Repo.update(changeset)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        json(conn, %{error: error})
 
-          changeset =
-            Friends.changeset(%Friends{}, %{
-              friender: friendee,
-              friendee: friender,
-              nickname: nil,
-              accepted: 1
-            })
+      {:ok, user, anon} ->
+        friender = params["user_id"]
+        friendee = params["id"]
+        relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
 
-          successful = Repo.insert(changeset)
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to update a friendship"})
 
-          case successful do
-            {:ok, _schema} ->
-              json(conn, %{})
+          user != friender ->
+            json(conn, %{error: "Insufficient permission"})
 
-            {:error, _changeset} ->
-              json(conn, %{error: "Unable to create friendship in database"})
-          end
-        else
-          # delete the input
-          successful = Repo.delete(relation)
+          !relation ->
+            json(conn, %{error: "Friendship not found"})
 
-          case successful do
-            {:ok, _schema} ->
-              json(conn, %{})
+          params["accepted"] ->
+            if params["accepted"] == "1" do
+              _successful = relation |> Friends.changeset(params) |> Repo.update()
 
-            {:error, _changeset} ->
-              json(conn, %{error: "Unable to delete friendship from database"})
-          end
+              changeset =
+                Friends.changeset(%Friends{}, %{
+                  friender: friendee,
+                  friendee: friender,
+                  nickname: nil,
+                  accepted: 1
+                })
+
+              case Repo.insert(changeset) do
+                {:ok, _schema} ->
+                  json(conn, %{})
+
+                {:error, _changeset} ->
+                  json(conn, %{error: "Unable to create friendship in database"})
+              end
+            else
+              case Repo.delete(relation) do
+                {:ok, _schema} ->
+                  json(conn, %{})
+
+                {:error, _changeset} ->
+                  json(conn, %{error: "Unable to delete friendship from database"})
+              end
+            end
+
+          true ->
+            case relation |> Friends.changeset(params) |> Repo.update() do
+              {:ok, _schema} ->
+                json(conn, %{})
+
+              {:error, _changeset} ->
+                json(conn, %{error: "Unable to update friendship in database"})
+            end
         end
-      else
-        # update nickname
-        changeset = Friends.changeset(relation, params)
-        successful = Repo.update(changeset)
-
-        case successful do
-          {:ok, _schema} ->
-            json(conn, %{})
-
-          {:error, _changeset} ->
-            json(conn, %{error: "Unable to update friendship in database"})
-        end
-      end
     end
   end
 
   def delete(conn, params) do
-    friender = params["user_id"]
-    friendee = params["id"]
-    relation1 = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-    successful1 = Repo.delete(relation1)
-    relation2 = Friends |> Repo.get_by(friender: friendee, friendee: friender)
-    successful2 = Repo.delete(relation2)
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        json(conn, %{error: error})
 
-    case successful1 && successful2 do
-      {:ok, _schema} ->
-        json(conn, %{})
+      {:ok, user, anon} ->
+        friender = params["user_id"]
+        friendee = params["id"]
 
-      {:error, _changeset} ->
-        json(conn, %{error: "Unable to delete friendship from database"})
+        cond do
+          anon ->
+            json(conn, %{error: "You must be logged in to delete a friendship"})
+
+          user != friender ->
+            json(conn, %{error: "Insufficient permission"})
+
+          true ->
+            relation1 = Friends |> Repo.get_by(friender: friender, friendee: friendee)
+            relation2 = Friends |> Repo.get_by(friender: friendee, friendee: friender)
+
+            with {:ok, _schema} <- delete_if_present(relation1),
+                 {:ok, _schema} <- delete_if_present(relation2) do
+              json(conn, %{})
+            else
+              {:error, _changeset} ->
+                json(conn, %{error: "Unable to delete friendship from database"})
+            end
+        end
     end
   end
+
+  defp delete_if_present(nil), do: {:ok, nil}
+  defp delete_if_present(relation), do: Repo.delete(relation)
 end
