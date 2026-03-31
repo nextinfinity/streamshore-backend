@@ -27,6 +27,37 @@ defmodule UserControllerTest do
     assert json_response(conn, 200) == %{}
   end
 
+  test "Registering an account with email verification enabled", %{conn: conn} do
+    original_email_key = System.get_env("EMAIL_KEY")
+    original_email_address = System.get_env("EMAIL_ADDRESS")
+
+    System.put_env("EMAIL_KEY", "test-key")
+    System.put_env("EMAIL_ADDRESS", "noreply@example.com")
+
+    on_exit(fn ->
+      if original_email_key do
+        System.put_env("EMAIL_KEY", original_email_key)
+      else
+        System.delete_env("EMAIL_KEY")
+      end
+
+      if original_email_address do
+        System.put_env("EMAIL_ADDRESS", original_email_address)
+      else
+        System.delete_env("EMAIL_ADDRESS")
+      end
+    end)
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "Verify@Test.com",
+        username: "Verified User",
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+  end
+
   test "Cannot register duplicate user", %{conn: conn} do
     username = "Test Account"
 
@@ -46,7 +77,7 @@ defmodule UserControllerTest do
         password: "$Test123"
       })
 
-    assert json_response(conn, 200) == %{"error" => "Username has already been taken"}
+    assert json_response(conn, 422) == %{"error" => "Username has already been taken"}
   end
 
   test "Updating with valid password", %{conn: conn} do
@@ -77,7 +108,7 @@ defmodule UserControllerTest do
 
     assert json_response(conn, 200) == %{}
     conn = put(conn, Routes.user_path(conn, :update, username), %{password: "BadPass"})
-    assert json_response(conn, 200) == %{"error" => "Password is invalid"}
+    assert json_response(conn, 422) == %{"error" => "Password is invalid"}
   end
 
   test "Deleting account", %{conn: conn} do
@@ -107,7 +138,7 @@ defmodule UserControllerTest do
 
     assert json_response(conn, 200) == %{}
     conn = delete(conn, Routes.user_path(conn, :delete, username))
-    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
   test "Getting list of all users as admin", %{conn: conn} do
@@ -153,6 +184,6 @@ defmodule UserControllerTest do
 
   test "Getting list of all users as non-admin", %{conn: conn} do
     conn = get(conn, Routes.user_path(conn, :index))
-    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 end

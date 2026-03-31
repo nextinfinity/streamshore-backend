@@ -1,22 +1,22 @@
 defmodule StreamshoreWeb.RoomChannel do
   use StreamshoreWeb, :channel
 
+  alias Streamshore.Accounts
   alias Streamshore.Filter
-  alias StreamshoreWeb.PermissionController
   alias Streamshore.PermissionLevel
+  alias Streamshore.RoomPermissions
+  alias Streamshore.Rooms
   alias StreamshoreWeb.Presence
   alias Streamshore.QueueManager
-  alias StreamshoreWeb.RoomController
-  alias StreamshoreWeb.UserController
   alias Streamshore.Videos
 
   def join("room:" <> room, _payload, socket) do
-    case RoomController.get_room(room) do
+    case Rooms.get_room(room) do
       nil ->
         {:error, %{reason: "room does not exist"}}
 
       room ->
-        perm = PermissionController.get_perm(room.route, socket.assigns.user)
+        perm = RoomPermissions.get_perm(room.route, socket.assigns.user)
 
         if perm > PermissionLevel.banned() do
           send(self(), {:after_join, perm})
@@ -39,7 +39,7 @@ defmodule StreamshoreWeb.RoomChannel do
         online_at: inspect(System.system_time(:second))
       })
 
-    UserController.set_room(socket.assigns.user, room)
+    Accounts.set_room(socket.assigns.user, room)
     {:noreply, socket}
   end
 
@@ -57,7 +57,7 @@ defmodule StreamshoreWeb.RoomChannel do
 
   def handle_in("skip", _payload, socket) do
     "room:" <> room = socket.topic
-    perm = PermissionController.get_perm(room, socket.assigns.user)
+    perm = RoomPermissions.get_perm(room, socket.assigns.user)
 
     if perm >= PermissionLevel.manager() do
       QueueManager.play_next(room)
@@ -70,15 +70,15 @@ defmodule StreamshoreWeb.RoomChannel do
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
     "room:" <> room = socket.topic
-    perm = PermissionController.get_perm(room, socket.assigns.user)
+    perm = RoomPermissions.get_perm(room, socket.assigns.user)
 
-    if perm >= RoomController.chat_perm(room) do
-      if RoomController.anon_chat?(room) || !socket.assigns.anon do
+    if perm >= Rooms.chat_perm(room) do
+      if Rooms.anon_chat?(room) || !socket.assigns.anon do
         time = Timex.to_unix(Timex.now())
         uuid = UUID.uuid4()
 
         payload =
-          if RoomController.filter_enabled?(room) do
+          if Rooms.filter_enabled?(room) do
             Map.put(payload, "msg", filter(payload["msg"]))
           else
             payload
@@ -99,9 +99,20 @@ defmodule StreamshoreWeb.RoomChannel do
     {:noreply, socket}
   end
 
-  def handle_in("delete", payload, socket) do
-    broadcast(socket, "delete", payload)
-    {:noreply, socket}
+  def handle_in("delete", %{"uuid" => uuid} = payload, socket) when is_binary(uuid) do
+    "room:" <> room = socket.topic
+    perm = RoomPermissions.get_perm(room, socket.assigns.user)
+
+    if perm >= PermissionLevel.manager() do
+      broadcast(socket, "delete", payload)
+      {:reply, :ok, socket}
+    else
+      {:reply, {:error, %{error: "Insufficient permission"}}, socket}
+    end
+  end
+
+  def handle_in("delete", _payload, socket) do
+    {:reply, {:error, %{error: "Invalid payload"}}, socket}
   end
 
   defp filter(msg) do
@@ -111,6 +122,6 @@ defmodule StreamshoreWeb.RoomChannel do
   end
 
   def terminate(_reason, socket) do
-    UserController.set_room(socket.assigns.user, nil)
+    Accounts.set_room(socket.assigns.user, nil)
   end
 end

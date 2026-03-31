@@ -5,12 +5,13 @@ defmodule StreamshoreWeb.PlaylistController do
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
   alias Streamshore.Repo
+  alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
     user = params["user_id"]
     query = from p in Playlist, where: p.owner == ^user, select: %{name: p.name}
     list = Repo.all(query)
-    json(conn, list)
+    ApiResponses.ok(conn, list)
   end
 
   def show(_conn, _params) do
@@ -20,18 +21,18 @@ defmodule StreamshoreWeb.PlaylistController do
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to create a playlist"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to create a playlist")
 
           user != params["user_id"] ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           Playlist |> Repo.get_by(name: params["name"], owner: params["user_id"]) ->
-            json(conn, %{error: "Playlist already exists"})
+            ApiResponses.error(conn, :unprocessable_entity, "Playlist already exists")
 
           true ->
             changeset =
@@ -39,10 +40,10 @@ defmodule StreamshoreWeb.PlaylistController do
 
             case Repo.insert(changeset) do
               {:ok, _schema} ->
-                json(conn, %{})
+                ApiResponses.ok(conn)
 
               {:error, _changeset} ->
-                json(conn, %{error: "Unable to create playlist in database"})
+                ApiResponses.error(conn, :unprocessable_entity, "Unable to create playlist in database")
             end
         end
     end
@@ -51,7 +52,7 @@ defmodule StreamshoreWeb.PlaylistController do
   def update(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         playlist = params["id"]
@@ -59,10 +60,10 @@ defmodule StreamshoreWeb.PlaylistController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to update a playlist"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to update a playlist")
 
           user != owner ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
             relation = Playlist |> Repo.get_by(name: playlist, owner: owner)
@@ -79,13 +80,13 @@ defmodule StreamshoreWeb.PlaylistController do
 
               case successful do
                 {:ok, _schema} ->
-                  json(conn, %{})
+                  ApiResponses.ok(conn)
 
                 {:error, _changeset} ->
-                  json(conn, %{error: "Unable to update playlist in database"})
+                  ApiResponses.error(conn, :unprocessable_entity, "Unable to update playlist in database")
               end
             else
-              json(conn, %{error: "Playlist doesn't exist"})
+              ApiResponses.error(conn, :not_found, "Playlist doesn't exist")
             end
         end
     end
@@ -94,7 +95,7 @@ defmodule StreamshoreWeb.PlaylistController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         playlist = params["id"]
@@ -102,10 +103,10 @@ defmodule StreamshoreWeb.PlaylistController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to delete a playlist"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to delete a playlist")
 
           user != owner ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
             query = from(v in PlaylistVideo, where: v.owner == ^owner and v.name == ^playlist)
@@ -113,15 +114,15 @@ defmodule StreamshoreWeb.PlaylistController do
 
             case Playlist |> Repo.get_by(name: playlist, owner: owner) do
               nil ->
-                json(conn, %{error: "Playlist doesn't exist"})
+                ApiResponses.error(conn, :not_found, "Playlist doesn't exist")
 
               relation ->
                 case Repo.delete(relation) do
                   {:ok, _schema} ->
-                    json(conn, %{})
+                    ApiResponses.ok(conn)
 
                   {:error, _changeset} ->
-                    json(conn, %{error: "Unable to delete playlist from database"})
+                    ApiResponses.error(conn, :unprocessable_entity, "Unable to delete playlist from database")
                 end
             end
         end

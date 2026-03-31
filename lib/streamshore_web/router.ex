@@ -10,8 +10,6 @@ defmodule StreamshoreWeb.Router do
 
     resources "/session", SessionController, only: [:create, :delete]
 
-    resources "/emails", EmailController, only: [:create]
-
     resources "/users", UserController, except: [:new, :edit] do
       resources "/friends", FriendController, only: [:index, :create, :update, :delete]
       resources "/favorites", FavoriteController, only: [:index, :show, :create, :delete]

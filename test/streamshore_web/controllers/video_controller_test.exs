@@ -18,7 +18,7 @@ defmodule VideoControllerTest do
 
   test "Add invalid video", %{conn: conn} do
     conn = post(conn, Routes.room_video_path(conn, :create, "invalid"), %{id: "abc"})
-    assert json_response(conn, 200) == %{"error" => "Unable to retrieve video information."}
+    assert json_response(conn, 422) == %{"error" => "Unable to retrieve video information."}
   end
 
   test "Add valid video", %{conn: conn} do
@@ -96,7 +96,7 @@ defmodule VideoControllerTest do
     assert json_response(conn, 200) == %{"route" => "queueperm"}
     id = "_-k6ppRkpcM"
     conn = post(conn, Routes.room_video_path(conn, :create, "queueperm"), %{id: id})
-    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
   test "anonymous permissions", %{conn: conn} do
@@ -117,7 +117,7 @@ defmodule VideoControllerTest do
 
     id = "_-k6ppRkpcM"
     conn2 = post(conn2, Routes.room_video_path(conn2, :create, "queueanon"), %{id: id})
-    assert json_response(conn2, 200) == %{"error" => "You must be logged in to submit a video"}
+    assert json_response(conn2, 403) == %{"error" => "You must be logged in to submit a video"}
   end
 
   test "votes tracked", %{conn: conn} do

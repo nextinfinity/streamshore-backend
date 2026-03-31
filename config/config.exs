@@ -3,6 +3,8 @@ import Config
 config :streamshore,
   ecto_repos: [Streamshore.Repo]
 
+config :streamshore, :mailer, Streamshore.Mailer.SendGrid
+
 # Configures the endpoint
 config :streamshore, StreamshoreWeb.Endpoint, pubsub_server: Streamshore.PubSub
 

@@ -61,7 +61,7 @@ defmodule FavoritesControllerTest do
     assert json_response(conn, 200) == %{"route" => "create"}
 
     conn = post(conn, Routes.user_favorite_path(conn, :create, "other-user"), %{room: "Create"})
-    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
   test "Users cannot delete favorites for another user", %{conn: conn} do
@@ -82,6 +82,6 @@ defmodule FavoritesControllerTest do
 
     conn2 = authorized_conn("other-user")
     conn2 = delete(conn2, Routes.user_favorite_path(conn2, :delete, username, "Create"))
-    assert json_response(conn2, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn2, 403) == %{"error" => "Insufficient permission"}
   end
 end
