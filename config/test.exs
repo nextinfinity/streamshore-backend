@@ -4,7 +4,7 @@ config :streamshore, Streamshore.Repo, pool: Ecto.Adapters.SQL.Sandbox
 
 config :streamshore, StreamshoreWeb.Endpoint, server: false
 
-config :streamshore, :mailer, Streamshore.Mailer.Test
+config :streamshore, :mailer, Streamshore.Mailer.Mock
 
 # Print only warnings and errors during test
 config :logger, level: :warning
