@@ -1,10 +1,8 @@
 defmodule Streamshore.YouTube do
   @moduledoc false
 
-  @base_url "https://www.googleapis.com/youtube/v3/videos"
-
   def fetch_video(id) when is_binary(id) do
-    with {:ok, response} <- Req.get(@base_url, params: request_params(id)),
+    with {:ok, response} <- Req.get(base_url(), params: request_params(id)),
          {:ok, item} <- first_item(response.body["items"]) do
       {:ok, build_video(item, id)}
     else
@@ -13,6 +11,8 @@ defmodule Streamshore.YouTube do
       :error -> {:error, "Unable to retrieve video information."}
     end
   end
+
+  defp base_url(), do: "https://www.googleapis.com/youtube/v3/videos"
 
   defp request_params(id) do
     [
