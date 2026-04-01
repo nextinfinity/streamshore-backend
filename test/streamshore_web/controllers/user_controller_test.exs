@@ -3,6 +3,7 @@ defmodule UserControllerTest do
 
   alias Streamshore.Guardian
   alias Streamshore.Repo
+  alias Streamshore.User
 
   setup %{conn: conn} do
     {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
@@ -56,6 +57,9 @@ defmodule UserControllerTest do
       })
 
     assert json_response(conn, 200) == %{}
+
+    user = Repo.get_by(User, username: "Verified User")
+    assert user.verify_token != nil
   end
 
   test "Cannot register duplicate user", %{conn: conn} do
