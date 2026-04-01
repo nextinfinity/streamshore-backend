@@ -19,7 +19,9 @@ defmodule StreamshoreWeb do
 
   def controller do
     quote do
-      use Phoenix.Controller, namespace: StreamshoreWeb
+      use Phoenix.Controller,
+        formats: [:json],
+        layouts: []
 
       import Plug.Conn
       alias StreamshoreWeb.Router.Helpers, as: Routes
