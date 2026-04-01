@@ -29,24 +29,15 @@ defmodule UserControllerTest do
   end
 
   test "Registering an account with email verification enabled", %{conn: conn} do
-    original_email_key = System.get_env("EMAIL_KEY")
-    original_email_address = System.get_env("EMAIL_ADDRESS")
+    original_mailer_enabled = Application.get_env(:streamshore, :mailer_enabled)
+    original_mailer_from_address = Application.get_env(:streamshore, :mailer_from_address)
 
-    System.put_env("EMAIL_KEY", "test-key")
-    System.put_env("EMAIL_ADDRESS", "noreply@example.com")
+    Application.put_env(:streamshore, :mailer_enabled, true)
+    Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
 
     on_exit(fn ->
-      if original_email_key do
-        System.put_env("EMAIL_KEY", original_email_key)
-      else
-        System.delete_env("EMAIL_KEY")
-      end
-
-      if original_email_address do
-        System.put_env("EMAIL_ADDRESS", original_email_address)
-      else
-        System.delete_env("EMAIL_ADDRESS")
-      end
+      Application.put_env(:streamshore, :mailer_enabled, original_mailer_enabled)
+      Application.put_env(:streamshore, :mailer_from_address, original_mailer_from_address)
     end)
 
     conn =

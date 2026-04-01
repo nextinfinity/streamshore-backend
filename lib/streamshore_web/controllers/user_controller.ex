@@ -52,7 +52,7 @@ defmodule StreamshoreWeb.UserController do
       verify_token = AuthTokens.create_token("Verify-" <> params["username"], false)
 
       params =
-        if System.get_env("EMAIL_KEY") && System.get_env("EMAIL_ADDRESS") do
+        if Mailer.enabled?() do
           Map.put(params, "verify_token", verify_token)
         else
           params
