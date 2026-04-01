@@ -5,7 +5,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
   alias Streamshore.Repo
-  alias Streamshore.YouTube
+  alias Streamshore.VideoFetcher
   alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
@@ -22,7 +22,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
     video_list =
       Enum.map(video_ids, fn item ->
-        case YouTube.fetch_video(item) do
+        case VideoFetcher.fetch_video(item) do
           {:ok, video} ->
             [Map.take(video, [:id, :title, :channel, :thumbnail])]
 
@@ -60,7 +60,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
             ApiResponses.error(conn, :not_found, "Playlist doesn't exists")
 
           true ->
-            case YouTube.fetch_video(video) do
+            case VideoFetcher.fetch_video(video) do
               {:ok, _video} ->
                 changeset =
                   PlaylistVideo.changeset(%PlaylistVideo{}, %{
@@ -78,7 +78,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
                 end
 
               {:error, _error} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Invalid youtube video")
+                ApiResponses.error(conn, :unprocessable_entity, "Invalid video")
             end
         end
     end

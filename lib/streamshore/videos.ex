@@ -8,7 +8,7 @@ defmodule Streamshore.Videos do
   end
 
   def set(key, value) do
-    GenServer.cast(@me, {:set, key, value})
+    GenServer.call(@me, {:set, key, value})
   end
 
   def get(key) do
@@ -20,7 +20,7 @@ defmodule Streamshore.Videos do
   end
 
   def delete(key) do
-    GenServer.cast(@me, {:remove, key})
+    GenServer.call(@me, {:remove, key})
   end
 
   def stop do
@@ -35,12 +35,8 @@ defmodule Streamshore.Videos do
     {:ok, Enum.into(args, %{})}
   end
 
-  def handle_cast({:set, key, value}, state) do
-    {:noreply, Map.put(state, key, value)}
-  end
-
-  def handle_cast({:remove, key}, state) do
-    {:noreply, Map.delete(state, key)}
+  def handle_call({:set, key, value}, _from, state) do
+    {:reply, :ok, Map.put(state, key, value)}
   end
 
   def handle_call({:get, key}, _from, state) do
@@ -49,5 +45,9 @@ defmodule Streamshore.Videos do
 
   def handle_call({:keys}, _from, state) do
     {:reply, Map.keys(state), state}
+  end
+
+  def handle_call({:remove, key}, _from, state) do
+    {:reply, :ok, Map.delete(state, key)}
   end
 end
