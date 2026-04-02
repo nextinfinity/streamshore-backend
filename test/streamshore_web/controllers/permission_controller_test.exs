@@ -25,6 +25,15 @@ defmodule PermissionControllerTest do
     assert perm == PermissionLevel.user()
   end
 
+  test "permission update requires manager access", %{conn: conn} do
+    conn =
+      put(conn, Routes.room_permission_path(conn, :show, "permissions", "other-user"), %{
+        permission: PermissionLevel.owner()
+      })
+
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
+  end
+
   test "set permission", %{conn: conn} do
     conn
     |> put(Routes.room_permission_path(conn, :show, "permissions", "set-user"), %{

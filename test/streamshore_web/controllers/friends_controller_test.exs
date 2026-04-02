@@ -67,7 +67,7 @@ defmodule FriendsControllerTest do
     assert json_response(conn, 200) == %{}
     # send friend request
     conn = post(conn, Routes.user_friend_path(conn, :create, friender), %{friendee: friendee})
-    assert json_response(conn, 200) == %{"error" => "User does not exist"}
+    assert json_response(conn, 404) == %{"error" => "User does not exist"}
   end
 
   test "Getting a list of friends", %{conn: conn} do
@@ -313,6 +313,32 @@ defmodule FriendsControllerTest do
     assert json_response(conn, 200) == %{}
 
     conn = post(conn, Routes.user_friend_path(conn, :create, "Tester2"), %{friendee: "Tester1"})
-    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
+  end
+
+  test "Creating a duplicate friend request returns conflict", %{conn: conn} do
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "test1@test.com",
+        username: "Tester1",
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "test2@test.com",
+        username: "Tester2",
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.user_friend_path(conn, :create, "Tester1"), %{friendee: "Tester2"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.user_friend_path(conn, :create, "Tester1"), %{friendee: "Tester2"})
+    assert json_response(conn, 409) == %{"error" => "Friend connection already exists"}
   end
 end

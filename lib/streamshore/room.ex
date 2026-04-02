@@ -39,12 +39,12 @@ defmodule Streamshore.Room do
       :vote_threshold,
       :vote_enable
     ])
-    |> validate_required([:name])
+    |> validate_required([:name], message: "Room name can't be blank")
     |> validate_required([:owner])
     |> validate_required([:route])
     |> validate_length(:name, min: 1, max: 32)
     |> validate_length(:route, min: 1, max: 32)
-    |> unique_constraint(:name)
-    |> unique_constraint(:route)
+    |> unique_constraint(:name, message: "Room name has already been taken")
+    |> unique_constraint(:route, message: "Room route has already been taken")
   end
 end

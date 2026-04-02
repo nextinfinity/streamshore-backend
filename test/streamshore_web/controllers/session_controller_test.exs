@@ -41,7 +41,7 @@ defmodule SessionControllerTest do
 
     assert json_response(conn, 200) == %{}
     conn = post(conn, Routes.session_path(conn, :create), %{id: "bad", password: "$Test123"})
-    assert json_response(conn, 200) == %{"error" => "Invalid credentials"}
+    assert json_response(conn, 401) == %{"error" => "Invalid credentials"}
   end
 
   test "Password validation", %{conn: conn} do
@@ -59,7 +59,7 @@ defmodule SessionControllerTest do
     conn =
       post(conn, Routes.session_path(conn, :create), %{id: "Email@Test.com", password: "bad"})
 
-    assert json_response(conn, 200) == %{"error" => "Invalid credentials"}
+    assert json_response(conn, 401) == %{"error" => "Invalid credentials"}
   end
 
   test "Logging in via username", %{conn: conn} do
@@ -100,6 +100,6 @@ defmodule SessionControllerTest do
     conn =
       post(conn, Routes.session_path(conn, :create), %{id: "Wrong Username", password: "$Test123"})
 
-    assert json_response(conn, 200) == %{"error" => "Invalid credentials"}
+    assert json_response(conn, 401) == %{"error" => "Invalid credentials"}
   end
 end

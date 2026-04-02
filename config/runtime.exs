@@ -54,7 +54,8 @@ guardian_secret =
   System.get_env("GUARDIAN_SECRET") ||
     "A9uQgqHb60mVqn9tap1S9IRhcS/vY73HeHjYpCpNtBoraYk36KZlDcHmaTeI35OP"
 
-email_key = System.get_env("EMAIL_KEY") || false
+email_key = System.get_env("EMAIL_KEY")
+email_address = System.get_env("EMAIL_ADDRESS")
 
 config :streamshore, Streamshore.Repo,
   url: database_url,
@@ -90,7 +91,13 @@ end
 
 config :streamshore, Streamshore.Guardian, secret_key: guardian_secret
 
-if email_key do
+config :streamshore,
+  :mailer_enabled,
+  not is_nil(email_key) and not is_nil(email_address)
+
+config :streamshore, :mailer_from_address, email_address
+
+if email_key && email_address do
   config :sendgrid,
     api_key: email_key
 end

@@ -111,4 +111,25 @@ defmodule StreamshoreWeb.RoomChannelTest do
     push(socket, "chat", %{"msg" => "lorem ipsum iu lorem ipsum"})
     assert_broadcast "chat", %{"msg" => "lorem ipsum ***** lorem ipsum"}
   end
+
+  test "delete broadcasts for managers", %{socket: socket} do
+    ref = push(socket, "delete", %{"uuid" => "message-1"})
+    assert_reply ref, :ok
+    assert_broadcast "delete", %{"uuid" => "message-1"}
+  end
+
+  test "delete is rejected for non-managers" do
+    {:ok, _, socket} =
+      socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: false})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:lobby")
+
+    ref = push(socket, "delete", %{"uuid" => "message-1"})
+    assert_reply ref, :error, %{error: "Insufficient permission"}
+    refute_broadcast "delete", %{"uuid" => "message-1"}
+  end
+
+  test "delete requires a uuid payload", %{socket: socket} do
+    ref = push(socket, "delete", %{})
+    assert_reply ref, :error, %{error: "Invalid payload"}
+  end
 end

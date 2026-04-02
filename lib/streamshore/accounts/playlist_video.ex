@@ -12,5 +12,6 @@ defmodule Streamshore.PlaylistVideo do
     playlist_video
     |> cast(params, [:name, :owner, :video])
     |> validate_required([:name, :owner, :video])
+    |> unique_constraint(:video, name: :playlist_video_owner_name_video_index, message: "Video is already in playlist")
   end
 end

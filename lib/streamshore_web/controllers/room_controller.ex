@@ -1,14 +1,15 @@
 defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
   alias Streamshore.Guardian
-  alias StreamshoreWeb.PermissionController
+  alias Streamshore.RoomPermissions
   alias Streamshore.PermissionLevel
   alias StreamshoreWeb.Presence
   alias Streamshore.Permission
   alias Streamshore.Favorites
   alias Streamshore.Repo
   alias Streamshore.Room
-  alias Streamshore.Util
+  alias Streamshore.Rooms
+  alias StreamshoreWeb.ApiResponses
   import Ecto.Query
 
   def index(conn, params) do
@@ -36,7 +37,7 @@ defmodule StreamshoreWeb.RoomController do
             Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route])))
           end)
 
-        json(conn, rooms)
+        ApiResponses.ok(conn, rooms)
       else
         user = params["user"]
 
@@ -58,7 +59,7 @@ defmodule StreamshoreWeb.RoomController do
             Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route])))
           end)
 
-        json(conn, rooms)
+        ApiResponses.ok(conn, rooms)
       end
     else
       query =
@@ -78,7 +79,7 @@ defmodule StreamshoreWeb.RoomController do
           Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route])))
         end)
 
-      json(conn, rooms)
+      ApiResponses.ok(conn, rooms)
     end
   end
 
@@ -86,22 +87,21 @@ defmodule StreamshoreWeb.RoomController do
     room = Repo.get_by(Room, route: params["id"])
 
     if room do
-      json(conn, %{name: room.name})
+      ApiResponses.ok(conn, %{name: room.name})
     else
-      json(conn, %{error: "Room does not exist"})
+      ApiResponses.error(conn, :not_found, "Room does not exist")
     end
   end
 
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         case anon do
           false ->
-            route = String.downcase(String.replace(params["name"], " ", "-"))
-            route = Regex.replace(~r/[^A-Za-z0-9\-]/, route, "")
+            route = Rooms.sanitize_route(params["name"])
 
             params =
               params
@@ -115,18 +115,15 @@ defmodule StreamshoreWeb.RoomController do
 
             case success do
               {:ok, _schema} ->
-                PermissionController.update_perm(params["route"], user, PermissionLevel.owner())
-                json(conn, %{route: route})
+                RoomPermissions.update_perm(params["route"], user, PermissionLevel.owner())
+                ApiResponses.ok(conn, %{route: route})
 
               {:error, changeset} ->
-                errors = Util.convert_changeset_errors(changeset)
-                key = Enum.at(Map.keys(errors), 0)
-                err = "Room " <> Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-                json(conn, %{error: err})
+                ApiResponses.changeset_error(conn, changeset)
             end
 
           true ->
-            json(conn, %{error: "You must be logged in to create a room"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to create a room")
         end
     end
   end
@@ -134,30 +131,16 @@ defmodule StreamshoreWeb.RoomController do
   def edit(conn, params) do
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, _user, _anon, permission} ->
         if permission >= PermissionLevel.manager() do
-          query =
-            from r in Room,
-              where: r.route == ^params["id"],
-              select: %{
-                motd: r.motd,
-                privacy: r.privacy,
-                queue_level: r.queue_level,
-                anon_queue: r.anon_queue,
-                queue_limit: r.queue_limit,
-                chat_level: r.chat_level,
-                anon_chat: r.anon_chat,
-                chat_filter: r.chat_filter,
-                vote_enable: r.vote_enable,
-                vote_threshold: r.vote_threshold
-              }
-
-          room = Repo.one(query)
-          json(conn, room)
+          case Rooms.settings(params["id"]) do
+            nil -> ApiResponses.error(conn, :not_found, "Room does not exist")
+            room -> ApiResponses.ok(conn, room)
+          end
         else
-          json(conn, %{error: "Insufficient permission"})
+          ApiResponses.error(conn, :forbidden, "Insufficient permission")
         end
     end
   end
@@ -165,7 +148,7 @@ defmodule StreamshoreWeb.RoomController do
   def update(conn, params) do
     case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, _user, _anon, permission} ->
         if permission >= PermissionLevel.manager() do
@@ -173,33 +156,34 @@ defmodule StreamshoreWeb.RoomController do
 
           case Repo.get_by(Room, %{route: room}) do
             nil ->
-              nil
+              ApiResponses.error(conn, :not_found, "Room does not exist")
 
             schema ->
               params = params |> Map.delete("id")
 
-              schema
-              |> Room.changeset(params)
-              |> Repo.update()
+              case schema |> Room.changeset(params) |> Repo.update() do
+                {:ok, _schema} ->
+                  params =
+                    params
+                    |> Map.take([
+                      "motd",
+                      "queue_level",
+                      "anon_queue",
+                      "queue_limit",
+                      "chat_level",
+                      "anon_chat",
+                      "vote_enable"
+                    ])
 
-              params =
-                params
-                |> Map.take([
-                  "motd",
-                  "queue_level",
-                  "anon_queue",
-                  "queue_limit",
-                  "chat_level",
-                  "anon_chat",
-                  "vote_enable"
-                ])
+                  StreamshoreWeb.Endpoint.broadcast("room:" <> room, "update", params)
+                  ApiResponses.ok(conn)
 
-              StreamshoreWeb.Endpoint.broadcast("room:" <> room, "update", params)
+                {:error, changeset} ->
+                  ApiResponses.changeset_error(conn, changeset)
+              end
           end
-
-          json(conn, %{})
         else
-          json(conn, %{error: "Insufficient permission"})
+          ApiResponses.error(conn, :forbidden, "Insufficient permission")
         end
     end
   end
@@ -207,96 +191,35 @@ defmodule StreamshoreWeb.RoomController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, _anon} ->
         room_name = params["id"]
-        query = from r in Room, where: r.route == ^room_name, select: r.owner
-        owner = Repo.one(query)
+        owner = Rooms.owner(room_name)
 
-        if user == owner do
-          favorites = from(f in Favorites, where: f.room == ^room_name)
-          Repo.delete_all(favorites)
-          permissions = from(p in Permission, where: p.room == ^room_name)
-          Repo.delete_all(permissions)
-          room = Room |> Repo.get_by(route: room_name)
+        cond do
+          is_nil(owner) ->
+            ApiResponses.error(conn, :not_found, "Room does not exist")
 
-          case Repo.delete(room) do
-            {:ok, _schema} ->
-              StreamshoreWeb.Endpoint.broadcast("room:" <> room_name, "room-deleted", %{})
-              json(conn, %{})
+          owner != user ->
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-            {:error, _changeset} ->
-              json(conn, %{error: "Unable to delete room from database"})
-          end
-        else
-          json(conn, %{error: "Insufficient permission"})
+          true ->
+            favorites = from(f in Favorites, where: f.room == ^room_name)
+            Repo.delete_all(favorites)
+            permissions = from(p in Permission, where: p.room == ^room_name)
+            Repo.delete_all(permissions)
+            room = Room |> Repo.get_by(route: room_name)
+
+            case Repo.delete(room) do
+              {:ok, _schema} ->
+                StreamshoreWeb.Endpoint.broadcast("room:" <> room_name, "room-deleted", %{})
+                ApiResponses.ok(conn)
+
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
+            end
         end
-    end
-  end
-
-  def filter_enabled?(room) do
-    room = Repo.get_by(Room, route: room)
-
-    if room do
-      room.chat_filter == 1
-    else
-      false
-    end
-  end
-
-  def get_room(room) do
-    query =
-      from r in Room,
-        where: r.route == ^room,
-        select: %{
-          name: r.name,
-          motd: r.motd,
-          owner: r.owner,
-          route: r.route,
-          queue_level: r.queue_level,
-          anon_queue: r.anon_queue,
-          chat_level: r.chat_level,
-          anon_chat: r.anon_chat,
-          queue_limit: r.queue_limit,
-          vote_enable: r.vote_enable
-        }
-
-    Repo.one(query)
-  end
-
-  def queue_perm(room) do
-    case Repo.get_by(Room, route: room) do
-      nil -> PermissionLevel.user()
-      room -> room.queue_level
-    end
-  end
-
-  def anon_queue?(room) do
-    case Repo.get_by(Room, route: room) do
-      nil -> ""
-      room -> room.anon_queue == 1
-    end
-  end
-
-  def chat_perm(room) do
-    case Repo.get_by(Room, route: room) do
-      nil -> PermissionLevel.user()
-      room -> room.chat_level
-    end
-  end
-
-  def anon_chat?(room) do
-    case Repo.get_by(Room, route: room) do
-      nil -> ""
-      room -> room.anon_chat == 1
-    end
-  end
-
-  def get_motd(room) do
-    case Repo.get_by(Room, route: room) do
-      nil -> ""
-      room -> room.motd
     end
   end
 end

@@ -71,9 +71,29 @@ defmodule RoomControllerTest do
     assert response.room.motd == "Other Lorem Ipsum"
   end
 
+  test "invalid room update returns an error and does not broadcast", %{conn: conn} do
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{name: "MOTD", motd: "Lorem Ipsum", privacy: 0})
+
+    assert json_response(conn, 200) == %{"route" => "motd"}
+
+    conn = put(conn, Routes.room_path(conn, :update, "MOTD"), %{name: ""})
+
+    assert json_response(conn, 422) == %{"error" => "Room name can't be blank"}
+    refute_broadcast "update", %{"name" => ""}
+  end
+
   test "creating a room", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "create"}
+  end
+
+  test "creating a duplicate room returns conflict", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "create"}
+
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 409) == %{"error" => "Room name has already been taken"}
   end
 
   test "get room from username", %{conn: conn} do
@@ -188,6 +208,11 @@ defmodule RoomControllerTest do
       |> put_req_header("authorization", "Bearer " <> token)
 
     conn2 = delete(conn2, Routes.room_path(conn2, :delete, "Create"))
-    assert json_response(conn2, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn2, 403) == %{"error" => "Insufficient permission"}
+  end
+
+  test "missing room returns not found", %{conn: conn} do
+    conn = get(conn, Routes.room_path(conn, :show, "missing-room"))
+    assert json_response(conn, 404) == %{"error" => "Room does not exist"}
   end
 end

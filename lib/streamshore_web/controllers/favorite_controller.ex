@@ -6,6 +6,7 @@ defmodule StreamshoreWeb.FavoriteController do
   alias StreamshoreWeb.Presence
   alias Streamshore.Repo
   alias Streamshore.Room
+  alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
     user = params["user_id"]
@@ -31,7 +32,7 @@ defmodule StreamshoreWeb.FavoriteController do
         Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route])))
       end)
 
-    json(conn, rooms)
+    ApiResponses.ok(conn, rooms)
   end
 
   def show(conn, params) do
@@ -39,16 +40,16 @@ defmodule StreamshoreWeb.FavoriteController do
     room = params["id"]
 
     if Favorites |> Repo.get_by(user: user, room: room) do
-      json(conn, true)
+      ApiResponses.ok(conn, true)
     else
-      json(conn, false)
+      ApiResponses.ok(conn, false)
     end
   end
 
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, current_user, anon} ->
         room = params["room"]
@@ -56,26 +57,23 @@ defmodule StreamshoreWeb.FavoriteController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to add a room to favorites"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to add a room to favorites")
 
           current_user != user ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           !(Room |> Repo.get_by(route: room)) ->
-            json(conn, %{error: "Room does not exist"})
-
-          Favorites |> Repo.get_by(user: user, room: room) ->
-            json(conn, %{error: "Room is already a favorite room"})
+            ApiResponses.error(conn, :not_found, "Room does not exist")
 
           true ->
             changeset = Favorites.changeset(%Favorites{}, %{user: user, room: room})
 
             case Repo.insert(changeset) do
               {:ok, _schema} ->
-                json(conn, %{})
+                ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                json(conn, %{error: "Unable to create favorite in database"})
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -84,7 +82,7 @@ defmodule StreamshoreWeb.FavoriteController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, current_user, anon} ->
         room = params["id"]
@@ -92,23 +90,23 @@ defmodule StreamshoreWeb.FavoriteController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to remove a room from favorites"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to remove a room from favorites")
 
           current_user != user ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
             case Favorites |> Repo.get_by(user: user, room: room) do
               nil ->
-                json(conn, %{error: "Favorite does not exist"})
+                ApiResponses.error(conn, :not_found, "Favorite does not exist")
 
               relation ->
                 case Repo.delete(relation) do
                   {:ok, _schema} ->
-                    json(conn, %{})
+                    ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    json(conn, %{error: "Unable to delete favorite from database"})
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
             end
         end

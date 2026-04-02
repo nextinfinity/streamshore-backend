@@ -6,6 +6,7 @@ defmodule StreamshoreWeb.FriendController do
   alias Streamshore.Guardian
   alias Streamshore.Repo
   alias Streamshore.User
+  alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
     friender = params["user_id"]
@@ -24,13 +25,13 @@ defmodule StreamshoreWeb.FriendController do
 
     requests = Repo.all(query)
     map = %{friends: friends, requests: requests}
-    json(conn, map)
+    ApiResponses.ok(conn, map)
   end
 
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         friender = params["user_id"]
@@ -38,17 +39,17 @@ defmodule StreamshoreWeb.FriendController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to add a friend"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to add a friend")
 
           user != friender ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           !(User |> Repo.get_by(username: friendee)) ->
-            json(conn, %{error: "User does not exist"})
+            ApiResponses.error(conn, :not_found, "User does not exist")
 
           Friends |> Repo.get_by(friender: friendee, friendee: friender) ||
               Friends |> Repo.get_by(friender: friender, friendee: friendee) ->
-            json(conn, %{error: "Friend connection already exists"})
+            ApiResponses.error(conn, :conflict, "Friend connection already exists")
 
           true ->
             changeset =
@@ -61,10 +62,10 @@ defmodule StreamshoreWeb.FriendController do
 
             case Repo.insert(changeset) do
               {:ok, _schema} ->
-                json(conn, %{})
+                ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                json(conn, %{error: "Unable to create friend request in database"})
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -73,7 +74,7 @@ defmodule StreamshoreWeb.FriendController do
   def update(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         friender = params["user_id"]
@@ -82,13 +83,13 @@ defmodule StreamshoreWeb.FriendController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to update a friendship"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to update a friendship")
 
           user != friender ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           !relation ->
-            json(conn, %{error: "Friendship not found"})
+            ApiResponses.error(conn, :not_found, "Friendship not found")
 
           params["accepted"] ->
             if params["accepted"] == "1" do
@@ -102,30 +103,30 @@ defmodule StreamshoreWeb.FriendController do
                   accepted: 1
                 })
 
-              case Repo.insert(changeset) do
-                {:ok, _schema} ->
-                  json(conn, %{})
+                case Repo.insert(changeset) do
+                  {:ok, _schema} ->
+                    ApiResponses.ok(conn)
 
-                {:error, _changeset} ->
-                  json(conn, %{error: "Unable to create friendship in database"})
-              end
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
+                end
             else
               case Repo.delete(relation) do
                 {:ok, _schema} ->
-                  json(conn, %{})
+                  ApiResponses.ok(conn)
 
-                {:error, _changeset} ->
-                  json(conn, %{error: "Unable to delete friendship from database"})
+                {:error, changeset} ->
+                  ApiResponses.changeset_error(conn, changeset)
               end
             end
 
           true ->
             case relation |> Friends.changeset(params) |> Repo.update() do
               {:ok, _schema} ->
-                json(conn, %{})
+                ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                json(conn, %{error: "Unable to update friendship in database"})
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -134,7 +135,7 @@ defmodule StreamshoreWeb.FriendController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         friender = params["user_id"]
@@ -142,10 +143,10 @@ defmodule StreamshoreWeb.FriendController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to delete a friendship"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to delete a friendship")
 
           user != friender ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
             relation1 = Friends |> Repo.get_by(friender: friender, friendee: friendee)
@@ -153,10 +154,10 @@ defmodule StreamshoreWeb.FriendController do
 
             with {:ok, _schema} <- delete_if_present(relation1),
                  {:ok, _schema} <- delete_if_present(relation2) do
-              json(conn, %{})
+              ApiResponses.ok(conn)
             else
-              {:error, _changeset} ->
-                json(conn, %{error: "Unable to delete friendship from database"})
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end

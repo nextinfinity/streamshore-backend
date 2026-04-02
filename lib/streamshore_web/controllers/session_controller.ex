@@ -2,32 +2,29 @@ defmodule StreamshoreWeb.SessionController do
   use StreamshoreWeb, :controller
   import Dictionary
 
+  alias Streamshore.Accounts
+  alias Streamshore.AuthTokens
   alias Streamshore.Guardian
-  alias Streamshore.Repo
-  alias Streamshore.User
+  alias StreamshoreWeb.ApiResponses
 
   def create(conn, params) do
     if Enum.count(params) != 0 do
-      user =
-        case Repo.get_by(User, email: params["id"]) do
-          nil -> Repo.get_by(User, username: params["id"])
-          user -> user
-        end
+      user = Accounts.get_by_email_or_username(params["id"])
 
       if user && Pbkdf2.verify_pass(params["password"], user.password) do
         case user.verify_token do
           nil ->
-            json(conn, %{
-              token: create_token(user.username, false),
+            ApiResponses.ok(conn, %{
+              token: AuthTokens.create_token(user.username, false),
               user: user.username,
               anon: false
             })
 
           _ ->
-            json(conn, %{error: "Email address not verified"})
+            ApiResponses.error(conn, :forbidden, "Email address not verified")
         end
       else
-        json(conn, %{error: "Invalid credentials"})
+        ApiResponses.error(conn, :unauthorized, "Invalid credentials")
       end
     else
       username =
@@ -35,17 +32,12 @@ defmodule StreamshoreWeb.SessionController do
           String.capitalize(String.trim(random_adjective(), "\r")) <>
           String.capitalize(String.trim(random_animal(), "\r"))
 
-      json(conn, %{token: create_token(username, true), user: username, anon: true})
+      ApiResponses.ok(conn, %{token: AuthTokens.create_token(username, true), user: username, anon: true})
     end
   end
 
   def delete(conn, params) do
     Guardian.revoke(params["id"])
-    json(conn, %{})
-  end
-
-  def create_token(user, anon) do
-    {:ok, token, _claims} = Guardian.encode_and_sign(user, %{anon: anon})
-    token
+    ApiResponses.ok(conn)
   end
 end

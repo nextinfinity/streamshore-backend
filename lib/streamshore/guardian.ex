@@ -1,8 +1,8 @@
 defmodule Streamshore.Guardian do
   use Guardian, otp_app: :streamshore
 
-  alias StreamshoreWeb.PermissionController
-  alias StreamshoreWeb.UserController
+  alias Streamshore.Accounts
+  alias Streamshore.RoomPermissions
 
   def subject_for_token(user, _claims) do
     sub = to_string(user)
@@ -52,7 +52,7 @@ defmodule Streamshore.Guardian do
             {:error, error}
 
           {:ok, user, anon} ->
-            perm = PermissionController.get_perm(room, user)
+            perm = RoomPermissions.get_perm(room, user)
             {:ok, user, anon, perm}
         end
     end
@@ -69,7 +69,7 @@ defmodule Streamshore.Guardian do
             {:error, error}
 
           {:ok, user, anon} ->
-            admin = UserController.get_admin(user)
+            admin = Accounts.admin?(user)
             {:ok, user, anon, admin}
         end
     end

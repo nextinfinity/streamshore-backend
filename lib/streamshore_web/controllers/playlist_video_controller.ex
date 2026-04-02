@@ -6,6 +6,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   alias Streamshore.PlaylistVideo
   alias Streamshore.Repo
   alias Streamshore.YouTube
+  alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
     user = params["user_id"]
@@ -31,7 +32,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
       end)
       |> Enum.reject(&is_nil/1)
 
-    json(conn, video_list)
+    ApiResponses.ok(conn, video_list)
   end
 
   def show(_conn, _params) do
@@ -41,7 +42,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   def create(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         video = params["video"]
@@ -50,16 +51,13 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to add a video to a playlist"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to add a video to a playlist")
 
           user != owner ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           !(Playlist |> Repo.get_by(name: playlist, owner: owner)) ->
-            json(conn, %{error: "Playlist doesn't exists"})
-
-          PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video) ->
-            json(conn, %{error: "Video is already in playlist"})
+            ApiResponses.error(conn, :not_found, "Playlist doesn't exists")
 
           true ->
             case YouTube.fetch_video(video) do
@@ -73,14 +71,14 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
                 case Repo.insert(changeset) do
                   {:ok, _schema} ->
-                    json(conn, %{})
+                    ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    json(conn, %{error: "Unable to create video in database"})
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
 
               {:error, _error} ->
-                json(conn, %{error: "Invalid youtube video"})
+                ApiResponses.error(conn, :unprocessable_entity, "Invalid youtube video")
             end
         end
     end
@@ -93,7 +91,7 @@ defmodule StreamshoreWeb.PlaylistVideoController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:error, error} ->
-        json(conn, %{error: error})
+        ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
         video = params["id"]
@@ -102,23 +100,23 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
         cond do
           anon ->
-            json(conn, %{error: "You must be logged in to delete a video from a playlist"})
+            ApiResponses.error(conn, :forbidden, "You must be logged in to delete a video from a playlist")
 
           user != owner ->
-            json(conn, %{error: "Insufficient permission"})
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
             case PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video) do
               nil ->
-                json(conn, %{error: "Video doesn't exist in playlist"})
+                ApiResponses.error(conn, :not_found, "Video doesn't exist in playlist")
 
               relation ->
                 case Repo.delete(relation) do
                   {:ok, _schema} ->
-                    json(conn, %{})
+                    ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    json(conn, %{error: "Unable to delete video from database"})
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
             end
         end

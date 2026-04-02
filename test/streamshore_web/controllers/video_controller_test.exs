@@ -18,7 +18,7 @@ defmodule VideoControllerTest do
 
   test "Add invalid video", %{conn: conn} do
     conn = post(conn, Routes.room_video_path(conn, :create, "invalid"), %{id: "abc"})
-    assert json_response(conn, 200) == %{"error" => "Unable to retrieve video information."}
+    assert json_response(conn, 422) == %{"error" => "Unable to retrieve video information."}
   end
 
   test "Add valid video", %{conn: conn} do
@@ -96,7 +96,31 @@ defmodule VideoControllerTest do
     assert json_response(conn, 200) == %{"route" => "queueperm"}
     id = "_-k6ppRkpcM"
     conn = post(conn, Routes.room_video_path(conn, :create, "queueperm"), %{id: id})
-    assert json_response(conn, 200) == %{"error" => "Insufficient permission"}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
+  end
+
+  test "queue limit returns conflict", %{conn: conn} do
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "QueueLimit",
+        motd: "",
+        queue_limit: 1,
+        privacy: 0
+      })
+
+    assert json_response(conn, 200) == %{"route" => "queuelimit"}
+
+    conn = post(conn, Routes.room_video_path(conn, :create, "queuelimit"), %{id: "_-k6ppRkpcM"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.room_video_path(conn, :create, "queuelimit"), %{id: "VlbtLvZqMsI"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.room_video_path(conn, :create, "queuelimit"), %{id: "9jzsr5wyG4o"})
+
+    assert json_response(conn, 409) == %{
+             "error" => "You already have the maximum allowed amount of videos in the queue."
+           }
   end
 
   test "anonymous permissions", %{conn: conn} do
@@ -117,7 +141,7 @@ defmodule VideoControllerTest do
 
     id = "_-k6ppRkpcM"
     conn2 = post(conn2, Routes.room_video_path(conn2, :create, "queueanon"), %{id: id})
-    assert json_response(conn2, 200) == %{"error" => "You must be logged in to submit a video"}
+    assert json_response(conn2, 403) == %{"error" => "You must be logged in to submit a video"}
   end
 
   test "votes tracked", %{conn: conn} do
