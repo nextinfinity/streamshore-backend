@@ -57,7 +57,8 @@ defmodule Streamshore.QueueManager do
         {:error, error} -> {:error, :invalid_video, error}
       end
     else
-      {:error, :queue_limit, "You already have the maximum allowed amount of videos in the queue."}
+      {:error, :queue_limit,
+       "You already have the maximum allowed amount of videos in the queue."}
     end
   end
 

@@ -57,7 +57,11 @@ defmodule StreamshoreWeb.FavoriteController do
 
         cond do
           anon ->
-            ApiResponses.error(conn, :forbidden, "You must be logged in to add a room to favorites")
+            ApiResponses.error(
+              conn,
+              :forbidden,
+              "You must be logged in to add a room to favorites"
+            )
 
           current_user != user ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
@@ -90,7 +94,11 @@ defmodule StreamshoreWeb.FavoriteController do
 
         cond do
           anon ->
-            ApiResponses.error(conn, :forbidden, "You must be logged in to remove a room from favorites")
+            ApiResponses.error(
+              conn,
+              :forbidden,
+              "You must be logged in to remove a room from favorites"
+            )
 
           current_user != user ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")

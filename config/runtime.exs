@@ -92,8 +92,8 @@ end
 config :streamshore, Streamshore.Guardian, secret_key: guardian_secret
 
 config :streamshore,
-  :mailer_enabled,
-  not is_nil(email_key) and not is_nil(email_address)
+       :mailer_enabled,
+       not is_nil(email_key) and not is_nil(email_address)
 
 config :streamshore, :mailer_from_address, email_address
 
