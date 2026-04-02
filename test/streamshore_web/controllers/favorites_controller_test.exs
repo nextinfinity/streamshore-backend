@@ -64,6 +64,26 @@ defmodule FavoritesControllerTest do
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
+  test "Adding a duplicate favorite returns conflict", %{conn: conn} do
+    username = "user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "Email@Test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "create"}
+    conn = post(conn, Routes.user_favorite_path(conn, :create, username), %{room: "Create"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.user_favorite_path(conn, :create, username), %{room: "Create"})
+    assert json_response(conn, 409) == %{"error" => "Room is already a favorite room"}
+  end
+
   test "Users cannot delete favorites for another user", %{conn: conn} do
     username = "user"
 

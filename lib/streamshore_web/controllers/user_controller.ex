@@ -13,7 +13,6 @@ defmodule StreamshoreWeb.UserController do
   alias Streamshore.Repo
   alias Streamshore.Room
   alias Streamshore.User
-  alias Streamshore.Util
   alias StreamshoreWeb.ApiResponses
   import Ecto.Query
 
@@ -75,10 +74,7 @@ defmodule StreamshoreWeb.UserController do
           ApiResponses.ok(conn)
 
         {:error, changeset} ->
-          errors = Util.convert_changeset_errors(changeset)
-          key = Enum.at(Map.keys(errors), 0)
-          err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-          ApiResponses.error(conn, :unprocessable_entity, String.capitalize(err))
+          ApiResponses.changeset_error(conn, changeset)
       end
     end
   end
@@ -113,7 +109,7 @@ defmodule StreamshoreWeb.UserController do
           schema ->
             case schema.verify_token do
               nil ->
-                ApiResponses.error(conn, :unprocessable_entity, "Email already verified")
+                ApiResponses.error(conn, :conflict, "Email already verified")
 
               token ->
                 Mailer.send_email(
@@ -157,7 +153,7 @@ defmodule StreamshoreWeb.UserController do
 
             case schema.verify_token do
               nil ->
-                ApiResponses.error(conn, :unprocessable_entity, "Email already verified")
+                ApiResponses.error(conn, :conflict, "Email already verified")
 
               ^token ->
                 schema
@@ -195,8 +191,8 @@ defmodule StreamshoreWeb.UserController do
                     {:ok, _schema} ->
                       ApiResponses.ok(conn)
 
-                    {:error, _changeset} ->
-                      ApiResponses.error(conn, :unprocessable_entity, "Unable to save new password to database")
+                    {:error, changeset} ->
+                      ApiResponses.changeset_error(conn, changeset)
                   end
                 end
               else
@@ -243,8 +239,8 @@ defmodule StreamshoreWeb.UserController do
             {:ok, _schema} ->
               ApiResponses.ok(conn)
 
-            {:error, _changeset} ->
-              ApiResponses.error(conn, :unprocessable_entity, "Unable to delete user")
+            {:error, changeset} ->
+              ApiResponses.changeset_error(conn, changeset)
           end
         else
           ApiResponses.error(conn, :forbidden, "Insufficient permission")

@@ -49,7 +49,7 @@ defmodule StreamshoreWeb.FriendController do
 
           Friends |> Repo.get_by(friender: friendee, friendee: friender) ||
               Friends |> Repo.get_by(friender: friender, friendee: friendee) ->
-            ApiResponses.error(conn, :unprocessable_entity, "Friend connection already exists")
+            ApiResponses.error(conn, :conflict, "Friend connection already exists")
 
           true ->
             changeset =
@@ -64,8 +64,8 @@ defmodule StreamshoreWeb.FriendController do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Unable to create friend request in database")
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -107,16 +107,16 @@ defmodule StreamshoreWeb.FriendController do
                   {:ok, _schema} ->
                     ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    ApiResponses.error(conn, :unprocessable_entity, "Unable to create friendship in database")
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
             else
               case Repo.delete(relation) do
                 {:ok, _schema} ->
                   ApiResponses.ok(conn)
 
-                {:error, _changeset} ->
-                  ApiResponses.error(conn, :unprocessable_entity, "Unable to delete friendship from database")
+                {:error, changeset} ->
+                  ApiResponses.changeset_error(conn, changeset)
               end
             end
 
@@ -125,8 +125,8 @@ defmodule StreamshoreWeb.FriendController do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Unable to update friendship in database")
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -156,8 +156,8 @@ defmodule StreamshoreWeb.FriendController do
                  {:ok, _schema} <- delete_if_present(relation2) do
               ApiResponses.ok(conn)
             else
-              {:error, _changeset} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Unable to delete friendship from database")
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end

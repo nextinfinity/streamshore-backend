@@ -55,6 +55,14 @@ defmodule PlaylistControllerTest do
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
+  test "Creating a duplicate playlist returns conflict", %{conn: conn} do
+    conn = post(conn, Routes.user_playlist_path(conn, :create, "user"), %{name: "Playlist"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.user_playlist_path(conn, :create, "user"), %{name: "Playlist"})
+    assert json_response(conn, 409) == %{"error" => "Playlist already exists"}
+  end
+
   test "Users cannot rename playlists they do not own", %{conn: conn} do
     conn = post(conn, Routes.user_playlist_path(conn, :create, "user"), %{name: "Playlist"})
     assert json_response(conn, 200) == %{}
@@ -91,5 +99,24 @@ defmodule PlaylistControllerTest do
       })
 
     assert json_response(conn, 422) == %{"error" => "Invalid youtube video"}
+  end
+
+  test "Adding a duplicate playlist video returns conflict", %{conn: conn} do
+    conn = post(conn, Routes.user_playlist_path(conn, :create, "user"), %{name: "Playlist"})
+    assert json_response(conn, 200) == %{}
+
+    conn =
+      post(conn, Routes.user_playlist_playlist_video_path(conn, :create, "user", "Playlist"), %{
+        video: "_-k6ppRkpcM"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn =
+      post(conn, Routes.user_playlist_playlist_video_path(conn, :create, "user", "Playlist"), %{
+        video: "_-k6ppRkpcM"
+      })
+
+    assert json_response(conn, 409) == %{"error" => "Video is already in playlist"}
   end
 end

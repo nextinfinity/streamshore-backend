@@ -9,7 +9,6 @@ defmodule StreamshoreWeb.RoomController do
   alias Streamshore.Repo
   alias Streamshore.Room
   alias Streamshore.Rooms
-  alias Streamshore.Util
   alias StreamshoreWeb.ApiResponses
   import Ecto.Query
 
@@ -120,10 +119,7 @@ defmodule StreamshoreWeb.RoomController do
                 ApiResponses.ok(conn, %{route: route})
 
               {:error, changeset} ->
-                errors = Util.convert_changeset_errors(changeset)
-                key = Enum.at(Map.keys(errors), 0)
-                err = "Room " <> Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-                ApiResponses.error(conn, :unprocessable_entity, err)
+                ApiResponses.changeset_error(conn, changeset)
             end
 
           true ->
@@ -183,10 +179,7 @@ defmodule StreamshoreWeb.RoomController do
                   ApiResponses.ok(conn)
 
                 {:error, changeset} ->
-                  errors = Util.convert_changeset_errors(changeset)
-                  key = Enum.at(Map.keys(errors), 0)
-                  err = "Room " <> Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-                  ApiResponses.error(conn, :unprocessable_entity, err)
+                  ApiResponses.changeset_error(conn, changeset)
               end
           end
         else
@@ -223,8 +216,8 @@ defmodule StreamshoreWeb.RoomController do
                 StreamshoreWeb.Endpoint.broadcast("room:" <> room_name, "room-deleted", %{})
                 ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Unable to delete room from database")
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end

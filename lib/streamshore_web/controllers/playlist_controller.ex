@@ -31,9 +31,6 @@ defmodule StreamshoreWeb.PlaylistController do
           user != params["user_id"] ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-          Playlist |> Repo.get_by(name: params["name"], owner: params["user_id"]) ->
-            ApiResponses.error(conn, :unprocessable_entity, "Playlist already exists")
-
           true ->
             changeset =
               Playlist.changeset(%Playlist{}, %{name: params["name"], owner: params["user_id"]})
@@ -42,8 +39,8 @@ defmodule StreamshoreWeb.PlaylistController do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Unable to create playlist in database")
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -70,20 +67,19 @@ defmodule StreamshoreWeb.PlaylistController do
 
             if relation do
               changeset = Playlist.changeset(relation, %{name: params["name"], owner: owner})
-              successful = Repo.update(changeset)
 
-              from(v in PlaylistVideo,
-                where: v.name == ^playlist,
-                update: [set: [name: ^params["name"]]]
-              )
-              |> Repo.update_all([])
-
-              case successful do
+              case Repo.update(changeset) do
                 {:ok, _schema} ->
+                  from(v in PlaylistVideo,
+                    where: v.name == ^playlist,
+                    update: [set: [name: ^params["name"]]]
+                  )
+                  |> Repo.update_all([])
+
                   ApiResponses.ok(conn)
 
-                {:error, _changeset} ->
-                  ApiResponses.error(conn, :unprocessable_entity, "Unable to update playlist in database")
+                {:error, changeset} ->
+                  ApiResponses.changeset_error(conn, changeset)
               end
             else
               ApiResponses.error(conn, :not_found, "Playlist doesn't exist")
@@ -121,8 +117,8 @@ defmodule StreamshoreWeb.PlaylistController do
                   {:ok, _schema} ->
                     ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    ApiResponses.error(conn, :unprocessable_entity, "Unable to delete playlist from database")
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
             end
         end

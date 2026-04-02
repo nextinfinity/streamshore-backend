@@ -18,8 +18,14 @@ defmodule StreamshoreWeb.VideoController do
         if perm >= Rooms.queue_perm(room) do
           if Rooms.anon_queue?(room) || !anon do
             case QueueManager.add_to_queue(room, params["id"], user) do
-              :ok -> ApiResponses.ok(conn)
-              {:error, error} -> ApiResponses.error(conn, :unprocessable_entity, error)
+              :ok ->
+                ApiResponses.ok(conn)
+
+              {:error, :queue_limit, error} ->
+                ApiResponses.error(conn, :conflict, error)
+
+              {:error, :invalid_video, error} ->
+                ApiResponses.error(conn, :unprocessable_entity, error)
             end
           else
             ApiResponses.error(conn, :forbidden, "You must be logged in to submit a video")

@@ -65,9 +65,6 @@ defmodule StreamshoreWeb.FavoriteController do
           !(Room |> Repo.get_by(route: room)) ->
             ApiResponses.error(conn, :not_found, "Room does not exist")
 
-          Favorites |> Repo.get_by(user: user, room: room) ->
-            ApiResponses.error(conn, :unprocessable_entity, "Room is already a favorite room")
-
           true ->
             changeset = Favorites.changeset(%Favorites{}, %{user: user, room: room})
 
@@ -75,8 +72,8 @@ defmodule StreamshoreWeb.FavoriteController do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
 
-              {:error, _changeset} ->
-                ApiResponses.error(conn, :unprocessable_entity, "Unable to create favorite in database")
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
@@ -108,8 +105,8 @@ defmodule StreamshoreWeb.FavoriteController do
                   {:ok, _schema} ->
                     ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    ApiResponses.error(conn, :unprocessable_entity, "Unable to delete favorite from database")
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
             end
         end

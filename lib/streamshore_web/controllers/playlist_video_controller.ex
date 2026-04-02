@@ -59,9 +59,6 @@ defmodule StreamshoreWeb.PlaylistVideoController do
           !(Playlist |> Repo.get_by(name: playlist, owner: owner)) ->
             ApiResponses.error(conn, :not_found, "Playlist doesn't exists")
 
-          PlaylistVideo |> Repo.get_by(name: playlist, owner: owner, video: video) ->
-            ApiResponses.error(conn, :unprocessable_entity, "Video is already in playlist")
-
           true ->
             case YouTube.fetch_video(video) do
               {:ok, _video} ->
@@ -76,8 +73,8 @@ defmodule StreamshoreWeb.PlaylistVideoController do
                   {:ok, _schema} ->
                     ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    ApiResponses.error(conn, :unprocessable_entity, "Unable to create video in database")
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
 
               {:error, _error} ->
@@ -118,8 +115,8 @@ defmodule StreamshoreWeb.PlaylistVideoController do
                   {:ok, _schema} ->
                     ApiResponses.ok(conn)
 
-                  {:error, _changeset} ->
-                    ApiResponses.error(conn, :unprocessable_entity, "Unable to delete video from database")
+                  {:error, changeset} ->
+                    ApiResponses.changeset_error(conn, changeset)
                 end
             end
         end

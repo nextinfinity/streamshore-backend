@@ -72,7 +72,7 @@ defmodule UserControllerTest do
         password: "$Test123"
       })
 
-    assert json_response(conn, 422) == %{"error" => "Username has already been taken"}
+    assert json_response(conn, 409) == %{"error" => "Username has already been taken"}
   end
 
   test "Updating with valid password", %{conn: conn} do

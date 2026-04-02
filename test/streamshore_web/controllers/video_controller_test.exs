@@ -99,6 +99,30 @@ defmodule VideoControllerTest do
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
+  test "queue limit returns conflict", %{conn: conn} do
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "QueueLimit",
+        motd: "",
+        queue_limit: 1,
+        privacy: 0
+      })
+
+    assert json_response(conn, 200) == %{"route" => "queuelimit"}
+
+    conn = post(conn, Routes.room_video_path(conn, :create, "queuelimit"), %{id: "_-k6ppRkpcM"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.room_video_path(conn, :create, "queuelimit"), %{id: "VlbtLvZqMsI"})
+    assert json_response(conn, 200) == %{}
+
+    conn = post(conn, Routes.room_video_path(conn, :create, "queuelimit"), %{id: "9jzsr5wyG4o"})
+
+    assert json_response(conn, 409) == %{
+             "error" => "You already have the maximum allowed amount of videos in the queue."
+           }
+  end
+
   test "anonymous permissions", %{conn: conn} do
     conn =
       post(conn, Routes.room_path(conn, :create), %{

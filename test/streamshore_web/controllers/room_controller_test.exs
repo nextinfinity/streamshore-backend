@@ -88,6 +88,14 @@ defmodule RoomControllerTest do
     assert json_response(conn, 200) == %{"route" => "create"}
   end
 
+  test "creating a duplicate room returns conflict", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "create"}
+
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 409) == %{"error" => "Room name has already been taken"}
+  end
+
   test "get room from username", %{conn: conn} do
     # making room
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Test", motd: "", privacy: 0})

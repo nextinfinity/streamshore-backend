@@ -4,7 +4,6 @@ defmodule StreamshoreWeb.PermissionController do
   alias Streamshore.Guardian
   alias Streamshore.PermissionLevel
   alias Streamshore.RoomPermissions
-  alias Streamshore.Util
   alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
@@ -39,10 +38,7 @@ defmodule StreamshoreWeb.PermissionController do
               ApiResponses.ok(conn)
 
             {:error, changeset} ->
-              errors = Util.convert_changeset_errors(changeset)
-              key = Enum.at(Map.keys(errors), 0)
-              err = Atom.to_string(key) <> " " <> Enum.at(errors[key], 0)
-              ApiResponses.error(conn, :unprocessable_entity, String.capitalize(err))
+              ApiResponses.changeset_error(conn, changeset)
           end
         else
           ApiResponses.error(conn, :forbidden, "Insufficient permission")
