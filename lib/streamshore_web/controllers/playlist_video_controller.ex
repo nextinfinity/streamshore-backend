@@ -51,7 +51,11 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
         cond do
           anon ->
-            ApiResponses.error(conn, :forbidden, "You must be logged in to add a video to a playlist")
+            ApiResponses.error(
+              conn,
+              :forbidden,
+              "You must be logged in to add a video to a playlist"
+            )
 
           user != owner ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
@@ -100,7 +104,11 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
         cond do
           anon ->
-            ApiResponses.error(conn, :forbidden, "You must be logged in to delete a video from a playlist")
+            ApiResponses.error(
+              conn,
+              :forbidden,
+              "You must be logged in to delete a video from a playlist"
+            )
 
           user != owner ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")

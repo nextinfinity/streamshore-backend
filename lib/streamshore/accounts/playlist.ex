@@ -11,6 +11,9 @@ defmodule Streamshore.Playlist do
     playlist
     |> cast(params, [:name, :owner])
     |> validate_required([:name, :owner])
-    |> unique_constraint(:name, name: :playlists_owner_name_index, message: "Playlist already exists")
+    |> unique_constraint(:name,
+      name: :playlists_owner_name_index,
+      message: "Playlist already exists"
+    )
   end
 end

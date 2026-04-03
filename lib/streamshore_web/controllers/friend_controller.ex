@@ -103,13 +103,13 @@ defmodule StreamshoreWeb.FriendController do
                   accepted: 1
                 })
 
-                case Repo.insert(changeset) do
-                  {:ok, _schema} ->
-                    ApiResponses.ok(conn)
+              case Repo.insert(changeset) do
+                {:ok, _schema} ->
+                  ApiResponses.ok(conn)
 
-                  {:error, changeset} ->
-                    ApiResponses.changeset_error(conn, changeset)
-                end
+                {:error, changeset} ->
+                  ApiResponses.changeset_error(conn, changeset)
+              end
             else
               case Repo.delete(relation) do
                 {:ok, _schema} ->

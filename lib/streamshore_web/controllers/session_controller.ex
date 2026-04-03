@@ -32,7 +32,11 @@ defmodule StreamshoreWeb.SessionController do
           String.capitalize(String.trim(random_adjective(), "\r")) <>
           String.capitalize(String.trim(random_animal(), "\r"))
 
-      ApiResponses.ok(conn, %{token: AuthTokens.create_token(username, true), user: username, anon: true})
+      ApiResponses.ok(conn, %{
+        token: AuthTokens.create_token(username, true),
+        user: username,
+        anon: true
+      })
     end
   end
 
