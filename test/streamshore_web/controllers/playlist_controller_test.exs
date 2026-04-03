@@ -98,7 +98,7 @@ defmodule PlaylistControllerTest do
         video: "abc"
       })
 
-    assert json_response(conn, 422) == %{"error" => "Invalid youtube video"}
+    assert json_response(conn, 422) == %{"error" => "Invalid video"}
   end
 
   test "Adding a duplicate playlist video returns conflict", %{conn: conn} do

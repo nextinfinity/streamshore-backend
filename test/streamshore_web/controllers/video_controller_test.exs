@@ -47,7 +47,10 @@ defmodule VideoControllerTest do
     conn = post(conn, Routes.room_video_path(conn, :create, "progress"), %{id: id2})
     assert json_response(conn, 200) == %{}
     assert Videos.get("progress")[:playing][:id] == id1
-    :timer.sleep(10000)
+    room_data = Videos.get("progress")
+    playing = Map.update!(room_data[:playing], :start, &(&1 - 10))
+    Videos.set("progress", Map.put(room_data, :playing, playing))
+    QueueManager.tick()
     assert Videos.get("progress")[:playing][:id] == id2
   end
 

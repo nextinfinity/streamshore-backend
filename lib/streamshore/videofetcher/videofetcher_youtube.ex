@@ -1,5 +1,7 @@
-defmodule Streamshore.YouTube do
+defmodule Streamshore.VideoFetcher.YouTube do
   @moduledoc false
+
+  @behaviour Streamshore.VideoFetcher
 
   def fetch_video(id) when is_binary(id) do
     with {:ok, response} <- Req.get(base_url(), params: request_params(id)),

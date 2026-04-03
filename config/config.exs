@@ -6,6 +6,7 @@ config :streamshore,
 config :streamshore, :mailer, Streamshore.Mailer.SendGrid
 config :streamshore, :mailer_enabled, false
 config :streamshore, :mailer_from_address, nil
+config :streamshore, :video_fetcher, Streamshore.VideoFetcher.Client
 
 # Configures the endpoint
 config :streamshore, StreamshoreWeb.Endpoint, pubsub_server: Streamshore.PubSub
