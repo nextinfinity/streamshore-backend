@@ -7,5 +7,6 @@ defmodule Streamshore.VideoFetcher do
     impl().fetch_video(id)
   end
 
-  defp impl, do: Application.get_env(:streamshore, :video_fetcher, Streamshore.VideoFetcher.Client)
+  defp impl,
+    do: Application.get_env(:streamshore, :video_fetcher, Streamshore.VideoFetcher.Client)
 end
