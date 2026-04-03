@@ -6,7 +6,7 @@ defmodule Streamshore.QueueManager do
   alias Streamshore.Repo
   alias Streamshore.Room
   alias Streamshore.Videos
-  alias Streamshore.YouTube
+  alias Streamshore.VideoFetcher
 
   def start_link(default \\ []) do
     GenServer.start_link(__MODULE__, default)
@@ -41,7 +41,7 @@ defmodule Streamshore.QueueManager do
       end
 
     if allow do
-      with {:ok, video} <- YouTube.fetch_video(id) do
+      with {:ok, video} <- VideoFetcher.fetch_video(id) do
         video = [Map.put(video, :submittedBy, user)]
 
         room_data = Map.put(room_data, :queue, room_data[:queue] ++ video)
@@ -144,7 +144,10 @@ defmodule Streamshore.QueueManager do
 
   def timer() do
     schedule()
+    tick()
+  end
 
+  def tick() do
     Enum.each(
       Videos.keys(),
       fn room ->
