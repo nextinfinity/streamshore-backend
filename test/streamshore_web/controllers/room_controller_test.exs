@@ -63,6 +63,7 @@ defmodule RoomControllerTest do
     assert response.room.motd == "Lorem Ipsum"
     conn = put(conn, Routes.room_path(conn, :update, "MOTD"), %{motd: "Other Lorem Ipsum"})
     assert json_response(conn, 200) == %{}
+    assert_broadcast "update", %{"motd" => "Other Lorem Ipsum"}
 
     {:ok, response, _socket} =
       socket(StreamshoreWeb.UserSocket, "user", %{user: "user", anon: true})
@@ -194,8 +195,14 @@ defmodule RoomControllerTest do
   test "Removing a room you own", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "create"}
+
+    {:ok, _, _socket} =
+      socket(StreamshoreWeb.UserSocket, "friend", %{user: "friend", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:create")
+
     conn = delete(conn, Routes.room_path(conn, :delete, "create"))
     assert json_response(conn, 200) == %{}
+    assert_broadcast "room-deleted", %{}
   end
 
   test "Removing a room you don't own", %{conn: conn} do

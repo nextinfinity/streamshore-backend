@@ -2,19 +2,9 @@ defmodule StreamshoreWeb.UserController do
   use StreamshoreWeb, :controller
 
   alias Streamshore.Accounts
-  alias Streamshore.AuthTokens
+  alias Streamshore.Events
   alias Streamshore.Guardian
-  alias Streamshore.Favorites
-  alias Streamshore.Friends
-  alias Streamshore.Mailer
-  alias Streamshore.Permission
-  alias Streamshore.Playlist
-  alias Streamshore.PlaylistVideo
-  alias Streamshore.Repo
-  alias Streamshore.Room
-  alias Streamshore.User
   alias StreamshoreWeb.ApiResponses
-  import Ecto.Query
 
   def index(conn, _params) do
     case Guardian.get_user_and_admin(Guardian.token_from_conn(conn)) do
@@ -23,18 +13,7 @@ defmodule StreamshoreWeb.UserController do
 
       {:ok, _user, _anon, admin} ->
         if admin do
-          query =
-            from u in User,
-              select: %{
-                username: u.username,
-                email: u.email,
-                room: u.room,
-                admin: u.admin,
-                verify_token: u.verify_token
-              }
-
-          users = Repo.all(query)
-          ApiResponses.ok(conn, users)
+          ApiResponses.ok(conn, Accounts.list_users())
         else
           ApiResponses.error(conn, :forbidden, "Insufficient permission")
         end
@@ -42,53 +21,18 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def create(conn, params) do
-    password = params["password"]
-    valid_pass = User.valid_password(password)
+    case Accounts.create_user(params) do
+      {:ok, _user, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
 
-    if !valid_pass do
-      ApiResponses.error(conn, :unprocessable_entity, "password: password is invalid")
-    else
-      verify_token = AuthTokens.create_token("Verify-" <> params["username"], false)
-
-      params =
-        if Mailer.enabled?() do
-          Map.put(params, "verify_token", verify_token)
-        else
-          params
-        end
-
-      successful =
-        %Streamshore.User{}
-        |> User.changeset(params)
-        |> Repo.insert()
-
-      case successful do
-        {:ok, _schema} ->
-          Mailer.send_email(
-            params["email"],
-            "Verify your email!",
-            "https://streamshore.tv/verify?user=" <>
-              params["username"] <> "&token=" <> verify_token
-          )
-
-          ApiResponses.ok(conn)
-
-        {:error, changeset} ->
-          ApiResponses.changeset_error(conn, changeset)
-      end
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
     end
   end
 
   def show(conn, params) do
-    user =
-      Repo.one(
-        from(u in User,
-          where: [username: ^params["id"]],
-          select: %{username: u.username, room: u.room}
-        )
-      )
-
-    case user do
+    case Accounts.get_public_user(params["id"]) do
       nil ->
         ApiResponses.error(conn, :not_found, "User not found")
 
@@ -100,108 +44,16 @@ defmodule StreamshoreWeb.UserController do
   def update(conn, params) do
     cond do
       params["resend_verification"] ->
-        user = Accounts.get_by_email_or_username(params["id"])
-
-        case user do
-          nil ->
-            ApiResponses.error(conn, :not_found, "User not found")
-
-          schema ->
-            case schema.verify_token do
-              nil ->
-                ApiResponses.error(conn, :conflict, "Email already verified")
-
-              token ->
-                Mailer.send_email(
-                  schema.email,
-                  "Verify your email!",
-                  "https://streamshore.tv/verify?user=" <> schema.username <> "&token=" <> token
-                )
-
-                ApiResponses.ok(conn)
-            end
-        end
+        handle_resend_verification(conn, params)
 
       params["reset_password"] ->
-        case User |> Repo.get_by(email: params["id"]) do
-          nil ->
-            ApiResponses.error(conn, :not_found, "User not found")
-
-          schema ->
-            reset_token = AuthTokens.create_token("Reset-" <> schema.username, false)
-
-            Mailer.send_email(
-              params["id"],
-              "Reset your password!",
-              "https://streamshore.tv/reset?user=" <> schema.username <> "&token=" <> reset_token
-            )
-
-            schema
-            |> User.changeset(%{reset_token: reset_token})
-            |> Repo.update()
-
-            ApiResponses.ok(conn)
-        end
+        handle_password_reset_request(conn, params)
 
       params["verify_token"] ->
-        case User |> Repo.get_by(username: params["id"]) do
-          nil ->
-            ApiResponses.error(conn, :not_found, "User not found")
-
-          schema ->
-            token = params["verify_token"]
-
-            case schema.verify_token do
-              nil ->
-                ApiResponses.error(conn, :conflict, "Email already verified")
-
-              ^token ->
-                schema
-                |> User.changeset(%{verify_token: nil})
-                |> Repo.update()
-
-                ApiResponses.ok(conn)
-
-              _ ->
-                ApiResponses.error(conn, :unauthorized, "Invalid token")
-            end
-        end
+        handle_verify_email(conn, params)
 
       params["password"] ->
-        case Guardian.get_user(Guardian.token_from_conn(conn)) do
-          {:error, error} ->
-            ApiResponses.error(conn, :unauthorized, error)
-
-          {:ok, user, anon} ->
-            username = params["id"]
-
-            if !anon do
-              if user == username || user == "Reset-" <> username do
-                user_entry = User |> Repo.get_by(username: username)
-                password = params["password"]
-                valid_pass = User.valid_password(password)
-
-                if !valid_pass do
-                  ApiResponses.error(conn, :unprocessable_entity, "Password is invalid")
-                else
-                  changeset = User.changeset(user_entry, %{password: password, reset_token: nil})
-                  successful = Repo.update(changeset)
-
-                  case successful do
-                    {:ok, _schema} ->
-                      ApiResponses.ok(conn)
-
-                    {:error, changeset} ->
-                      ApiResponses.changeset_error(conn, changeset)
-                  end
-                end
-              else
-                ApiResponses.error(conn, :forbidden, "Insufficient permission")
-              end
-            else
-              ApiResponses.error(conn, :forbidden, "Insufficient permission")
-            end
-        end
+        handle_password_update(conn, params)
 
       true ->
         ApiResponses.error(conn, :bad_request, "No valid options specified")
@@ -214,30 +66,13 @@ defmodule StreamshoreWeb.UserController do
         username = params["id"]
 
         if user == username && !anon do
-          query = from(f in Favorites, where: f.user == ^user)
-          successful1 = Repo.delete_all(query)
-          query = from(p in Permission, where: p.username == ^user)
-          successful2 = Repo.delete_all(query)
-          query = from r in Room, where: r.owner == ^user, select: %{name: r.name}
-          list = Repo.all(query)
-          rooms = list |> Enum.map(fn a -> a.name end)
-          query = from(f in Favorites, where: f.room in ^rooms)
-          successful7 = Repo.delete_all(query)
-          query = from(r in Room, where: r.owner == ^user)
-          successful3 = Repo.delete_all(query)
-          query = from(f in Friends, where: f.friendee == ^user or f.friender == ^user)
-          successful4 = Repo.delete_all(query)
-          query = from(v in PlaylistVideo, where: v.owner == ^user)
-          successful5 = Repo.delete_all(query)
-          query = from(p in Playlist, where: p.owner == ^user)
-          successful6 = Repo.delete_all(query)
-          user_entry = User |> Repo.get_by(username: username)
-          successful8 = Repo.delete(user_entry)
-
-          case successful1 && successful2 && successful3 && successful4 && successful5 &&
-                 successful6 && successful7 && successful8 do
-            {:ok, _schema} ->
+          case Accounts.delete_user(username) do
+            {:ok, _schema, events} ->
+              Events.dispatch_all(events)
               ApiResponses.ok(conn)
+
+            {:error, :not_found} ->
+              ApiResponses.error(conn, :not_found, "User not found")
 
             {:error, changeset} ->
               ApiResponses.changeset_error(conn, changeset)
@@ -248,6 +83,82 @@ defmodule StreamshoreWeb.UserController do
 
       {:error, error} ->
         ApiResponses.error(conn, :unauthorized, error)
+    end
+  end
+
+  defp handle_resend_verification(conn, params) do
+    case Accounts.resend_verification_email(params["id"]) do
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "User not found")
+
+      {:error, :already_verified} ->
+        ApiResponses.error(conn, :conflict, "Email already verified")
+
+      {:ok, _schema, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
+    end
+  end
+
+  defp handle_password_reset_request(conn, params) do
+    case Accounts.store_reset_token(params["id"]) do
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "User not found")
+
+      {:ok, _schema, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
+
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
+    end
+  end
+
+  defp handle_verify_email(conn, params) do
+    case Accounts.verify_email(params["id"], params["verify_token"]) do
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "User not found")
+
+      {:error, :already_verified} ->
+        ApiResponses.error(conn, :conflict, "Email already verified")
+
+      {:error, :invalid_token} ->
+        ApiResponses.error(conn, :unauthorized, "Invalid token")
+
+      {:ok, _schema} ->
+        ApiResponses.ok(conn)
+
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
+    end
+  end
+
+  defp handle_password_update(conn, params) do
+    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+      {:error, error} ->
+        ApiResponses.error(conn, :unauthorized, error)
+
+      {:ok, user, anon} ->
+        username = params["id"]
+
+        if !anon do
+          if user == username || user == "Reset-" <> username do
+            case Accounts.update_password(username, params["password"]) do
+              {:ok, _schema} ->
+                ApiResponses.ok(conn)
+
+              {:error, :not_found} ->
+                ApiResponses.error(conn, :not_found, "User not found")
+
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
+            end
+          else
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
+          end
+        else
+          ApiResponses.error(conn, :forbidden, "Insufficient permission")
+        end
     end
   end
 end
