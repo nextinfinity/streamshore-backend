@@ -129,15 +129,7 @@ defmodule Streamshore.Accounts do
   end
 
   def update_password(username, password) do
-    case Repo.get_by(User, username: username) do
-      nil ->
-        {:error, :not_found}
-
-      user ->
-        user
-        |> User.password_changeset(%{password: password})
-        |> Repo.update()
-    end
+    update_user(username, &User.password_changeset(&1, %{password: password}))
   end
 
   def delete_user(username) do
@@ -175,15 +167,7 @@ defmodule Streamshore.Accounts do
   end
 
   def set_room(user, room) do
-    case Repo.get_by(User, username: user) do
-      nil ->
-        nil
-
-      schema ->
-        schema
-        |> User.room_changeset(%{room: room})
-        |> Repo.update()
-    end
+    update_user(user, &User.room_changeset(&1, %{room: room}))
   end
 
   defp update_user(username, changeset_fun) do
