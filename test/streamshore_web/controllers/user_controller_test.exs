@@ -1,9 +1,11 @@
 defmodule UserControllerTest do
   use StreamshoreWeb.ConnCase
+  import Phoenix.ChannelTest
 
+  @endpoint StreamshoreWeb.Endpoint
+
+  alias Streamshore.Accounts
   alias Streamshore.Guardian
-  alias Streamshore.Repo
-  alias Streamshore.User
 
   setup %{conn: conn} do
     {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
@@ -28,29 +30,25 @@ defmodule UserControllerTest do
     assert json_response(conn, 200) == %{}
   end
 
-  test "Registering an account with email verification enabled", %{conn: conn} do
-    original_mailer_enabled = Application.get_env(:streamshore, :mailer_enabled)
-    original_mailer_from_address = Application.get_env(:streamshore, :mailer_from_address)
-
-    Application.put_env(:streamshore, :mailer_enabled, true)
-    Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
-
-    on_exit(fn ->
-      Application.put_env(:streamshore, :mailer_enabled, original_mailer_enabled)
-      Application.put_env(:streamshore, :mailer_from_address, original_mailer_from_address)
-    end)
-
+  test "Registering an account with invalid password", %{conn: conn} do
     conn =
       post(conn, Routes.user_path(conn, :create), %{
-        email: "Verify@Test.com",
-        username: "Verified User",
-        password: "$Test123"
+        email: "Email@Test.com",
+        username: "Test Account",
+        password: "BadPass"
       })
 
-    assert json_response(conn, 200) == %{}
+    assert json_response(conn, 422) == %{"error" => "Password is invalid"}
+  end
 
-    user = Repo.get_by(User, username: "Verified User")
-    assert user.verify_token != nil
+  test "Registering an account without password", %{conn: conn} do
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "Email@Test.com",
+        username: "Test Account"
+      })
+
+    assert json_response(conn, 422) == %{"error" => "Password can't be blank"}
   end
 
   test "Cannot register duplicate user", %{conn: conn} do
@@ -121,6 +119,37 @@ defmodule UserControllerTest do
     assert json_response(conn, 200) == %{}
   end
 
+  test "Deleting account broadcasts room deletion for owned rooms", %{conn: conn} do
+    username = "user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "Email@Test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{
+        name: "Owned Room",
+        motd: "",
+        privacy: 0
+      })
+
+    assert json_response(conn, 200) == %{"route" => "owned-room"}
+
+    {:ok, _, _socket} =
+      socket(StreamshoreWeb.UserSocket, "friend", %{user: "friend", anon: true})
+      |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:owned-room")
+
+    conn = delete(conn, Routes.user_path(conn, :delete, username))
+
+    assert json_response(conn, 200) == %{}
+    assert_broadcast "room-deleted", %{}
+  end
+
   test "Deleting account with wrong credentials", %{conn: conn} do
     username = "Not User"
 
@@ -148,15 +177,7 @@ defmodule UserControllerTest do
 
     assert json_response(conn, 200) == %{}
 
-    Repo
-    |> Ecto.Adapters.SQL.query!(
-      "UPDATE `streamshore_test`.`users` SET `admin` = '1' WHERE (`username` = 'Test Account')"
-    )
-
-    Repo
-    |> Ecto.Adapters.SQL.query!(
-      "UPDATE `streamshore_test`.`users` SET `verify_token` = NULL WHERE (`username` = 'Test Account')"
-    )
+    assert {:ok, _user} = Accounts.set_admin("Test Account", 1)
 
     {:ok, token, _claims} = Guardian.encode_and_sign("Test Account", %{anon: false})
 
