@@ -57,6 +57,10 @@ guardian_secret =
 email_key = System.get_env("EMAIL_KEY")
 email_address = System.get_env("EMAIL_ADDRESS")
 
+frontend_base_url =
+  System.get_env("FRONTEND_BASE_URL") ||
+    "https://streamshore.tv"
+
 config :streamshore, Streamshore.Repo,
   url: database_url,
   pool_size: database_pool_size
@@ -101,3 +105,5 @@ if email_key && email_address do
   config :sendgrid,
     api_key: email_key
 end
+
+config :streamshore, :frontend_base_url, String.trim_trailing(frontend_base_url, "/")

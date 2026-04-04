@@ -5,7 +5,7 @@ defmodule Streamshore.AccountEvents do
     Mailer.send_email(
       user.email,
       "Verify your email!",
-      "https://streamshore.tv/verify?user=" <> user.username <> "&token=" <> user.verify_token
+      frontend_url("/verify", user: user.username, token: user.verify_token)
     )
   end
 
@@ -13,7 +13,13 @@ defmodule Streamshore.AccountEvents do
     Mailer.send_email(
       user.email,
       "Reset your password!",
-      "https://streamshore.tv/reset?user=" <> user.username <> "&token=" <> token
+      frontend_url("/reset", user: user.username, token: token)
     )
+  end
+
+  defp frontend_url(path, params) do
+    Application.fetch_env!(:streamshore, :frontend_base_url)
+    |> String.trim_trailing("/")
+    |> Kernel.<>(path <> "?" <> URI.encode_query(params))
   end
 end
