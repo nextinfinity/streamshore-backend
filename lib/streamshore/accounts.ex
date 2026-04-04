@@ -10,11 +10,123 @@ defmodule Streamshore.Accounts do
   alias Streamshore.Playlist
   alias Streamshore.PlaylistVideo
   alias Streamshore.Repo
+  alias Streamshore.Room
   alias Streamshore.Rooms
   alias Streamshore.User
 
   def admin?(user) do
     Repo.one(from u in User, where: u.username == ^user, select: u.admin) == 1
+  end
+
+  def list_favorite_rooms(user) do
+    Repo.all(
+      from f in Favorites,
+        join: r in Room,
+        on: r.route == f.room,
+        where: f.user == ^user,
+        select: %{
+          name: r.name,
+          owner: r.owner,
+          route: r.route,
+          thumbnail: r.thumbnail,
+          privacy: r.privacy
+        }
+    )
+  end
+
+  def favorite?(user, room_identifier) do
+    room = normalize_room_identifier(room_identifier)
+
+    Repo.exists?(from f in Favorites, where: f.user == ^user and f.room == ^room)
+  end
+
+  def create_favorite(user, room_identifier) do
+    room = normalize_room_identifier(room_identifier)
+
+    if Rooms.exists?(room) do
+      %Favorites{}
+      |> Favorites.changeset(%{user: user, room: room})
+      |> Repo.insert()
+    else
+      {:error, :room_not_found}
+    end
+  end
+
+  def delete_favorite(user, room_identifier) do
+    room = normalize_room_identifier(room_identifier)
+
+    case Repo.get_by(Favorites, user: user, room: room) do
+      nil -> {:error, :not_found}
+      favorite -> Repo.delete(favorite)
+    end
+  end
+
+  def list_friendships(user) do
+    friends =
+      Repo.all(
+        from f in Friends,
+          where: f.friender == ^user and f.accepted == 1,
+          select: %{friendee: f.friendee, nickname: f.nickname}
+      )
+
+    requests =
+      Repo.all(
+        from f in Friends,
+          where: f.friender == ^user and f.accepted == 0,
+          select: %{friendee: f.friendee, nickname: f.nickname}
+      )
+
+    %{friends: friends, requests: requests}
+  end
+
+  def create_friend_request(friender, friendee) do
+    cond do
+      Repo.get_by(User, username: friendee) == nil ->
+        {:error, :user_not_found}
+
+      friendship_exists?(friender, friendee) ->
+        {:error, :already_exists}
+
+      true ->
+        %Friends{}
+        |> Friends.changeset(%{
+          friender: friendee,
+          friendee: friender,
+          nickname: nil,
+          accepted: 0
+        })
+        |> Repo.insert()
+    end
+  end
+
+  def update_friendship(friender, friendee, attrs) do
+    case Repo.get_by(Friends, friender: friender, friendee: friendee) do
+      nil ->
+        {:error, :not_found}
+
+      relation ->
+        case Map.get(attrs, "accepted") do
+          nil ->
+            relation
+            |> Friends.changeset(attrs)
+            |> Repo.update()
+
+          accepted when accepted in ["1", 1] ->
+            accept_friend_request(relation, friender, friendee)
+
+          _ ->
+            Repo.delete(relation)
+        end
+    end
+  end
+
+  def delete_friendship(friender, friendee) do
+    with {:ok, _schema} <- delete_friendship_relation(friender, friendee),
+         {:ok, _schema} <- delete_friendship_relation(friendee, friender) do
+      :ok
+    else
+      {:error, changeset} -> {:error, changeset}
+    end
   end
 
   def list_users do
@@ -179,6 +291,51 @@ defmodule Streamshore.Accounts do
         user
         |> changeset_fun.()
         |> Repo.update()
+    end
+  end
+
+  defp normalize_room_identifier(room_identifier) when is_binary(room_identifier) do
+    Rooms.sanitize_route(room_identifier)
+  end
+
+  defp normalize_room_identifier(room_identifier), do: room_identifier
+
+  defp friendship_exists?(friender, friendee) do
+    Repo.exists?(
+      from f in Friends,
+        where:
+          (f.friender == ^friender and f.friendee == ^friendee) or
+            (f.friender == ^friendee and f.friendee == ^friender)
+    )
+  end
+
+  defp accept_friend_request(relation, friender, friendee) do
+    reciprocal_relation =
+      Repo.get_by(Friends, friender: friendee, friendee: friender) ||
+        %Friends{friender: friendee, friendee: friender}
+
+    Multi.new()
+    |> Multi.update(:friend_request, Friends.changeset(relation, %{accepted: 1}))
+    |> Multi.insert_or_update(
+      :friendship,
+      Friends.changeset(reciprocal_relation, %{
+        friender: friendee,
+        friendee: friender,
+        nickname: nil,
+        accepted: 1
+      })
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{friend_request: friendship}} -> {:ok, friendship}
+      {:error, _step, changeset, _changes} -> {:error, changeset}
+    end
+  end
+
+  defp delete_friendship_relation(friender, friendee) do
+    case Repo.get_by(Friends, friender: friender, friendee: friendee) do
+      nil -> {:ok, nil}
+      relation -> Repo.delete(relation)
     end
   end
 end
