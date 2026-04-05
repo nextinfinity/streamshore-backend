@@ -55,9 +55,9 @@ defmodule Streamshore.Accounts do
   def delete_favorite(user, room_identifier) do
     room = normalize_room_identifier(room_identifier)
 
-    case Repo.get_by(Favorites, user: user, room: room) do
-      nil -> {:error, :not_found}
-      favorite -> Repo.delete(favorite)
+    case Repo.delete_all(from f in Favorites, where: f.user == ^user and f.room == ^room) do
+      {0, _} -> {:error, :not_found}
+      {_count, _} -> {:ok, :deleted}
     end
   end
 
@@ -105,13 +105,13 @@ defmodule Streamshore.Accounts do
         {:error, :not_found}
 
       relation ->
-        case Map.get(attrs, "accepted") do
+        case normalize_accepted_value(Map.get(attrs, "accepted")) do
           nil ->
             relation
             |> Friends.changeset(attrs)
             |> Repo.update()
 
-          accepted when accepted in ["1", 1] ->
+          "1" ->
             accept_friend_request(relation, friender, friendee)
 
           _ ->
@@ -121,11 +121,19 @@ defmodule Streamshore.Accounts do
   end
 
   def delete_friendship(friender, friendee) do
-    with {:ok, _schema} <- delete_friendship_relation(friender, friendee),
-         {:ok, _schema} <- delete_friendship_relation(friendee, friender) do
-      :ok
-    else
-      {:error, changeset} -> {:error, changeset}
+    Multi.new()
+    |> Multi.delete_all(
+      :forward_friendship,
+      from(f in Friends, where: f.friender == ^friender and f.friendee == ^friendee)
+    )
+    |> Multi.delete_all(
+      :reverse_friendship,
+      from(f in Friends, where: f.friender == ^friendee and f.friendee == ^friender)
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, _changes} -> :ok
+      {:error, _step, reason, _changes} -> {:error, reason}
     end
   end
 
@@ -300,6 +308,10 @@ defmodule Streamshore.Accounts do
 
   defp normalize_room_identifier(room_identifier), do: room_identifier
 
+  defp normalize_accepted_value(nil), do: nil
+  defp normalize_accepted_value(value) when is_binary(value), do: value
+  defp normalize_accepted_value(value) when is_integer(value), do: Integer.to_string(value)
+
   defp friendship_exists?(friender, friendee) do
     Repo.exists?(
       from f in Friends,
@@ -329,13 +341,6 @@ defmodule Streamshore.Accounts do
     |> case do
       {:ok, %{friend_request: friendship}} -> {:ok, friendship}
       {:error, _step, changeset, _changes} -> {:error, changeset}
-    end
-  end
-
-  defp delete_friendship_relation(friender, friendee) do
-    case Repo.get_by(Friends, friender: friender, friendee: friendee) do
-      nil -> {:ok, nil}
-      relation -> Repo.delete(relation)
     end
   end
 end

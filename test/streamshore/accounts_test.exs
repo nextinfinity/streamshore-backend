@@ -199,6 +199,24 @@ defmodule Streamshore.AccountsTest do
     assert room_summary.owner == "owner-user"
   end
 
+  test "delete_favorite removes an existing favorite without a preload lookup" do
+    assert {:ok, room} =
+             Rooms.create_room("owner-user", %{
+               "name" => "Owned Room",
+               "motd" => "",
+               "privacy" => 0
+             })
+
+    Repo.insert!(Favorites.changeset(%Favorites{}, %{user: "user-one", room: room.route}))
+
+    assert {:ok, :deleted} = Accounts.delete_favorite("user-one", "Owned Room")
+    assert Repo.get_by(Favorites, user: "user-one", room: room.route) == nil
+  end
+
+  test "delete_favorite returns not_found when the favorite does not exist" do
+    assert {:error, :not_found} = Accounts.delete_favorite("user-one", "Missing Room")
+  end
+
   test "update_friendship accepts a request and creates the reciprocal friendship" do
     Repo.insert!(
       User.registration_changeset(%User{}, %{
@@ -220,6 +238,33 @@ defmodule Streamshore.AccountsTest do
 
     assert {:ok, accepted_friendship} =
              Accounts.update_friendship("two", "one", %{"accepted" => "1"})
+
+    assert accepted_friendship.accepted == 1
+    assert Repo.get_by(Friends, friender: "one", friendee: "two", accepted: 1) != nil
+    assert Repo.get_by(Friends, friender: "two", friendee: "one", accepted: 1) != nil
+  end
+
+  test "update_friendship accepts integer accepted values after normalization" do
+    Repo.insert!(
+      User.registration_changeset(%User{}, %{
+        email: "one@test.com",
+        username: "one",
+        password: "$Test123"
+      })
+    )
+
+    Repo.insert!(
+      User.registration_changeset(%User{}, %{
+        email: "two@test.com",
+        username: "two",
+        password: "$Test123"
+      })
+    )
+
+    assert {:ok, _request} = Accounts.create_friend_request("one", "two")
+
+    assert {:ok, accepted_friendship} =
+             Accounts.update_friendship("two", "one", %{"accepted" => 1})
 
     assert accepted_friendship.accepted == 1
     assert Repo.get_by(Friends, friender: "one", friendee: "two", accepted: 1) != nil
