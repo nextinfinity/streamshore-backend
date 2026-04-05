@@ -4,12 +4,13 @@ if System.get_env("PHX_SERVER") do
   config :streamshore, StreamshoreWeb.Endpoint, server: true
 end
 
-# Required config - YouTube API Key
-youtube_key =
+# Tests use the mock video fetcher, so they do not need a YouTube API key.
+if Mix.env() != :test do
   System.get_env("YOUTUBE_KEY") ||
     raise """
     environment variable YOUTUBE_KEY is missing.
     """
+end
 
 # Database config
 database_test_suffix =

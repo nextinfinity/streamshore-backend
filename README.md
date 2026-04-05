@@ -8,7 +8,7 @@ Documentation for this repository is a work in progress.
 
 ## Running
 
-**The environment variable YOUTUBE_KEY must be set to a Google API key with YouTube access for Streamshore to run.**
+**The environment variable `YOUTUBE_KEY` must be set to a Google API key with YouTube access for non-test runtime environments. Tests use a mock video fetcher and do not require it.**
 
 This project currently targets modern Elixir and Phoenix:
 
@@ -21,7 +21,7 @@ Runtime configuration is loaded from `config/runtime.exs`.
 
 Required environment variables:
 
-- `YOUTUBE_KEY` set to a Google API key with YouTube access
+- Non-test environments: `YOUTUBE_KEY` set to a Google API key with YouTube access
 
 Common optional overrides:
 
@@ -29,6 +29,7 @@ Common optional overrides:
 - `DATABASE_POOL_SIZE`
 - `HOST`
 - `PORT`
+- `FRONTEND_BASE_URL` for links included in account emails such as verification and password reset
 - `SECRET_KEY_BASE`
 - `GUARDIAN_SECRET`
 - `PHX_SERVER`
@@ -42,7 +43,7 @@ Common optional overrides:
 
 To start your Phoenix server:
 
-*Note: local startup requires a running MySQL server. The default local database URL is `ecto://root:password@localhost/streamshore`. Tests use `streamshore_test`.*
+*Note: local startup requires a running MySQL server and a `YOUTUBE_KEY`. The default local database URL is `ecto://root:password@localhost/streamshore`. Tests use `streamshore_test` and do not require a `YOUTUBE_KEY`.*
 
   * Install dependencies with `mix.bat deps.get` on Windows, or `mix deps.get` on Unix-like shells
   * Create, migrate, and seed your database with `mix.bat ecto.setup`
