@@ -81,10 +81,14 @@ defmodule Streamshore.AccountsTest do
                "password" => "$Test123"
              })
 
+    original_token = Repo.get_by!(User, username: "verified-user").verify_token
+
     assert {:ok, resent_user, [{:send_verification_email, event_user}]} =
              Accounts.resend_verification_email("verified-user")
 
     assert resent_user.verify_token != nil
+    refute resent_user.verify_token == original_token
+    assert Repo.get_by!(User, username: "verified-user").verify_token == resent_user.verify_token
     assert event_user.username == resent_user.username
   end
 

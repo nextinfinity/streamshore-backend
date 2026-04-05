@@ -187,7 +187,15 @@ defmodule Streamshore.Accounts do
         {:error, :already_verified}
 
       %User{} = user ->
-        {:ok, user, [{:send_verification_email, user}]}
+        token = AuthTokens.create_token("Verify-" <> user.username, false)
+
+        case update_user(user.username, &User.verification_changeset(&1, %{verify_token: token})) do
+          {:ok, updated_user} ->
+            {:ok, updated_user, [{:send_verification_email, updated_user}]}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
     end
   end
 
@@ -245,6 +253,13 @@ defmodule Streamshore.Accounts do
           {:error, changeset} ->
             {:error, changeset}
         end
+    end
+  end
+
+  def valid_reset_token?(username, token) do
+    case Repo.get_by(User, username: username) do
+      %User{reset_token: ^token} when not is_nil(token) -> true
+      _ -> false
     end
   end
 
