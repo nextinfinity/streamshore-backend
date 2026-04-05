@@ -1,49 +1,21 @@
 defmodule StreamshoreWeb.FavoriteController do
-  import Ecto.Query, only: [from: 2]
   use StreamshoreWeb, :controller
-  alias Streamshore.Favorites
+
+  alias Streamshore.Accounts
   alias Streamshore.Guardian
-  alias StreamshoreWeb.Presence
-  alias Streamshore.Repo
-  alias Streamshore.Room
   alias StreamshoreWeb.ApiResponses
+  alias StreamshoreWeb.Presence
 
   def index(conn, params) do
-    user = params["user_id"]
-    query = from f in Favorites, where: f.user == ^user, select: %{room: f.room}
-    list = Repo.all(query)
-    favorites = list |> Enum.map(fn a -> a.room end)
-
-    query =
-      from r in Room,
-        where: r.route in ^favorites,
-        select: %{
-          name: r.name,
-          owner: r.owner,
-          route: r.route,
-          thumbnail: r.thumbnail,
-          privacy: r.privacy
-        }
-
-    rooms = Repo.all(query)
-
-    rooms =
-      Enum.map(rooms, fn room ->
-        Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route])))
-      end)
-
-    ApiResponses.ok(conn, rooms)
+    params["user_id"]
+    |> Accounts.list_favorite_rooms()
+    |> with_user_counts()
+    |> then(&ApiResponses.ok(conn, &1))
   end
 
   def show(conn, params) do
-    user = params["user_id"]
-    room = params["id"]
-
-    if Favorites |> Repo.get_by(user: user, room: room) do
-      ApiResponses.ok(conn, true)
-    else
-      ApiResponses.ok(conn, false)
-    end
+    favorite = Accounts.favorite?(params["user_id"], params["id"])
+    ApiResponses.ok(conn, favorite)
   end
 
   def create(conn, params) do
@@ -66,15 +38,13 @@ defmodule StreamshoreWeb.FavoriteController do
           current_user != user ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-          !(Room |> Repo.get_by(route: room)) ->
-            ApiResponses.error(conn, :not_found, "Room does not exist")
-
           true ->
-            changeset = Favorites.changeset(%Favorites{}, %{user: user, room: room})
-
-            case Repo.insert(changeset) do
+            case Accounts.create_favorite(user, room) do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
+
+              {:error, :room_not_found} ->
+                ApiResponses.error(conn, :not_found, "Room does not exist")
 
               {:error, changeset} ->
                 ApiResponses.changeset_error(conn, changeset)
@@ -104,20 +74,23 @@ defmodule StreamshoreWeb.FavoriteController do
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
-            case Favorites |> Repo.get_by(user: user, room: room) do
-              nil ->
+            case Accounts.delete_favorite(user, room) do
+              {:error, :not_found} ->
                 ApiResponses.error(conn, :not_found, "Favorite does not exist")
 
-              relation ->
-                case Repo.delete(relation) do
-                  {:ok, _schema} ->
-                    ApiResponses.ok(conn)
+              {:ok, _schema} ->
+                ApiResponses.ok(conn)
 
-                  {:error, changeset} ->
-                    ApiResponses.changeset_error(conn, changeset)
-                end
+              {:error, changeset} ->
+                ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
+  end
+
+  defp with_user_counts(rooms) do
+    Enum.map(rooms, fn room ->
+      Map.put(room, :users, Enum.count(Presence.list("room:" <> room[:route])))
+    end)
   end
 end

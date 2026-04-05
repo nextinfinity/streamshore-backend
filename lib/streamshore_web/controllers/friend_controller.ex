@@ -1,31 +1,14 @@
 defmodule StreamshoreWeb.FriendController do
-  import Ecto.Query, only: [from: 2]
   use StreamshoreWeb, :controller
 
-  alias Streamshore.Friends
+  alias Streamshore.Accounts
   alias Streamshore.Guardian
-  alias Streamshore.Repo
-  alias Streamshore.User
   alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
-    friender = params["user_id"]
-
-    query =
-      from f in Friends,
-        where: f.friender == ^friender and f.accepted == 1,
-        select: %{friendee: f.friendee, nickname: f.nickname}
-
-    friends = Repo.all(query)
-
-    query =
-      from f in Friends,
-        where: f.friender == ^friender and f.accepted == 0,
-        select: %{friendee: f.friendee, nickname: f.nickname}
-
-    requests = Repo.all(query)
-    map = %{friends: friends, requests: requests}
-    ApiResponses.ok(conn, map)
+    params["user_id"]
+    |> Accounts.list_friendships()
+    |> then(&ApiResponses.ok(conn, &1))
   end
 
   def create(conn, params) do
@@ -44,25 +27,16 @@ defmodule StreamshoreWeb.FriendController do
           user != friender ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-          !(User |> Repo.get_by(username: friendee)) ->
-            ApiResponses.error(conn, :not_found, "User does not exist")
-
-          Friends |> Repo.get_by(friender: friendee, friendee: friender) ||
-              Friends |> Repo.get_by(friender: friender, friendee: friendee) ->
-            ApiResponses.error(conn, :conflict, "Friend connection already exists")
-
           true ->
-            changeset =
-              Friends.changeset(%Friends{}, %{
-                friender: friendee,
-                friendee: friender,
-                nickname: nil,
-                accepted: 0
-              })
-
-            case Repo.insert(changeset) do
+            case Accounts.create_friend_request(friender, friendee) do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
+
+              {:error, :user_not_found} ->
+                ApiResponses.error(conn, :not_found, "User does not exist")
+
+              {:error, :already_exists} ->
+                ApiResponses.error(conn, :conflict, "Friend connection already exists")
 
               {:error, changeset} ->
                 ApiResponses.changeset_error(conn, changeset)
@@ -79,7 +53,6 @@ defmodule StreamshoreWeb.FriendController do
       {:ok, user, anon} ->
         friender = params["user_id"]
         friendee = params["id"]
-        relation = Friends |> Repo.get_by(friender: friender, friendee: friendee)
 
         cond do
           anon ->
@@ -88,42 +61,13 @@ defmodule StreamshoreWeb.FriendController do
           user != friender ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-          !relation ->
-            ApiResponses.error(conn, :not_found, "Friendship not found")
-
-          params["accepted"] ->
-            if params["accepted"] == "1" do
-              _successful = relation |> Friends.changeset(params) |> Repo.update()
-
-              changeset =
-                Friends.changeset(%Friends{}, %{
-                  friender: friendee,
-                  friendee: friender,
-                  nickname: nil,
-                  accepted: 1
-                })
-
-              case Repo.insert(changeset) do
-                {:ok, _schema} ->
-                  ApiResponses.ok(conn)
-
-                {:error, changeset} ->
-                  ApiResponses.changeset_error(conn, changeset)
-              end
-            else
-              case Repo.delete(relation) do
-                {:ok, _schema} ->
-                  ApiResponses.ok(conn)
-
-                {:error, changeset} ->
-                  ApiResponses.changeset_error(conn, changeset)
-              end
-            end
-
           true ->
-            case relation |> Friends.changeset(params) |> Repo.update() do
+            case Accounts.update_friendship(friender, friendee, params) do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)
+
+              {:error, :not_found} ->
+                ApiResponses.error(conn, :not_found, "Friendship not found")
 
               {:error, changeset} ->
                 ApiResponses.changeset_error(conn, changeset)
@@ -149,20 +93,14 @@ defmodule StreamshoreWeb.FriendController do
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
           true ->
-            relation1 = Friends |> Repo.get_by(friender: friender, friendee: friendee)
-            relation2 = Friends |> Repo.get_by(friender: friendee, friendee: friender)
+            case Accounts.delete_friendship(friender, friendee) do
+              :ok ->
+                ApiResponses.ok(conn)
 
-            with {:ok, _schema} <- delete_if_present(relation1),
-                 {:ok, _schema} <- delete_if_present(relation2) do
-              ApiResponses.ok(conn)
-            else
               {:error, changeset} ->
                 ApiResponses.changeset_error(conn, changeset)
             end
         end
     end
   end
-
-  defp delete_if_present(nil), do: {:ok, nil}
-  defp delete_if_present(relation), do: Repo.delete(relation)
 end

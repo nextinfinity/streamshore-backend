@@ -3,6 +3,7 @@ defmodule Streamshore.AccountsTest do
 
   alias Streamshore.Accounts
   alias Streamshore.Favorites
+  alias Streamshore.Friends
   alias Streamshore.Permission
   alias Streamshore.Repo
   alias Streamshore.Room
@@ -163,5 +164,119 @@ defmodule Streamshore.AccountsTest do
     assert Repo.get_by(Room, route: room.route) == nil
     assert Repo.get_by(Favorites, room: room.route) == nil
     assert Repo.get_by(Permission, room: room.route) == nil
+  end
+
+  test "create_favorite stores the room route for the user" do
+    assert {:ok, _room} =
+             Rooms.create_room("owner-user", %{
+               "name" => "Owned Room",
+               "motd" => "",
+               "privacy" => 0
+             })
+
+    assert {:ok, favorite} = Accounts.create_favorite("user-one", "Owned Room")
+    assert favorite.room == "owned-room"
+    assert Accounts.favorite?("user-one", "owned-room")
+  end
+
+  test "create_favorite returns room_not_found when the room is missing" do
+    assert {:error, :room_not_found} = Accounts.create_favorite("user-one", "Missing Room")
+  end
+
+  test "list_favorite_rooms returns room summaries for a user" do
+    assert {:ok, room} =
+             Rooms.create_room("owner-user", %{
+               "name" => "Owned Room",
+               "motd" => "",
+               "privacy" => 0
+             })
+
+    Repo.insert!(Favorites.changeset(%Favorites{}, %{user: "user-one", room: room.route}))
+
+    [room_summary] = Accounts.list_favorite_rooms("user-one")
+    assert room_summary.name == "Owned Room"
+    assert room_summary.route == "owned-room"
+    assert room_summary.owner == "owner-user"
+  end
+
+  test "delete_favorite removes an existing favorite without a preload lookup" do
+    assert {:ok, room} =
+             Rooms.create_room("owner-user", %{
+               "name" => "Owned Room",
+               "motd" => "",
+               "privacy" => 0
+             })
+
+    Repo.insert!(Favorites.changeset(%Favorites{}, %{user: "user-one", room: room.route}))
+
+    assert {:ok, :deleted} = Accounts.delete_favorite("user-one", "Owned Room")
+    assert Repo.get_by(Favorites, user: "user-one", room: room.route) == nil
+  end
+
+  test "delete_favorite returns not_found when the favorite does not exist" do
+    assert {:error, :not_found} = Accounts.delete_favorite("user-one", "Missing Room")
+  end
+
+  test "update_friendship accepts a request and creates the reciprocal friendship" do
+    Repo.insert!(
+      User.registration_changeset(%User{}, %{
+        email: "one@test.com",
+        username: "one",
+        password: "$Test123"
+      })
+    )
+
+    Repo.insert!(
+      User.registration_changeset(%User{}, %{
+        email: "two@test.com",
+        username: "two",
+        password: "$Test123"
+      })
+    )
+
+    assert {:ok, _request} = Accounts.create_friend_request("one", "two")
+
+    assert {:ok, accepted_friendship} =
+             Accounts.update_friendship("two", "one", %{"accepted" => "1"})
+
+    assert accepted_friendship.accepted == 1
+    assert Repo.get_by(Friends, friender: "one", friendee: "two", accepted: 1) != nil
+    assert Repo.get_by(Friends, friender: "two", friendee: "one", accepted: 1) != nil
+  end
+
+  test "update_friendship accepts integer accepted values after normalization" do
+    Repo.insert!(
+      User.registration_changeset(%User{}, %{
+        email: "one@test.com",
+        username: "one",
+        password: "$Test123"
+      })
+    )
+
+    Repo.insert!(
+      User.registration_changeset(%User{}, %{
+        email: "two@test.com",
+        username: "two",
+        password: "$Test123"
+      })
+    )
+
+    assert {:ok, _request} = Accounts.create_friend_request("one", "two")
+
+    assert {:ok, accepted_friendship} =
+             Accounts.update_friendship("two", "one", %{"accepted" => 1})
+
+    assert accepted_friendship.accepted == 1
+    assert Repo.get_by(Friends, friender: "one", friendee: "two", accepted: 1) != nil
+    assert Repo.get_by(Friends, friender: "two", friendee: "one", accepted: 1) != nil
+  end
+
+  test "delete_friendship removes both sides when present" do
+    Repo.insert!(Friends.changeset(%Friends{}, %{friender: "one", friendee: "two", accepted: 1}))
+    Repo.insert!(Friends.changeset(%Friends{}, %{friender: "two", friendee: "one", accepted: 1}))
+
+    assert :ok = Accounts.delete_friendship("one", "two")
+    assert Repo.get_by(Friends, friender: "one", friendee: "two") == nil
+    assert Repo.get_by(Friends, friender: "two", friendee: "one") == nil
   end
 end
