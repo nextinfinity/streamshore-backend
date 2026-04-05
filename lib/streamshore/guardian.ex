@@ -2,7 +2,7 @@ defmodule Streamshore.Guardian do
   use Guardian, otp_app: :streamshore
 
   alias Streamshore.Accounts
-  alias Streamshore.RoomPermissions
+  alias Streamshore.Rooms
 
   def subject_for_token(user, _claims) do
     sub = to_string(user)
@@ -52,7 +52,7 @@ defmodule Streamshore.Guardian do
             {:error, error}
 
           {:ok, user, anon} ->
-            perm = RoomPermissions.get_perm(room, user)
+            perm = Rooms.get_permission(room, user)
             {:ok, user, anon, perm}
         end
     end

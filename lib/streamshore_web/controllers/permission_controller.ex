@@ -3,17 +3,17 @@ defmodule StreamshoreWeb.PermissionController do
 
   alias Streamshore.Guardian
   alias Streamshore.PermissionLevel
-  alias Streamshore.RoomPermissions
+  alias Streamshore.Rooms
   alias StreamshoreWeb.ApiResponses
 
   def index(conn, params) do
     room = params["room_id"]
-    perms = RoomPermissions.list(room)
+    perms = Rooms.list_permissions(room)
     ApiResponses.ok(conn, perms)
   end
 
   def show(conn, params) do
-    perm = RoomPermissions.get_perm(params["room_id"], params["id"])
+    perm = Rooms.get_permission(params["room_id"], params["id"])
     ApiResponses.ok(conn, perm)
   end
 
@@ -28,7 +28,7 @@ defmodule StreamshoreWeb.PermissionController do
 
       {:ok, _user, _anon, permission} ->
         if permission > perm && permission >= PermissionLevel.manager() do
-          case RoomPermissions.update_perm(room, user, perm) do
+          case Rooms.update_permission(room, user, perm) do
             {:ok, _schema} ->
               StreamshoreWeb.Endpoint.broadcast("room:" <> room, "permission", %{
                 user: user,
