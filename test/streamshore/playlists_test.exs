@@ -87,4 +87,9 @@ defmodule Streamshore.PlaylistsTest do
     assert Repo.get_by(PlaylistVideo, owner: "user-one", name: "Favorites", video: "_-k6ppRkpcM") ==
              nil
   end
+
+  test "delete_playlist_video returns not_found when the relation is missing" do
+    assert {:error, :not_found} =
+             Playlists.delete_playlist_video("user-one", "Favorites", "_-k6ppRkpcM")
+  end
 end

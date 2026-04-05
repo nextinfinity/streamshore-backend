@@ -90,9 +90,12 @@ defmodule Streamshore.Playlists do
   end
 
   def delete_playlist_video(owner, playlist_name, video_id) do
-    case Repo.get_by(PlaylistVideo, name: playlist_name, owner: owner, video: video_id) do
-      nil -> {:error, :not_found}
-      playlist_video -> Repo.delete(playlist_video)
+    case Repo.delete_all(
+           from v in PlaylistVideo,
+             where: v.name == ^playlist_name and v.owner == ^owner and v.video == ^video_id
+         ) do
+      {0, _} -> {:error, :not_found}
+      {_count, _} -> {:ok, :deleted}
     end
   end
 
