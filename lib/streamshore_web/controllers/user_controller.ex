@@ -11,11 +11,13 @@ defmodule StreamshoreWeb.UserController do
       {:error, error} ->
         ApiResponses.error(conn, :unauthorized, error)
 
-      {:ok, _user, _anon, admin} ->
-        if admin do
-          ApiResponses.ok(conn, Accounts.list_users())
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
+      {:ok, user, anon, _admin} ->
+        case Accounts.list_users_for(user, anon) do
+          {:ok, users} ->
+            ApiResponses.ok(conn, users)
+
+          {:error, :forbidden} ->
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
         end
     end
   end
@@ -63,22 +65,19 @@ defmodule StreamshoreWeb.UserController do
   def delete(conn, params) do
     case Guardian.get_user(Guardian.token_from_conn(conn)) do
       {:ok, user, anon} ->
-        username = params["id"]
+        case Accounts.delete_user_for(user, anon, params["id"]) do
+          {:ok, _schema, events} ->
+            Events.dispatch_all(events)
+            ApiResponses.ok(conn)
 
-        if user == username && !anon do
-          case Accounts.delete_user(username) do
-            {:ok, _schema, events} ->
-              Events.dispatch_all(events)
-              ApiResponses.ok(conn)
+          {:error, :forbidden} ->
+            ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-            {:error, :not_found} ->
-              ApiResponses.error(conn, :not_found, "User not found")
+          {:error, :not_found} ->
+            ApiResponses.error(conn, :not_found, "User not found")
 
-            {:error, changeset} ->
-              ApiResponses.changeset_error(conn, changeset)
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
+          {:error, changeset} ->
+            ApiResponses.changeset_error(conn, changeset)
         end
 
       {:error, error} ->
@@ -139,25 +138,18 @@ defmodule StreamshoreWeb.UserController do
         ApiResponses.error(conn, :unauthorized, error)
 
       {:ok, user, anon} ->
-        username = params["id"]
+        case Accounts.update_password_for(user, anon, params["id"], params["password"]) do
+          {:ok, _schema} ->
+            ApiResponses.ok(conn)
 
-        if !anon do
-          if user == username || user == "Reset-" <> username do
-            case Accounts.update_password(username, params["password"]) do
-              {:ok, _schema} ->
-                ApiResponses.ok(conn)
-
-              {:error, :not_found} ->
-                ApiResponses.error(conn, :not_found, "User not found")
-
-              {:error, changeset} ->
-                ApiResponses.changeset_error(conn, changeset)
-            end
-          else
+          {:error, :forbidden} ->
             ApiResponses.error(conn, :forbidden, "Insufficient permission")
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
+
+          {:error, :not_found} ->
+            ApiResponses.error(conn, :not_found, "User not found")
+
+          {:error, changeset} ->
+            ApiResponses.changeset_error(conn, changeset)
         end
     end
   end

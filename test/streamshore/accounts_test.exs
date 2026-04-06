@@ -132,6 +132,48 @@ defmodule Streamshore.AccountsTest do
     assert Repo.get_by!(User, username: "password-user").reset_token == nil
   end
 
+  test "update_password_for allows the matching user" do
+    assert {:ok, _user, _events} =
+             Accounts.create_user(%{
+               "email" => "password@test.com",
+               "username" => "password-user",
+               "password" => "$Test123"
+             })
+
+    assert {:ok, updated_user} =
+             Accounts.update_password_for("password-user", false, "password-user", "$NewPass123")
+
+    assert updated_user.password != "$NewPass123"
+  end
+
+  test "update_password_for allows the reset token subject" do
+    assert {:ok, _user, _events} =
+             Accounts.create_user(%{
+               "email" => "password@test.com",
+               "username" => "password-user",
+               "password" => "$Test123"
+             })
+
+    assert {:ok, updated_user} =
+             Accounts.update_password_for(
+               "Reset-password-user",
+               false,
+               "password-user",
+               "$NewPass123"
+             )
+
+    assert updated_user.password != "$NewPass123"
+  end
+
+  test "update_password_for rejects unauthorized users" do
+    assert {:error, :forbidden} =
+             Accounts.update_password_for("other-user", false, "password-user", "$NewPass123")
+  end
+
+  test "list_users_for rejects non-admin users" do
+    assert {:error, :forbidden} = Accounts.list_users_for("user", false)
+  end
+
   test "delete_user removes owned room references" do
     assert {:ok, _user, _events} =
              Accounts.create_user(%{
@@ -164,6 +206,10 @@ defmodule Streamshore.AccountsTest do
     assert Repo.get_by(Room, route: room.route) == nil
     assert Repo.get_by(Favorites, room: room.route) == nil
     assert Repo.get_by(Permission, room: room.route) == nil
+  end
+
+  test "delete_user_for rejects mismatched users" do
+    assert {:error, :forbidden} = Accounts.delete_user_for("other-user", false, "owner-user")
   end
 
   test "create_favorite stores the room route for the user" do

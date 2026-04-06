@@ -150,6 +150,14 @@ defmodule Streamshore.Accounts do
     )
   end
 
+  def list_users_for(user, anon) do
+    if !anon and admin?(user) do
+      {:ok, list_users()}
+    else
+      {:error, :forbidden}
+    end
+  end
+
   def create_user(params) do
     params =
       if Mailer.enabled?() do
@@ -252,6 +260,14 @@ defmodule Streamshore.Accounts do
     update_user(username, &User.password_changeset(&1, %{password: password}))
   end
 
+  def update_password_for(user, anon, username, password) do
+    if !anon and authorized_to_update_password?(user, username) do
+      update_password(username, password)
+    else
+      {:error, :forbidden}
+    end
+  end
+
   def delete_user(username) do
     case Repo.get_by(User, username: username) do
       nil ->
@@ -283,6 +299,14 @@ defmodule Streamshore.Accounts do
           {:error, _step, changeset, _changes} ->
             {:error, changeset}
         end
+    end
+  end
+
+  def delete_user_for(user, anon, username) do
+    if !anon and user == username do
+      delete_user(username)
+    else
+      {:error, :forbidden}
     end
   end
 
@@ -319,6 +343,10 @@ defmodule Streamshore.Accounts do
           (f.friender == ^friender and f.friendee == ^friendee) or
             (f.friender == ^friendee and f.friendee == ^friender)
     )
+  end
+
+  defp authorized_to_update_password?(user, username) do
+    user == username || user == "Reset-" <> username
   end
 
   defp accept_friend_request(relation, friender, friendee) do
