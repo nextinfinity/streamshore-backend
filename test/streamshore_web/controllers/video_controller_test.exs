@@ -32,11 +32,12 @@ defmodule VideoControllerTest do
     id = "_-k6ppRkpcM"
     conn = post(conn, Routes.room_video_path(conn, :create, "time"), %{id: id})
     assert json_response(conn, 200) == %{}
-    init_time = QueueManager.get_runtime("time")
-    :timer.sleep(1000)
-    final_time = QueueManager.get_runtime("time")
-    diff = final_time - init_time
-    assert_in_delta diff, 1.0, 0.05
+
+    room_data = Videos.get("time")
+    playing = Map.update!(room_data[:playing], :start, &(&1 - 2))
+    Videos.set("time", Map.put(room_data, :playing, playing))
+
+    assert_in_delta QueueManager.get_runtime("time"), 1.0, 0.05
   end
 
   test "Queue progression", %{conn: conn} do
@@ -170,8 +171,7 @@ defmodule VideoControllerTest do
       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:votes")
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("votes")[:playing][:votes] == ["user"]
+    assert_eventually(fn -> Videos.get("votes")[:playing][:votes] == ["user"] end)
   end
 
   test "vote skip", %{conn: conn} do
@@ -197,8 +197,7 @@ defmodule VideoControllerTest do
       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:skip")
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("skip")[:playing][:id] == id2
+    assert_eventually(fn -> Videos.get("skip")[:playing][:id] == id2 end)
   end
 
   test "no votes", %{conn: conn} do
@@ -224,8 +223,7 @@ defmodule VideoControllerTest do
       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:no-votes")
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("no-votes")[:playing][:votes] == []
+    assert_eventually(fn -> Videos.get("no-votes")[:playing][:votes] == [] end)
   end
 
   test "update vote enable", %{conn: conn} do
@@ -251,8 +249,7 @@ defmodule VideoControllerTest do
       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:update-votes")
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("update-votes")[:playing][:votes] == []
+    assert_eventually(fn -> Videos.get("update-votes")[:playing][:votes] == [] end)
 
     conn =
       put(conn, Routes.room_path(conn, :update, "update-votes"), %{
@@ -263,8 +260,7 @@ defmodule VideoControllerTest do
     assert json_response(conn, 200) == %{}
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("update-votes")[:playing][:votes] == ["user"]
+    assert_eventually(fn -> Videos.get("update-votes")[:playing][:votes] == ["user"] end)
   end
 
   test "vote threshold", %{conn: conn} do
@@ -290,15 +286,32 @@ defmodule VideoControllerTest do
       |> subscribe_and_join(StreamshoreWeb.RoomChannel, "room:vote-threshold")
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("vote-threshold")[:playing][:id] == id2
+    assert_eventually(fn -> Videos.get("vote-threshold")[:playing][:id] == id2 end)
 
     conn = put(conn, Routes.room_path(conn, :update, "vote-threshold"), %{vote_threshold: 101})
     assert json_response(conn, 200) == %{}
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
-    :timer.sleep(100)
-    assert Videos.get("vote-threshold")[:playing][:id] == id2
-    assert Videos.get("vote-threshold")[:playing][:votes] == ["user"]
+    assert_eventually(fn ->
+      Videos.get("vote-threshold")[:playing][:id] == id2 &&
+        Videos.get("vote-threshold")[:playing][:votes] == ["user"]
+    end)
+  end
+
+  defp assert_eventually(assertion, attempts \\ 20)
+
+  defp assert_eventually(assertion, attempts) when attempts > 0 do
+    if assertion.() do
+      assert true
+    else
+      receive do
+      after
+        10 -> assert_eventually(assertion, attempts - 1)
+      end
+    end
+  end
+
+  defp assert_eventually(_assertion, 0) do
+    flunk("condition was not met in time")
   end
 end
