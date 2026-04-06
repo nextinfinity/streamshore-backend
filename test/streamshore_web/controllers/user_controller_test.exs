@@ -8,6 +8,14 @@ defmodule UserControllerTest do
   alias Streamshore.Guardian
 
   setup %{conn: conn} do
+    original_mailer_enabled = Application.get_env(:streamshore, :mailer_enabled)
+    original_mailer_from_address = Application.get_env(:streamshore, :mailer_from_address)
+
+    on_exit(fn ->
+      Application.put_env(:streamshore, :mailer_enabled, original_mailer_enabled)
+      Application.put_env(:streamshore, :mailer_from_address, original_mailer_from_address)
+    end)
+
     {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
 
     conn =
@@ -102,6 +110,75 @@ defmodule UserControllerTest do
     assert json_response(conn, 200) == %{}
     conn = put(conn, Routes.user_path(conn, :update, username), %{password: "BadPass"})
     assert json_response(conn, 422) == %{"error" => "Password is invalid"}
+  end
+
+  test "Updating without supported params returns bad request", %{conn: conn} do
+    conn = put(conn, Routes.user_path(conn, :update, "user"), %{"ignored" => "value"})
+
+    assert json_response(conn, 400) == %{"error" => "No valid options specified"}
+  end
+
+  test "Updating password without a token returns unauthorized", %{conn: _conn} do
+    conn = put(build_conn(), Routes.user_path(build_conn(), :update, "user"), %{password: "$NewPass123"})
+
+    assert json_response(conn, 401) == %{"error" => "No valid token provided"}
+  end
+
+  test "Resending verification for an unknown user returns not found", %{conn: conn} do
+    conn = put(conn, Routes.user_path(conn, :update, "missing-user"), %{resend_verification: true})
+
+    assert json_response(conn, 404) == %{"error" => "User not found"}
+  end
+
+  test "Verifying with an invalid token returns unauthorized", %{conn: conn} do
+    Application.put_env(:streamshore, :mailer_enabled, true)
+    Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
+
+    username = "verified-user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "verify@test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn = put(conn, Routes.user_path(conn, :update, username), %{verify_token: "invalid-token"})
+
+    assert json_response(conn, 401) == %{"error" => "Invalid token"}
+  end
+
+  test "Verifying an already verified user returns conflict", %{conn: conn} do
+    Application.put_env(:streamshore, :mailer_enabled, true)
+    Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
+
+    username = "verified-user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "verify@test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    user = Accounts.get_by_email_or_username(username)
+
+    conn = put(conn, Routes.user_path(conn, :update, username), %{verify_token: user.verify_token})
+    assert json_response(conn, 200) == %{}
+
+    conn = put(conn, Routes.user_path(conn, :update, username), %{verify_token: user.verify_token})
+
+    assert json_response(conn, 409) == %{"error" => "Email already verified"}
+  end
+
+  test "Requesting a password reset for an unknown user returns not found", %{conn: conn} do
+    conn = put(conn, Routes.user_path(conn, :update, "missing@example.com"), %{reset_password: true})
+
+    assert json_response(conn, 404) == %{"error" => "User not found"}
   end
 
   test "Deleting account", %{conn: conn} do
