@@ -292,6 +292,7 @@ defmodule VideoControllerTest do
     assert json_response(conn, 200) == %{}
 
     Phoenix.ChannelTest.push(socket, "vote", %{})
+
     assert_eventually(fn ->
       Videos.get("vote-threshold")[:playing][:id] == id2 &&
         Videos.get("vote-threshold")[:playing][:votes] == ["user"]
