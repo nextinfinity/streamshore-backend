@@ -41,7 +41,7 @@ defmodule Streamshore.Rooms do
     Multi.new()
     |> Multi.insert(:room, Room.changeset(%Room{}, attrs))
     |> Multi.run(:permission, fn _repo, %{room: room} ->
-      RoomPermissions.update_perm(room.route, owner, PermissionLevel.owner())
+      update_permission(room.route, owner, PermissionLevel.owner())
     end)
     |> Repo.transaction()
     |> case do
@@ -112,6 +112,18 @@ defmodule Streamshore.Rooms do
 
   def exists?(room) do
     Repo.exists?(from r in Room, where: r.route == ^room)
+  end
+
+  def list_permissions(room) do
+    RoomPermissions.list(room)
+  end
+
+  def get_permission(room, user) do
+    RoomPermissions.get_perm(room, user)
+  end
+
+  def update_permission(room, user, permission) do
+    RoomPermissions.update_perm(room, user, permission)
   end
 
   def get_room(room) do
