@@ -134,7 +134,9 @@ defmodule StreamshoreWeb.UserController do
   end
 
   defp handle_password_update(conn, params) do
-    case Guardian.get_user(Guardian.token_from_conn(conn)) do
+    token = Guardian.token_from_conn(conn)
+
+    case Guardian.get_user(token) do
       {:error, error} ->
         ApiResponses.error(conn, :unauthorized, error)
 
@@ -142,7 +144,7 @@ defmodule StreamshoreWeb.UserController do
         username = params["id"]
 
         if !anon do
-          if user == username || user == "Reset-" <> username do
+          if user == username || Accounts.valid_reset_token?(username, token) do
             case Accounts.update_password(username, params["password"]) do
               {:ok, _schema} ->
                 ApiResponses.ok(conn)

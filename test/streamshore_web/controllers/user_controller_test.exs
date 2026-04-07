@@ -180,6 +180,55 @@ defmodule UserControllerTest do
 
     assert json_response(conn, 404) == %{"error" => "User not found"}
   end
+  
+  test "Updating password with a stored reset token", %{conn: conn} do
+    username = "reset-user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "reset@test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    assert {:ok, _updated_user, [{:send_password_reset_email, _event_user, token}]} =
+             Accounts.store_reset_token("reset@test.com")
+
+    reset_conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> token)
+
+    reset_conn =
+      put(reset_conn, Routes.user_path(reset_conn, :update, username), %{password: "$NewPass123"})
+
+    assert json_response(reset_conn, 200) == %{}
+  end
+
+  test "Rejecting a forged reset-subject token during password update", %{conn: conn} do
+    username = "reset-user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "reset@test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    {:ok, forged_token, _claims} = Guardian.encode_and_sign("Reset-" <> username, %{anon: false})
+
+    reset_conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> forged_token)
+
+    reset_conn =
+      put(reset_conn, Routes.user_path(reset_conn, :update, username), %{password: "$NewPass123"})
+
+    assert json_response(reset_conn, 403) == %{"error" => "Insufficient permission"}
+  end
 
   test "Deleting account", %{conn: conn} do
     username = "user"
