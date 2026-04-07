@@ -100,6 +100,25 @@ defmodule SessionControllerTest do
     assert json_response(conn, 200)["user"] == "Test Account"
   end
 
+  test "Logging in before email verification is forbidden", %{conn: conn} do
+    Application.put_env(:streamshore, :mailer_enabled, true)
+    Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "Email@Test.com",
+        username: "Test Account",
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    conn =
+      post(conn, Routes.session_path(conn, :create), %{id: "Test Account", password: "$Test123"})
+
+    assert json_response(conn, 403) == %{"error" => "Email address not verified"}
+  end
+
   test "Attempting to log in with bad username", %{conn: conn} do
     username = "Test Account"
 
