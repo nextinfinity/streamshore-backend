@@ -25,6 +25,24 @@ defmodule PermissionControllerTest do
     assert perm == PermissionLevel.user()
   end
 
+  test "permission index lists assigned permissions", %{conn: conn} do
+    conn =
+      put(conn, Routes.room_permission_path(conn, :show, "permissions", "listed-user"), %{
+        permission: PermissionLevel.manager()
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    permissions =
+      conn
+      |> get(Routes.room_permission_path(conn, :index, "permissions"))
+      |> json_response(200)
+
+    assert Enum.any?(permissions, fn permission ->
+             permission == %{"user" => "listed-user", "permission" => PermissionLevel.manager()}
+           end)
+  end
+
   test "permission update requires manager access", %{conn: conn} do
     conn =
       put(conn, Routes.room_permission_path(conn, :show, "permissions", "other-user"), %{
@@ -32,6 +50,30 @@ defmodule PermissionControllerTest do
       })
 
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
+  end
+
+  test "manager cannot grant owner permission", %{conn: conn} do
+    conn =
+      put(conn, Routes.room_permission_path(conn, :show, "permissions", "manager-user"), %{
+        permission: PermissionLevel.manager()
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    {:ok, token, _claims} = Guardian.encode_and_sign("manager-user", %{anon: false})
+
+    manager_conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> token)
+
+    manager_conn =
+      put(
+        manager_conn,
+        Routes.room_permission_path(manager_conn, :show, "permissions", "target-user"),
+        %{permission: PermissionLevel.owner()}
+      )
+
+    assert json_response(manager_conn, 403) == %{"error" => "Insufficient permission"}
   end
 
   test "set permission", %{conn: conn} do

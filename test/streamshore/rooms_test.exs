@@ -5,7 +5,6 @@ defmodule Streamshore.RoomsTest do
   alias Streamshore.Permission
   alias Streamshore.Repo
   alias Streamshore.Room
-  alias Streamshore.RoomPermissions
   alias Streamshore.Rooms
 
   test "create_room creates the room and owner permission" do
@@ -19,7 +18,7 @@ defmodule Streamshore.RoomsTest do
     assert room.route == "owned-room"
     assert room.owner == "owner-user"
     assert Repo.get_by(Room, route: "owned-room") != nil
-    assert RoomPermissions.get_perm("owned-room", "owner-user") == 100
+    assert Rooms.get_permission("owned-room", "owner-user") == 100
   end
 
   test "create_room returns changeset error for duplicate room" do

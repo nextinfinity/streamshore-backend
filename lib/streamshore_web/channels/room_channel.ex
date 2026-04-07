@@ -4,7 +4,6 @@ defmodule StreamshoreWeb.RoomChannel do
   alias Streamshore.Accounts
   alias Streamshore.Filter
   alias Streamshore.PermissionLevel
-  alias Streamshore.RoomPermissions
   alias Streamshore.Rooms
   alias StreamshoreWeb.Presence
   alias Streamshore.QueueManager
@@ -16,7 +15,7 @@ defmodule StreamshoreWeb.RoomChannel do
         {:error, %{reason: "room does not exist"}}
 
       room ->
-        perm = RoomPermissions.get_perm(room.route, socket.assigns.user)
+        perm = Rooms.get_permission(room.route, socket.assigns.user)
 
         if perm > PermissionLevel.banned() do
           send(self(), {:after_join, perm})
@@ -57,7 +56,7 @@ defmodule StreamshoreWeb.RoomChannel do
 
   def handle_in("skip", _payload, socket) do
     "room:" <> room = socket.topic
-    perm = RoomPermissions.get_perm(room, socket.assigns.user)
+    perm = Rooms.get_permission(room, socket.assigns.user)
 
     if perm >= PermissionLevel.manager() do
       QueueManager.play_next(room)
@@ -70,7 +69,7 @@ defmodule StreamshoreWeb.RoomChannel do
   # broadcast to everyone in the current topic (room_chat:lobby).
   def handle_in("chat", payload, socket) do
     "room:" <> room = socket.topic
-    perm = RoomPermissions.get_perm(room, socket.assigns.user)
+    perm = Rooms.get_permission(room, socket.assigns.user)
 
     if perm >= Rooms.chat_perm(room) do
       if Rooms.anon_chat?(room) || !socket.assigns.anon do
@@ -101,7 +100,7 @@ defmodule StreamshoreWeb.RoomChannel do
 
   def handle_in("delete", %{"uuid" => uuid} = payload, socket) when is_binary(uuid) do
     "room:" <> room = socket.topic
-    perm = RoomPermissions.get_perm(room, socket.assigns.user)
+    perm = Rooms.get_permission(room, socket.assigns.user)
 
     if perm >= PermissionLevel.manager() do
       broadcast(socket, "delete", payload)

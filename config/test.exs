@@ -6,6 +6,7 @@ config :streamshore, StreamshoreWeb.Endpoint, server: false
 
 config :streamshore, :mailer, Streamshore.Mailer.Mock
 config :streamshore, :video_fetcher, Streamshore.VideoFetcher.Mock
+config :pbkdf2_elixir, :rounds, 1
 
 # Print only warnings and errors during test
 config :logger, level: :warning
