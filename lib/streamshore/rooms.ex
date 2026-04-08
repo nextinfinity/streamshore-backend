@@ -7,7 +7,6 @@ defmodule Streamshore.Rooms do
   alias Streamshore.PermissionLevel
   alias Streamshore.Repo
   alias Streamshore.Room
-  alias Streamshore.RoomPermissions
 
   def list_rooms do
     room_summary_query()
@@ -115,15 +114,28 @@ defmodule Streamshore.Rooms do
   end
 
   def list_permissions(room) do
-    RoomPermissions.list(room)
+    query =
+      from p in Permission,
+           where: [room: ^room],
+           select: %{user: p.username, permission: p.permission}
+
+    Repo.all(query)
   end
 
   def get_permission(room, user) do
-    RoomPermissions.get_perm(room, user)
+    case Repo.get_by(Permission, room: room, username: user) do
+      nil -> PermissionLevel.user()
+      perm -> perm.permission
+    end
   end
 
   def update_permission(room, user, permission) do
-    RoomPermissions.update_perm(room, user, permission)
+    case Repo.get_by(Permission, room: room, username: user) do
+      nil -> %Permission{room: room, username: user}
+      permission -> permission
+    end
+    |> Permission.changeset(%{permission: permission})
+    |> Repo.insert_or_update()
   end
 
   def get_room(room) do

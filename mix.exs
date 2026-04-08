@@ -34,23 +34,15 @@ defmodule Streamshore.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.7"},
-      {:phoenix_pubsub, "~> 2.1"},
-      {:phoenix_ecto, "~> 4.6"},
       {:ecto_sql, "~> 3.12"},
       {:myxql, "~> 0.7.1"},
-      {:phoenix_html, "~> 4.2"},
-      {:jason, "~> 1.4"},
-      {:plug_cowboy, "~> 2.7"},
-      {:plug, "~> 1.16"},
       {:corsica, "~> 2.1"},
-      {:joken, "~> 2.6"},
-      {:comeonin, "~> 5.5"},
       {:pbkdf2_elixir, "~> 2.3"},
       {:req, "~> 0.5.8"},
       {:timex, "~> 3.7"},
       {:uuid, "~> 1.1"},
       {:guardian, "~> 2.3"},
-      {:sendgrid, "~> 2.0"},
+      {:sendgrid, "~> 2.0", only: [:prod, :dev]},
       {:junit_formatter, "~> 3.4", only: [:test]}
     ]
   end
