@@ -151,7 +151,7 @@ defmodule FriendsControllerTest do
     assert json_response(conn2, 200) == %{}
     # get friends of 3rd user
     conn = get(conn, Routes.user_friend_path(conn, :index, tester3))
-    assert json_response(conn, 200) == %{"friends" => [], "requests" => []}
+    assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
   test "Getting a list of nicknames", %{conn: conn} do

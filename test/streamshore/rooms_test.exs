@@ -54,7 +54,7 @@ defmodule Streamshore.RoomsTest do
     assert Repo.get_by!(Room, route: "owned-room").motd == "Updated"
   end
 
-  test "delete_owned_room removes favorites and permissions" do
+  test "delete_room removes favorites and permissions" do
     assert {:ok, room} =
              Rooms.create_room("owner-user", %{
                "name" => "Owned Room",
@@ -72,8 +72,8 @@ defmodule Streamshore.RoomsTest do
       })
     )
 
-    assert {:ok, _room, [{:room_deleted, "owned-room"}]} =
-             Rooms.delete_owned_room(room.route, "owner-user")
+    assert {:ok, "owned-room", [{:room_deleted, "owned-room"}]} =
+             Rooms.delete_room(room.route)
 
     assert Repo.get_by(Room, route: room.route) == nil
     assert Repo.get_by(Favorites, room: room.route) == nil
@@ -121,16 +121,5 @@ defmodule Streamshore.RoomsTest do
     assert Repo.get_by(Favorites, room: room_two.route) == nil
     assert Repo.get_by(Permission, room: room_one.route) == nil
     assert Repo.get_by(Permission, room: room_two.route) == nil
-  end
-
-  test "delete_owned_room returns forbidden for non-owner" do
-    assert {:ok, room} =
-             Rooms.create_room("owner-user", %{
-               "name" => "Owned Room",
-               "motd" => "",
-               "privacy" => 0
-             })
-
-    assert {:error, :forbidden} = Rooms.delete_owned_room(room.route, "other-user")
   end
 end

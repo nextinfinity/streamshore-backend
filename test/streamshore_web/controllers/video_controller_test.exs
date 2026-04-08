@@ -103,6 +103,17 @@ defmodule VideoControllerTest do
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
+  test "video queue update without a token returns unauthorized", %{conn: conn} do
+    conn =
+      post(conn, Routes.room_path(conn, :create), %{name: "UpdateAuth", motd: "", privacy: 0})
+
+    assert json_response(conn, 200) == %{"route" => "updateauth"}
+
+    conn = put(build_conn(), Routes.room_video_path(build_conn(), :update, "updateauth", "0"))
+
+    assert json_response(conn, 401) == %{"error" => "No valid token provided"}
+  end
+
   test "queue limit returns conflict", %{conn: conn} do
     conn =
       post(conn, Routes.room_path(conn, :create), %{
@@ -145,7 +156,10 @@ defmodule VideoControllerTest do
 
     id = "_-k6ppRkpcM"
     conn2 = post(conn2, Routes.room_video_path(conn2, :create, "queueanon"), %{id: id})
-    assert json_response(conn2, 403) == %{"error" => "You must be logged in to submit a video"}
+
+    assert json_response(conn2, 403) == %{
+             "error" => "You must be logged in to perform this action"
+           }
   end
 
   test "votes tracked", %{conn: conn} do

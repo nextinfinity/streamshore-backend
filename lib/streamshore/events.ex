@@ -14,6 +14,10 @@ defmodule Streamshore.Events do
     RoomEvents.dispatch({:room_updated, route, payload})
   end
 
+  def dispatch({:permission_updated, route, payload}) do
+    RoomEvents.dispatch({:permission_updated, route, payload})
+  end
+
   def dispatch({:send_verification_email, user}) do
     AccountEvents.dispatch({:send_verification_email, user})
   end

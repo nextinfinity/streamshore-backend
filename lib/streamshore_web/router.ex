@@ -3,6 +3,7 @@ defmodule StreamshoreWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug StreamshoreWeb.Plugs.LoadAuth
   end
 
   scope "/api", StreamshoreWeb do
@@ -14,8 +15,8 @@ defmodule StreamshoreWeb.Router do
       resources "/friends", FriendController, only: [:index, :create, :update, :delete]
       resources "/favorites", FavoriteController, only: [:index, :show, :create, :delete]
 
-      resources "/playlists", PlaylistController, except: [:new, :edit] do
-        resources "/videos", PlaylistVideoController, only: [:index, :create, :update, :delete]
+      resources "/playlists", PlaylistController, only: [:index, :create, :update, :delete] do
+        resources "/videos", PlaylistVideoController, only: [:index, :create, :delete]
       end
     end
 

@@ -8,4 +8,8 @@ defmodule StreamshoreWeb.RoomEvents do
   def dispatch({:room_updated, route, payload}) do
     Endpoint.broadcast("room:" <> route, "update", payload)
   end
+
+  def dispatch({:permission_updated, route, payload}) do
+    Endpoint.broadcast("room:" <> route, "permission", payload)
+  end
 end
