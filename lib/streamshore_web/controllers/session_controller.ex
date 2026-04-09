@@ -27,8 +27,8 @@ defmodule StreamshoreWeb.SessionController do
     end
   end
 
-  def delete(conn, params) do
-    Guardian.revoke(params["id"])
+  def delete(conn, _params) do
+    Guardian.revoke(conn.assigns.current_token)
     ApiResponses.ok(conn)
   end
 end
