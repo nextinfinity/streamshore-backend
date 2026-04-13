@@ -3,6 +3,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
   import Phoenix.ConnTest
   alias Plug.Conn
   alias Streamshore.Guardian
+  alias StreamshoreWeb.Router.Helpers, as: Routes
 
   setup do
     {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false})
@@ -11,7 +12,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
       build_conn()
       |> Conn.put_req_header("authorization", "Bearer " <> token)
 
-    post(conn, "/api/rooms", %{name: "Lobby", motd: "", privacy: 0, chat_filter: 1})
+    post(conn, Routes.room_path(conn, :create), %{name: "Lobby", motd: "", privacy: 0, chat_filter: 1})
 
     {:ok, _, socket} =
       socket(StreamshoreWeb.UserSocket, "anon", %{user: "anon", anon: false})
@@ -74,7 +75,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
       build_conn()
       |> Conn.put_req_header("authorization", "Bearer " <> token)
 
-    post(conn, "/api/rooms", %{name: "Lobby2", motd: "", privacy: 0, chat_filter: 0})
+    post(conn, Routes.room_path(conn, :create), %{name: "Lobby2", motd: "", privacy: 0, chat_filter: 0})
 
     {:ok, _, socket} =
       socket(StreamshoreWeb.UserSocket, "anon", %{user: "anon", anon: false})
@@ -93,7 +94,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
       build_conn()
       |> Conn.put_req_header("authorization", "Bearer " <> token)
 
-    post(conn, "/api/rooms", %{name: "Lobby2", motd: "", privacy: 0, chat_filter: 0})
+    post(conn, Routes.room_path(conn, :create), %{name: "Lobby2", motd: "", privacy: 0, chat_filter: 0})
 
     {:ok, _, socket} =
       socket(StreamshoreWeb.UserSocket, "anon", %{user: "anon", anon: false})
@@ -104,7 +105,7 @@ defmodule StreamshoreWeb.RoomChannelTest do
     push(socket, "chat", %{"msg" => "lorem ipsum iu lorem ipsum"})
     assert_broadcast "chat", %{"msg" => "lorem ipsum iu lorem ipsum"}
 
-    put(conn, "/api/rooms/lobby2", %{chat_filter: 1})
+    put(conn, Routes.room_path(conn, :update, "lobby2"), %{chat_filter: 1})
 
     push(socket, "chat", %{"msg" => "lorem ipsum IU lorem ipsum"})
     assert_broadcast "chat", %{"msg" => "lorem ipsum ***** lorem ipsum"}

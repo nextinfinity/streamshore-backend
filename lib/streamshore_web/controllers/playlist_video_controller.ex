@@ -6,7 +6,6 @@ defmodule StreamshoreWeb.PlaylistVideoController do
 
   plug StreamshoreWeb.Plugs.RequireAuth
   plug StreamshoreWeb.Plugs.RequireNonAnon
-  plug StreamshoreWeb.Plugs.RequireCurrentUser, param: "user_id"
 
   def index(conn, params) do
     Playlists.list_playlist_videos(conn.assigns.current_user, params["playlist_id"])

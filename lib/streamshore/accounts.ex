@@ -4,6 +4,7 @@ defmodule Streamshore.Accounts do
 
   alias Ecto.Multi
   alias Streamshore.AuthTokens
+  alias Streamshore.Guardian
   alias Streamshore.Favorites
   alias Streamshore.Friends
   alias Streamshore.Mailer
@@ -200,8 +201,8 @@ defmodule Streamshore.Accounts do
     {:ok, session_payload(build_anonymous_username(), true)}
   end
 
-  def resend_verification_email(id) do
-    case get_by_email_or_username(id) do
+  def resend_verification_email(identifier) do
+    case get_by_email_or_username(identifier) do
       nil ->
         {:error, :not_found}
 
@@ -278,6 +279,12 @@ defmodule Streamshore.Accounts do
     end
   end
 
+  def submit_password_reset(reset_token, password) do
+    with {:ok, username} <- decode_token_subject(reset_token, "Reset-") do
+      reset_password(username, reset_token, password)
+    end
+  end
+
   def reset_password(username, reset_token, password) do
     case Repo.get_by(User, username: username) do
       nil ->
@@ -288,6 +295,12 @@ defmodule Streamshore.Accounts do
 
       %User{} ->
         {:error, :invalid_token}
+    end
+  end
+
+  def submit_email_verification(token) do
+    with {:ok, username} <- decode_token_subject(token, "Verify-") do
+      verify_email(username, token)
     end
   end
 
@@ -401,6 +414,17 @@ defmodule Streamshore.Accounts do
     |> case do
       {:ok, %{friend_request: friendship}} -> {:ok, friendship}
       {:error, _step, changeset, _changes} -> {:error, changeset}
+    end
+  end
+
+  defp decode_token_subject(token, prefix) do
+    with {:ok, claims} <- Guardian.decode_and_verify(token),
+         subject when is_binary(subject) <- claims["sub"],
+         true <- String.starts_with?(subject, prefix),
+         username when byte_size(username) > 0 <- String.replace_prefix(subject, prefix, "") do
+      {:ok, username}
+    else
+      _ -> {:error, :invalid_token}
     end
   end
 end

@@ -5,6 +5,8 @@ defmodule SessionControllerTest do
   alias Streamshore.Repo
   alias Streamshore.User
 
+  defp unique_value(prefix), do: "#{prefix}-#{System.unique_integer([:positive])}"
+
   setup do
     original_mailer_enabled = Application.get_env(:streamshore, :mailer_enabled)
     original_mailer_from_address = Application.get_env(:streamshore, :mailer_from_address)
@@ -44,11 +46,11 @@ defmodule SessionControllerTest do
   end
 
   test "Username validation", %{conn: conn} do
-    username = "Test Account"
+    username = unique_value("test-account")
 
     conn =
-      post(conn, Routes.user_path(conn, :create), %{
-        email: "Email@Test.com",
+      post(conn, Routes.account_path(conn, :create), %{
+        email: unique_value("email") <> "@test.com",
         username: username,
         password: "$Test123"
       })
@@ -59,11 +61,11 @@ defmodule SessionControllerTest do
   end
 
   test "Password validation", %{conn: conn} do
-    username = "Test Account"
+    username = unique_value("test-account")
 
     conn =
-      post(conn, Routes.user_path(conn, :create), %{
-        email: "Email@Test.com",
+      post(conn, Routes.account_path(conn, :create), %{
+        email: unique_value("email") <> "@test.com",
         username: username,
         password: "$Test123"
       })
@@ -71,20 +73,20 @@ defmodule SessionControllerTest do
     assert json_response(conn, 200) == %{}
 
     conn =
-      post(conn, Routes.session_path(conn, :create), %{id: "Email@Test.com", password: "bad"})
+      post(conn, Routes.session_path(conn, :create), %{id: username, password: "bad"})
 
     assert json_response(conn, 401) == %{"error" => "Invalid credentials"}
   end
 
   test "Logging in via username", %{conn: conn} do
-    username = "Test Account"
+    username = unique_value("test-account")
 
     Application.put_env(:streamshore, :mailer_enabled, true)
     Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
 
     conn =
-      post(conn, Routes.user_path(conn, :create), %{
-        email: "Email@Test.com",
+      post(conn, Routes.account_path(conn, :create), %{
+        email: unique_value("email") <> "@test.com",
         username: username,
         password: "$Test123"
       })
@@ -95,36 +97,37 @@ defmodule SessionControllerTest do
     assert {:ok, _verified_user} = Accounts.verify_email(username, user.verify_token)
 
     conn =
-      post(conn, Routes.session_path(conn, :create), %{id: "Test Account", password: "$Test123"})
+      post(conn, Routes.session_path(conn, :create), %{id: username, password: "$Test123"})
 
-    assert json_response(conn, 200)["user"] == "Test Account"
+    assert json_response(conn, 200)["user"] == username
   end
 
   test "Logging in before email verification is forbidden", %{conn: conn} do
+    username = unique_value("test-account")
     Application.put_env(:streamshore, :mailer_enabled, true)
     Application.put_env(:streamshore, :mailer_from_address, "noreply@example.com")
 
     conn =
-      post(conn, Routes.user_path(conn, :create), %{
-        email: "Email@Test.com",
-        username: "Test Account",
+      post(conn, Routes.account_path(conn, :create), %{
+        email: unique_value("email") <> "@test.com",
+        username: username,
         password: "$Test123"
       })
 
     assert json_response(conn, 200) == %{}
 
     conn =
-      post(conn, Routes.session_path(conn, :create), %{id: "Test Account", password: "$Test123"})
+      post(conn, Routes.session_path(conn, :create), %{id: username, password: "$Test123"})
 
     assert json_response(conn, 403) == %{"error" => "Email address not verified"}
   end
 
   test "Attempting to log in with bad username", %{conn: conn} do
-    username = "Test Account"
+    username = unique_value("test-account")
 
     conn =
-      post(conn, Routes.user_path(conn, :create), %{
-        email: "Email@Test.com",
+      post(conn, Routes.account_path(conn, :create), %{
+        email: unique_value("email") <> "@test.com",
         username: username,
         password: "$Test123"
       })
