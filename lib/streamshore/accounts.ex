@@ -1,4 +1,5 @@
 defmodule Streamshore.Accounts do
+  import Dictionary
   import Ecto.Query
 
   alias Ecto.Multi
@@ -178,6 +179,27 @@ defmodule Streamshore.Accounts do
     end
   end
 
+  def create_authenticated_session(identifier, password) do
+    with user when not is_nil(user) <- get_by_email_or_username(identifier),
+         true <- Pbkdf2.verify_pass(password, user.password),
+         :ok <- ensure_verified(user) do
+      {:ok, session_payload(user.username, false)}
+    else
+      nil ->
+        {:error, :invalid_credentials}
+
+      false ->
+        {:error, :invalid_credentials}
+
+      {:error, :email_not_verified} ->
+        {:error, :email_not_verified}
+    end
+  end
+
+  def create_anonymous_session do
+    {:ok, session_payload(build_anonymous_username(), true)}
+  end
+
   def resend_verification_email(id) do
     case get_by_email_or_username(id) do
       nil ->
@@ -238,8 +260,8 @@ defmodule Streamshore.Accounts do
     end
   end
 
-  def store_reset_token(email) do
-    case get_by_email(email) do
+  def request_password_reset(identifier) do
+    case get_by_email_or_username(identifier) do
       nil ->
         {:error, :not_found}
 
@@ -256,10 +278,16 @@ defmodule Streamshore.Accounts do
     end
   end
 
-  def valid_reset_token?(username, token) do
+  def reset_password(username, reset_token, password) do
     case Repo.get_by(User, username: username) do
-      %User{reset_token: ^token} when not is_nil(token) -> true
-      _ -> false
+      nil ->
+        {:error, :not_found}
+
+      %User{reset_token: ^reset_token} when not is_nil(reset_token) ->
+        update_password(username, password)
+
+      %User{} ->
+        {:error, :invalid_token}
     end
   end
 
@@ -315,6 +343,23 @@ defmodule Streamshore.Accounts do
         |> changeset_fun.()
         |> Repo.update()
     end
+  end
+
+  defp ensure_verified(%{verify_token: nil}), do: :ok
+  defp ensure_verified(_user), do: {:error, :email_not_verified}
+
+  defp session_payload(username, anonymous?) do
+    %{
+      token: AuthTokens.create_token(username, anonymous?),
+      user: username,
+      anon: anonymous?
+    }
+  end
+
+  defp build_anonymous_username do
+    String.capitalize(String.trim(random_adjective(), "\r")) <>
+      String.capitalize(String.trim(random_adjective(), "\r")) <>
+      String.capitalize(String.trim(random_animal(), "\r"))
   end
 
   defp normalize_room_identifier(room_identifier) when is_binary(room_identifier) do

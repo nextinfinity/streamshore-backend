@@ -40,7 +40,7 @@ defmodule Streamshore.Rooms do
     Multi.new()
     |> Multi.insert(:room, Room.changeset(%Room{}, attrs))
     |> Multi.run(:permission, fn _repo, %{room: room} ->
-      update_permission(room.route, owner, PermissionLevel.owner())
+      update_permission_internal(room.route, owner, PermissionLevel.owner())
     end)
     |> Repo.transaction()
     |> case do
@@ -69,24 +69,18 @@ defmodule Streamshore.Rooms do
     end
   end
 
-  def delete_owned_room(room, owner) do
-    case Repo.get_by(Room, route: room) do
-      nil ->
+  def delete_room(room) do
+    case room
+         |> single_room_scope()
+         |> run_room_deletion() do
+      {:ok, [room_route], events} ->
+        {:ok, room_route, events}
+
+      {:ok, [], _events} ->
         {:error, :not_found}
 
-      %Room{owner: ^owner} = schema ->
-        case schema
-             |> single_room_scope()
-             |> run_room_deletion() do
-          {:ok, _room_routes, events} ->
-            {:ok, schema, events}
-
-          {:error, changeset} ->
-            {:error, changeset}
-        end
-
-      %Room{} ->
-        {:error, :forbidden}
+      {:error, changeset} ->
+        {:error, changeset}
     end
   end
 
@@ -116,8 +110,8 @@ defmodule Streamshore.Rooms do
   def list_permissions(room) do
     query =
       from p in Permission,
-           where: [room: ^room],
-           select: %{user: p.username, permission: p.permission}
+        where: [room: ^room],
+        select: %{user: p.username, permission: p.permission}
 
     Repo.all(query)
   end
@@ -130,6 +124,23 @@ defmodule Streamshore.Rooms do
   end
 
   def update_permission(room, user, permission) do
+    case update_permission_internal(room, user, permission) do
+      {:ok, updated_permission} ->
+        {:ok, updated_permission,
+          [
+            {:permission_updated, room,
+              %{
+                user: user,
+                permission: permission
+              }}
+          ]}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  defp update_permission_internal(room, user, permission) do
     case Repo.get_by(Permission, room: room, username: user) do
       nil -> %Permission{room: room, username: user}
       permission -> permission
@@ -265,7 +276,7 @@ defmodule Streamshore.Rooms do
   end
 
   defp single_room_scope(room) do
-    from(r in Room, where: r.id == ^room.id)
+    from(r in Room, where: r.route == ^room)
   end
 
   defp room_updated_event(room, attrs) do

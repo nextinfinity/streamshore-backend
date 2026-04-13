@@ -76,6 +76,17 @@ defmodule PermissionControllerTest do
     assert json_response(manager_conn, 403) == %{"error" => "Insufficient permission"}
   end
 
+  test "permission update without a token returns unauthorized" do
+    conn =
+      put(
+        build_conn(),
+        Routes.room_permission_path(build_conn(), :show, "permissions", "other-user"),
+        %{permission: PermissionLevel.manager()}
+      )
+
+    assert json_response(conn, 401) == %{"error" => "No valid token provided"}
+  end
+
   test "set permission", %{conn: conn} do
     conn
     |> put(Routes.room_permission_path(conn, :show, "permissions", "set-user"), %{

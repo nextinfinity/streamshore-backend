@@ -2,11 +2,22 @@ defmodule StreamshoreWeb.RoomController do
   use StreamshoreWeb, :controller
 
   alias Streamshore.Events
-  alias Streamshore.Guardian
   alias Streamshore.PermissionLevel
   alias Streamshore.Rooms
   alias StreamshoreWeb.ApiResponses
   alias StreamshoreWeb.Presence
+
+  plug StreamshoreWeb.Plugs.RequireAuth
+  plug StreamshoreWeb.Plugs.RequireNonAnon when action in [:create, :edit, :update, :delete]
+
+  plug StreamshoreWeb.Plugs.LoadRoomPermission,
+       [param: "id"] when action in [:edit, :update, :delete]
+
+  plug StreamshoreWeb.Plugs.RequireRoomPermission,
+       [min: PermissionLevel.manager()] when action in [:edit, :update]
+
+  plug StreamshoreWeb.Plugs.RequireRoomPermission,
+       [min: PermissionLevel.owner()] when action in [:delete]
 
   def index(conn, params) do
     rooms =
@@ -35,92 +46,47 @@ defmodule StreamshoreWeb.RoomController do
   end
 
   def create(conn, params) do
-    case Guardian.get_user(Guardian.token_from_conn(conn)) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+    case Rooms.create_room(conn.assigns.current_user, params) do
+      {:ok, room} ->
+        ApiResponses.ok(conn, %{route: room.route})
 
-      {:ok, user, anon} ->
-        case anon do
-          false ->
-            case Rooms.create_room(user, params) do
-              {:ok, room} ->
-                ApiResponses.ok(conn, %{route: room.route})
-
-              {:error, changeset} ->
-                ApiResponses.changeset_error(conn, changeset)
-            end
-
-          true ->
-            ApiResponses.error(conn, :forbidden, "You must be logged in to create a room")
-        end
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
     end
   end
 
   def edit(conn, params) do
-    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
-
-      {:ok, _user, _anon, permission} ->
-        if permission >= PermissionLevel.manager() do
-          case Rooms.settings(params["id"]) do
-            nil -> ApiResponses.error(conn, :not_found, "Room does not exist")
-            room -> ApiResponses.ok(conn, room)
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
-        end
+    case Rooms.settings(params["id"]) do
+      nil -> ApiResponses.error(conn, :not_found, "Room does not exist")
+      room -> ApiResponses.ok(conn, room)
     end
   end
 
   def update(conn, params) do
-    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["id"]) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+    case Rooms.update_room(params["id"], params) do
+      {:ok, _room, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
 
-      {:ok, _user, _anon, permission} ->
-        if permission >= PermissionLevel.manager() do
-          room = params["id"]
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "Room does not exist")
 
-          case Rooms.update_room(room, params) do
-            {:error, :not_found} ->
-              ApiResponses.error(conn, :not_found, "Room does not exist")
-
-            {:ok, _room, events} ->
-              Events.dispatch_all(events)
-              ApiResponses.ok(conn)
-
-            {:error, changeset} ->
-              ApiResponses.changeset_error(conn, changeset)
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
-        end
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
     end
   end
 
   def delete(conn, params) do
-    case Guardian.get_user(Guardian.token_from_conn(conn)) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+    case Rooms.delete_room(params["id"]) do
+      {:ok, _room, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
 
-      {:ok, user, _anon} ->
-        room_name = params["id"]
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "Room does not exist")
 
-        case Rooms.delete_owned_room(room_name, user) do
-          {:error, :not_found} ->
-            ApiResponses.error(conn, :not_found, "Room does not exist")
-
-          {:error, :forbidden} ->
-            ApiResponses.error(conn, :forbidden, "Insufficient permission")
-
-          {:ok, _room, events} ->
-            Events.dispatch_all(events)
-            ApiResponses.ok(conn)
-
-          {:error, changeset} ->
-            ApiResponses.changeset_error(conn, changeset)
-        end
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
     end
   end
 

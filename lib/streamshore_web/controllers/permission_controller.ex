@@ -1,47 +1,42 @@
 defmodule StreamshoreWeb.PermissionController do
   use StreamshoreWeb, :controller
 
-  alias Streamshore.Guardian
+  alias Streamshore.Events
   alias Streamshore.PermissionLevel
   alias Streamshore.Rooms
   alias StreamshoreWeb.ApiResponses
 
+  plug StreamshoreWeb.Plugs.RequireAuth
+  plug StreamshoreWeb.Plugs.LoadRoomPermission when action in [:update]
+
+  plug StreamshoreWeb.Plugs.RequireRoomPermission,
+       [min: PermissionLevel.manager()] when action in [:update]
+
   def index(conn, params) do
-    room = params["room_id"]
-    perms = Rooms.list_permissions(room)
-    ApiResponses.ok(conn, perms)
+    Rooms.list_permissions(params["room_id"])
+    |> then(&ApiResponses.ok(conn, &1))
   end
 
   def show(conn, params) do
-    perm = Rooms.get_permission(params["room_id"], params["id"])
-    ApiResponses.ok(conn, perm)
+    Rooms.get_permission(params["room_id"], params["id"])
+    |> then(&ApiResponses.ok(conn, &1))
   end
 
   def update(conn, params) do
-    room = params["room_id"]
-    user = params["id"]
-    perm = params["permission"]
+    permission = params["permission"]
 
-    case Guardian.get_user_and_permission(Guardian.token_from_conn(conn), params["room_id"]) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+    cond do
+      conn.assigns.current_room_permission <= permission ->
+        ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-      {:ok, _user, _anon, permission} ->
-        if permission > perm && permission >= PermissionLevel.manager() do
-          case Rooms.update_permission(room, user, perm) do
-            {:ok, _schema} ->
-              StreamshoreWeb.Endpoint.broadcast("room:" <> room, "permission", %{
-                user: user,
-                permission: perm
-              })
+      true ->
+        case Rooms.update_permission(params["room_id"], params["id"], permission) do
+          {:ok, _schema, events} ->
+            Events.dispatch_all(events)
+            ApiResponses.ok(conn)
 
-              ApiResponses.ok(conn)
-
-            {:error, changeset} ->
-              ApiResponses.changeset_error(conn, changeset)
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
+          {:error, changeset} ->
+            ApiResponses.changeset_error(conn, changeset)
         end
     end
   end

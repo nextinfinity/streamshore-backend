@@ -64,6 +64,34 @@ defmodule FavoritesControllerTest do
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
   end
 
+  test "Adding a favorite without a token returns unauthorized" do
+    conn =
+      post(build_conn(), Routes.user_favorite_path(build_conn(), :create, "user"), %{
+        room: "Create"
+      })
+
+    assert json_response(conn, 401) == %{"error" => "No valid token provided"}
+  end
+
+  test "Anonymous users cannot add favorites", %{conn: conn} do
+    conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
+    assert json_response(conn, 200) == %{"route" => "create"}
+
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon-user", %{anon: true})
+
+    anon_conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> token)
+
+    anon_conn =
+      post(anon_conn, Routes.user_favorite_path(anon_conn, :create, "anon-user"), %{
+        room: "Create"
+      })
+
+    assert json_response(anon_conn, 403) ==
+             %{"error" => "Insufficient permission"}
+  end
+
   test "Adding a duplicate favorite returns conflict", %{conn: conn} do
     username = "user"
 

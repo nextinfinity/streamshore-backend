@@ -1,47 +1,34 @@
 defmodule StreamshoreWeb.SessionController do
   use StreamshoreWeb, :controller
-  import Dictionary
 
   alias Streamshore.Accounts
-  alias Streamshore.AuthTokens
   alias Streamshore.Guardian
   alias StreamshoreWeb.ApiResponses
 
   def create(conn, params) do
-    if Enum.count(params) != 0 do
-      user = Accounts.get_by_email_or_username(params["id"])
+    case map_size(params) do
+      0 ->
+        case Accounts.create_anonymous_session() do
+          {:ok, session} ->
+            ApiResponses.ok(conn, session)
+        end
 
-      if user && Pbkdf2.verify_pass(params["password"], user.password) do
-        case user.verify_token do
-          nil ->
-            ApiResponses.ok(conn, %{
-              token: AuthTokens.create_token(user.username, false),
-              user: user.username,
-              anon: false
-            })
+      _ ->
+        case Accounts.create_authenticated_session(params["id"], params["password"]) do
+          {:ok, session} ->
+            ApiResponses.ok(conn, session)
 
-          _ ->
+          {:error, :invalid_credentials} ->
+            ApiResponses.error(conn, :unauthorized, "Invalid credentials")
+
+          {:error, :email_not_verified} ->
             ApiResponses.error(conn, :forbidden, "Email address not verified")
         end
-      else
-        ApiResponses.error(conn, :unauthorized, "Invalid credentials")
-      end
-    else
-      username =
-        String.capitalize(String.trim(random_adjective(), "\r")) <>
-          String.capitalize(String.trim(random_adjective(), "\r")) <>
-          String.capitalize(String.trim(random_animal(), "\r"))
-
-      ApiResponses.ok(conn, %{
-        token: AuthTokens.create_token(username, true),
-        user: username,
-        anon: true
-      })
     end
   end
 
-  def delete(conn, params) do
-    Guardian.revoke(params["id"])
+  def delete(conn, _params) do
+    Guardian.revoke(conn.assigns.current_token)
     ApiResponses.ok(conn)
   end
 end

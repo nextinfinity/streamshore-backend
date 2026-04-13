@@ -3,21 +3,15 @@ defmodule StreamshoreWeb.UserController do
 
   alias Streamshore.Accounts
   alias Streamshore.Events
-  alias Streamshore.Guardian
   alias StreamshoreWeb.ApiResponses
 
-  def index(conn, _params) do
-    case Guardian.get_user_and_admin(Guardian.token_from_conn(conn)) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+  plug StreamshoreWeb.Plugs.RequireAuth when action in [:index, :show, :update, :delete]
+  plug StreamshoreWeb.Plugs.RequireNonAnon when action in [:index, :update, :delete]
+  plug StreamshoreWeb.Plugs.RequireAdmin when action in [:index]
+  plug StreamshoreWeb.Plugs.RequireCurrentUser, [param: "id"] when action in [:delete]
 
-      {:ok, _user, _anon, admin} ->
-        if admin do
-          ApiResponses.ok(conn, Accounts.list_users())
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
-        end
-    end
+  def index(conn, _params) do
+    ApiResponses.ok(conn, Accounts.list_users())
   end
 
   def create(conn, params) do
@@ -61,53 +55,43 @@ defmodule StreamshoreWeb.UserController do
   end
 
   def delete(conn, params) do
-    case Guardian.get_user(Guardian.token_from_conn(conn)) do
-      {:ok, user, anon} ->
-        username = params["id"]
+    username = params["id"]
 
-        if user == username && !anon do
-          case Accounts.delete_user(username) do
-            {:ok, _schema, events} ->
-              Events.dispatch_all(events)
-              ApiResponses.ok(conn)
+    case Accounts.delete_user(username) do
+      {:ok, _schema, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
 
-            {:error, :not_found} ->
-              ApiResponses.error(conn, :not_found, "User not found")
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "User not found")
 
-            {:error, changeset} ->
-              ApiResponses.changeset_error(conn, changeset)
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
-        end
-
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
     end
   end
 
   defp handle_resend_verification(conn, params) do
     case Accounts.resend_verification_email(params["id"]) do
+      {:ok, _schema, events} ->
+        Events.dispatch_all(events)
+        ApiResponses.ok(conn)
+
       {:error, :not_found} ->
         ApiResponses.error(conn, :not_found, "User not found")
 
       {:error, :already_verified} ->
         ApiResponses.error(conn, :conflict, "Email already verified")
-
-      {:ok, _schema, events} ->
-        Events.dispatch_all(events)
-        ApiResponses.ok(conn)
     end
   end
 
   defp handle_password_reset_request(conn, params) do
-    case Accounts.store_reset_token(params["id"]) do
-      {:error, :not_found} ->
-        ApiResponses.error(conn, :not_found, "User not found")
-
+    case Accounts.request_password_reset(params["id"]) do
       {:ok, _schema, events} ->
         Events.dispatch_all(events)
         ApiResponses.ok(conn)
+
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "User not found")
 
       {:error, changeset} ->
         ApiResponses.changeset_error(conn, changeset)
@@ -116,6 +100,9 @@ defmodule StreamshoreWeb.UserController do
 
   defp handle_verify_email(conn, params) do
     case Accounts.verify_email(params["id"], params["verify_token"]) do
+      {:ok, _schema} ->
+        ApiResponses.ok(conn)
+
       {:error, :not_found} ->
         ApiResponses.error(conn, :not_found, "User not found")
 
@@ -125,42 +112,33 @@ defmodule StreamshoreWeb.UserController do
       {:error, :invalid_token} ->
         ApiResponses.error(conn, :unauthorized, "Invalid token")
 
-      {:ok, _schema} ->
-        ApiResponses.ok(conn)
-
       {:error, changeset} ->
         ApiResponses.changeset_error(conn, changeset)
     end
   end
 
   defp handle_password_update(conn, params) do
-    token = Guardian.token_from_conn(conn)
+    username = params["id"]
 
-    case Guardian.get_user(token) do
-      {:error, error} ->
-        ApiResponses.error(conn, :unauthorized, error)
+    result =
+      if username == conn.assigns.current_user do
+        Accounts.update_password(username, params["password"])
+      else
+        Accounts.reset_password(username, conn.assigns.current_token, params["password"])
+      end
 
-      {:ok, user, anon} ->
-        username = params["id"]
+    case result do
+      {:ok, _schema} ->
+        ApiResponses.ok(conn)
 
-        if !anon do
-          if user == username || Accounts.valid_reset_token?(username, token) do
-            case Accounts.update_password(username, params["password"]) do
-              {:ok, _schema} ->
-                ApiResponses.ok(conn)
+      {:error, :not_found} ->
+        ApiResponses.error(conn, :not_found, "User not found")
 
-              {:error, :not_found} ->
-                ApiResponses.error(conn, :not_found, "User not found")
+      {:error, :invalid_token} ->
+        ApiResponses.error(conn, :forbidden, "Insufficient permission")
 
-              {:error, changeset} ->
-                ApiResponses.changeset_error(conn, changeset)
-            end
-          else
-            ApiResponses.error(conn, :forbidden, "Insufficient permission")
-          end
-        else
-          ApiResponses.error(conn, :forbidden, "Insufficient permission")
-        end
+      {:error, changeset} ->
+        ApiResponses.changeset_error(conn, changeset)
     end
   end
 end

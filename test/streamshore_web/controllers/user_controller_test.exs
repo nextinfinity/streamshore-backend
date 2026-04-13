@@ -119,13 +119,41 @@ defmodule UserControllerTest do
   end
 
   test "Updating password without a token returns unauthorized", %{conn: _conn} do
-    conn = put(build_conn(), Routes.user_path(build_conn(), :update, "user"), %{password: "$NewPass123"})
+    conn =
+      put(build_conn(), Routes.user_path(build_conn(), :update, "user"), %{
+        password: "$NewPass123"
+      })
 
     assert json_response(conn, 401) == %{"error" => "No valid token provided"}
   end
 
+  test "Anonymous users cannot update passwords", %{conn: conn} do
+    username = "anon-reset-user"
+
+    conn =
+      post(conn, Routes.user_path(conn, :create), %{
+        email: "anon-reset@test.com",
+        username: username,
+        password: "$Test123"
+      })
+
+    assert json_response(conn, 200) == %{}
+
+    {:ok, token, _claims} = Guardian.encode_and_sign("anon-user", %{anon: true})
+
+    anon_conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer " <> token)
+
+    anon_conn =
+      put(anon_conn, Routes.user_path(anon_conn, :update, username), %{password: "$NewPass123"})
+
+    assert json_response(anon_conn, 403) == %{"error" => "Insufficient permission"}
+  end
+
   test "Resending verification for an unknown user returns not found", %{conn: conn} do
-    conn = put(conn, Routes.user_path(conn, :update, "missing-user"), %{resend_verification: true})
+    conn =
+      put(conn, Routes.user_path(conn, :update, "missing-user"), %{resend_verification: true})
 
     assert json_response(conn, 404) == %{"error" => "User not found"}
   end
@@ -167,20 +195,24 @@ defmodule UserControllerTest do
 
     user = Accounts.get_by_email_or_username(username)
 
-    conn = put(conn, Routes.user_path(conn, :update, username), %{verify_token: user.verify_token})
+    conn =
+      put(conn, Routes.user_path(conn, :update, username), %{verify_token: user.verify_token})
+
     assert json_response(conn, 200) == %{}
 
-    conn = put(conn, Routes.user_path(conn, :update, username), %{verify_token: user.verify_token})
+    conn =
+      put(conn, Routes.user_path(conn, :update, username), %{verify_token: user.verify_token})
 
     assert json_response(conn, 409) == %{"error" => "Email already verified"}
   end
 
   test "Requesting a password reset for an unknown user returns not found", %{conn: conn} do
-    conn = put(conn, Routes.user_path(conn, :update, "missing@example.com"), %{reset_password: true})
+    conn =
+      put(conn, Routes.user_path(conn, :update, "missing@example.com"), %{reset_password: true})
 
     assert json_response(conn, 404) == %{"error" => "User not found"}
   end
-  
+
   test "Updating password with a stored reset token", %{conn: conn} do
     username = "reset-user"
 
@@ -194,7 +226,7 @@ defmodule UserControllerTest do
     assert json_response(conn, 200) == %{}
 
     assert {:ok, _updated_user, [{:send_password_reset_email, _event_user, token}]} =
-             Accounts.store_reset_token("reset@test.com")
+             Accounts.request_password_reset("reset@test.com")
 
     reset_conn =
       build_conn()
@@ -327,5 +359,11 @@ defmodule UserControllerTest do
   test "Getting list of all users as non-admin", %{conn: conn} do
     conn = get(conn, Routes.user_path(conn, :index))
     assert json_response(conn, 403) == %{"error" => "Insufficient permission"}
+  end
+
+  test "Getting list of all users without a token returns unauthorized" do
+    conn = get(build_conn(), Routes.user_path(build_conn(), :index))
+
+    assert json_response(conn, 401) == %{"error" => "No valid token provided"}
   end
 end
