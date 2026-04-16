@@ -1,10 +1,10 @@
 defmodule PlaylistControllerTest do
   use StreamshoreWeb.ConnCase
 
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
+    token = AuthTokens.create_session_token("user", false)
 
     conn =
       conn

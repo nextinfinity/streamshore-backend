@@ -1,8 +1,8 @@
 defmodule ResetPasswordControllerTest do
   use StreamshoreWeb.ConnCase
 
-  alias Streamshore.Accounts
-  alias Streamshore.Guardian
+  alias Streamshore.Auth
+  alias Streamshore.AuthTokens
 
   defp unique_value(prefix), do: "#{prefix}-#{System.unique_integer([:positive])}"
 
@@ -29,7 +29,7 @@ defmodule ResetPasswordControllerTest do
     assert json_response(conn, 200) == %{}
 
     assert {:ok, _updated_user, [{:send_password_reset_email, _event_user, token}]} =
-             Accounts.request_password_reset(email)
+             Auth.request_password_reset(email)
 
     conn =
       post(conn, Routes.reset_password_path(conn, :reset_password), %{
@@ -52,8 +52,7 @@ defmodule ResetPasswordControllerTest do
 
     assert json_response(conn, 200) == %{}
 
-    {:ok, forged_token, _claims} =
-      Guardian.encode_and_sign(username, %{anon: false, purpose: "password_reset"})
+    forged_token = AuthTokens.create_password_reset_token(username)
 
     conn =
       post(conn, Routes.reset_password_path(conn, :reset_password), %{

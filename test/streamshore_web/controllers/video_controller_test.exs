@@ -2,12 +2,12 @@ defmodule VideoControllerTest do
   use StreamshoreWeb.ConnCase
   import Phoenix.ChannelTest
 
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
   alias Streamshore.QueueManager
   alias Streamshore.Videos
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: false})
+    token = AuthTokens.create_session_token("anon", false)
 
     conn =
       conn
@@ -148,7 +148,7 @@ defmodule VideoControllerTest do
       })
 
     assert json_response(conn, 200) == %{"route" => "queueanon"}
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true})
+    token = AuthTokens.create_session_token("anon", true)
 
     conn2 =
       build_conn()

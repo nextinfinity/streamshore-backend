@@ -1,12 +1,12 @@
 defmodule FavoritesControllerTest do
   use StreamshoreWeb.ConnCase
 
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
 
   defp unique_value(prefix), do: "#{prefix}-#{System.unique_integer([:positive])}"
 
   defp authorized_conn(username) do
-    {:ok, token, _claims} = Guardian.encode_and_sign(username, %{anon: false})
+    token = AuthTokens.create_session_token(username, false)
 
     build_conn()
     |> put_req_header("authorization", "Bearer " <> token)
@@ -14,7 +14,7 @@ defmodule FavoritesControllerTest do
 
   setup %{conn: conn} do
     current_user = unique_value("user")
-    {:ok, token, _claims} = Guardian.encode_and_sign(current_user, %{anon: false})
+    token = AuthTokens.create_session_token(current_user, false)
 
     conn =
       conn
@@ -24,7 +24,6 @@ defmodule FavoritesControllerTest do
   end
 
   test "Adding a room to your favorites list", %{conn: conn, current_user: username} do
-
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",
@@ -40,7 +39,6 @@ defmodule FavoritesControllerTest do
   end
 
   test "Removing a room from your favorites list", %{conn: conn, current_user: username} do
-
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",
@@ -78,7 +76,7 @@ defmodule FavoritesControllerTest do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "create"}
 
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon-user", %{anon: true})
+    token = AuthTokens.create_session_token("anon-user", true)
 
     anon_conn =
       build_conn()
@@ -94,7 +92,6 @@ defmodule FavoritesControllerTest do
   end
 
   test "Adding a duplicate favorite returns conflict", %{conn: conn, current_user: username} do
-
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",
@@ -113,7 +110,6 @@ defmodule FavoritesControllerTest do
   end
 
   test "Users cannot delete favorites for another user", %{conn: conn, current_user: username} do
-
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",

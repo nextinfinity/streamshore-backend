@@ -1,7 +1,7 @@
 defmodule SessionControllerTest do
   use StreamshoreWeb.ConnCase
 
-  alias Streamshore.Accounts
+  alias Streamshore.Auth
   alias Streamshore.Repo
   alias Streamshore.User
 
@@ -94,7 +94,7 @@ defmodule SessionControllerTest do
     assert json_response(conn, 200) == %{}
 
     user = Repo.get_by!(User, username: username)
-    assert {:ok, _verified_user} = Accounts.verify_email(username, user.verify_token)
+    assert {:ok, _verified_user} = Auth.verify_email_from_token(user.verify_token)
 
     conn =
       post(conn, Routes.session_path(conn, :create), %{id: username, password: "$Test123"})

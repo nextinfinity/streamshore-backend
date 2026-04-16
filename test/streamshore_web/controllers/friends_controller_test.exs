@@ -1,17 +1,17 @@
 defmodule FriendsControllerTest do
   use StreamshoreWeb.ConnCase
 
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
 
   defp authorized_conn(username) do
-    {:ok, token, _claims} = Guardian.encode_and_sign(username, %{anon: false})
+    token = AuthTokens.create_session_token(username, false)
 
     build_conn()
     |> put_req_header("authorization", "Bearer " <> token)
   end
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("Tester1", %{anon: false})
+    token = AuthTokens.create_session_token("Tester1", false)
 
     conn =
       conn

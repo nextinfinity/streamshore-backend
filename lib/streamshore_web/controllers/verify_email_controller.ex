@@ -1,12 +1,12 @@
 defmodule StreamshoreWeb.VerifyEmailController do
   use StreamshoreWeb, :controller
 
-  alias Streamshore.Accounts
+  alias Streamshore.Auth
   alias Streamshore.Events
   alias StreamshoreWeb.ApiResponses
 
   def resend_email_verification(conn, params) do
-    case Accounts.resend_verification_email(params["identifier"]) do
+    case Auth.resend_verification(params["identifier"]) do
       {:ok, _schema, events} ->
         Events.dispatch_all(events)
         ApiResponses.accepted(conn)
@@ -18,7 +18,7 @@ defmodule StreamshoreWeb.VerifyEmailController do
   end
 
   def verify_email(conn, params) do
-    case Accounts.submit_email_verification(params["token"]) do
+    case Auth.verify_email_from_token(params["token"]) do
       {:ok, _schema} ->
         ApiResponses.ok(conn)
 

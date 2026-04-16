@@ -1,12 +1,12 @@
 defmodule StreamshoreWeb.ResetPasswordController do
   use StreamshoreWeb, :controller
 
-  alias Streamshore.Accounts
+  alias Streamshore.Auth
   alias Streamshore.Events
   alias StreamshoreWeb.ApiResponses
 
   def request_password_reset(conn, params) do
-    case Accounts.request_password_reset(params["identifier"]) do
+    case Auth.request_password_reset(params["identifier"]) do
       {:ok, _schema, events} ->
         Events.dispatch_all(events)
         ApiResponses.accepted(conn)
@@ -21,7 +21,7 @@ defmodule StreamshoreWeb.ResetPasswordController do
   end
 
   def reset_password(conn, params) do
-    case Accounts.submit_password_reset(params["token"], params["password"]) do
+    case Auth.reset_password_from_token(params["token"], params["password"]) do
       {:ok, _schema} ->
         ApiResponses.ok(conn)
 

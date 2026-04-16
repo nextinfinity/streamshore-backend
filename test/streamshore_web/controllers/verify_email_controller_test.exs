@@ -1,8 +1,9 @@
 defmodule VerifyEmailControllerTest do
   use StreamshoreWeb.ConnCase
 
-  alias Streamshore.Accounts
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
+  alias Streamshore.Repo
+  alias Streamshore.User
 
   defp unique_value(prefix), do: "#{prefix}-#{System.unique_integer([:positive])}"
 
@@ -17,7 +18,7 @@ defmodule VerifyEmailControllerTest do
       Application.put_env(:streamshore, :mailer_from_address, original_mailer_from_address)
     end)
 
-    {:ok, token, _claims} = Guardian.encode_and_sign(current_user, %{anon: false})
+    token = AuthTokens.create_session_token(current_user, false)
 
     conn =
       conn
@@ -36,9 +37,10 @@ defmodule VerifyEmailControllerTest do
   end
 
   test "email verification rejects an invalid token", %{conn: conn} do
-    conn = post(conn, Routes.verify_email_path(conn, :verify_email), %{
-      token: "invalid-token"
-    })
+    conn =
+      post(conn, Routes.verify_email_path(conn, :verify_email), %{
+        token: "invalid-token"
+      })
 
     assert json_response(conn, 401) == %{"error" => "Invalid token"}
   end
@@ -59,16 +61,20 @@ defmodule VerifyEmailControllerTest do
 
     assert json_response(conn, 200) == %{}
 
-    user = Accounts.get_by_email_or_username(username)
+    user = Repo.get_by!(User, username: username)
 
-    conn = post(conn, Routes.verify_email_path(conn, :verify_email), %{
-      token: user.verify_token
-    })
+    conn =
+      post(conn, Routes.verify_email_path(conn, :verify_email), %{
+        token: user.verify_token
+      })
+
     assert json_response(conn, 200) == %{}
 
-    conn = post(conn, Routes.verify_email_path(conn, :verify_email), %{
-      token: user.verify_token
-    })
+    conn =
+      post(conn, Routes.verify_email_path(conn, :verify_email), %{
+        token: user.verify_token
+      })
+
     assert json_response(conn, 409) == %{"error" => "Email already verified"}
   end
 end

@@ -12,13 +12,4 @@ defmodule Streamshore.Guardian do
     resource = %{user: user, anon: anon}
     {:ok, resource}
   end
-
-  def token_from_conn(conn) do
-    case Enum.find(conn.req_headers, fn {key, _value} ->
-           String.downcase(key) == "authorization"
-         end) do
-      {_, "Bearer " <> token} -> token
-      _ -> nil
-    end
-  end
 end

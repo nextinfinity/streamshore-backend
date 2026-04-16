@@ -2,10 +2,10 @@ defmodule RoomControllerTest do
   use StreamshoreWeb.ConnCase
   import Phoenix.ChannelTest
 
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
+    token = AuthTokens.create_session_token("user", false)
 
     conn =
       conn
@@ -208,7 +208,7 @@ defmodule RoomControllerTest do
   test "Removing a room you don't own", %{conn: conn} do
     conn = post(conn, Routes.room_path(conn, :create), %{name: "Create", motd: "", privacy: 0})
     assert json_response(conn, 200) == %{"route" => "create"}
-    {:ok, token, _claims} = Guardian.encode_and_sign("anon", %{anon: true})
+    token = AuthTokens.create_session_token("anon", true)
 
     conn2 =
       build_conn()

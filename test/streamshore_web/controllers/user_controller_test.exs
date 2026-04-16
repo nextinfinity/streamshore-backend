@@ -3,7 +3,7 @@ defmodule UserControllerTest do
   import Phoenix.ChannelTest
 
   alias Streamshore.Accounts
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
 
   defp unique_value(prefix), do: "#{prefix}-#{System.unique_integer([:positive])}"
 
@@ -18,7 +18,7 @@ defmodule UserControllerTest do
       Application.put_env(:streamshore, :mailer_from_address, original_mailer_from_address)
     end)
 
-    {:ok, token, _claims} = Guardian.encode_and_sign(current_user, %{anon: false})
+    token = AuthTokens.create_session_token(current_user, false)
 
     conn =
       conn
@@ -85,7 +85,6 @@ defmodule UserControllerTest do
   end
 
   test "deleting the current user account succeeds", %{conn: conn, current_user: username} do
-
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",
@@ -102,7 +101,6 @@ defmodule UserControllerTest do
     conn: conn,
     current_user: username
   } do
-
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",
@@ -131,7 +129,10 @@ defmodule UserControllerTest do
     assert_broadcast "room-deleted", %{}
   end
 
-  test "deleting the current account removes the authenticated user", %{conn: conn, current_user: username} do
+  test "deleting the current account removes the authenticated user", %{
+    conn: conn,
+    current_user: username
+  } do
     conn =
       post(conn, Routes.account_path(conn, :create), %{
         email: unique_value("email") <> "@test.com",
@@ -159,7 +160,7 @@ defmodule UserControllerTest do
 
     assert {:ok, _user} = Accounts.set_admin(username, 1)
 
-    {:ok, token, _claims} = Guardian.encode_and_sign(username, %{anon: false})
+    token = AuthTokens.create_session_token(username, false)
 
     conn2 =
       build_conn()

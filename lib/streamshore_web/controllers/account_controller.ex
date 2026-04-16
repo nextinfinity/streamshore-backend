@@ -2,6 +2,7 @@ defmodule StreamshoreWeb.AccountController do
   use StreamshoreWeb, :controller
 
   alias Streamshore.Accounts
+  alias Streamshore.Auth
   alias Streamshore.Events
   alias StreamshoreWeb.ApiResponses
 
@@ -20,7 +21,7 @@ defmodule StreamshoreWeb.AccountController do
   end
 
   def update_password(conn, params) do
-    case Accounts.update_password(conn.assigns.current_user, params["password"]) do
+    case Auth.update_password(conn.assigns.current_user, params["password"]) do
       {:ok, _schema} ->
         ApiResponses.ok(conn)
 
