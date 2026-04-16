@@ -40,7 +40,7 @@ defmodule ResetPasswordControllerTest do
     assert json_response(conn, 200) == %{}
   end
 
-  test "forged reset-subject tokens cannot be used to set a new password", %{conn: conn} do
+  test "forged password reset tokens cannot be used to set a new password", %{conn: conn} do
     username = unique_value("reset-user")
 
     conn =
@@ -52,7 +52,8 @@ defmodule ResetPasswordControllerTest do
 
     assert json_response(conn, 200) == %{}
 
-    {:ok, forged_token, _claims} = Guardian.encode_and_sign("Reset-" <> username, %{anon: false})
+    {:ok, forged_token, _claims} =
+      Guardian.encode_and_sign(username, %{anon: false, purpose: "password_reset"})
 
     conn =
       post(conn, Routes.reset_password_path(conn, :reset_password), %{

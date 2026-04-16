@@ -4,7 +4,6 @@ defmodule Streamshore.Accounts do
 
   alias Ecto.Multi
   alias Streamshore.AuthTokens
-  alias Streamshore.Guardian
   alias Streamshore.Favorites
   alias Streamshore.Friends
   alias Streamshore.Mailer
@@ -15,6 +14,9 @@ defmodule Streamshore.Accounts do
   alias Streamshore.Room
   alias Streamshore.Rooms
   alias Streamshore.User
+
+  @verify_email_purpose "verify_email"
+  @password_reset_purpose "password_reset"
 
   def admin?(user) do
     Repo.one(from u in User, where: u.username == ^user, select: u.admin) == 1
@@ -155,7 +157,9 @@ defmodule Streamshore.Accounts do
   def create_user(params) do
     params =
       if Mailer.enabled?() do
-        verify_token = AuthTokens.create_token("Verify-" <> params["username"], false)
+        verify_token =
+          AuthTokens.create_token(params["username"], false, %{purpose: @verify_email_purpose})
+
         Map.put(params, "verify_token", verify_token)
       else
         params
@@ -210,7 +214,7 @@ defmodule Streamshore.Accounts do
         {:error, :already_verified}
 
       %User{} = user ->
-        token = AuthTokens.create_token("Verify-" <> user.username, false)
+        token = AuthTokens.create_token(user.username, false, %{purpose: @verify_email_purpose})
 
         case update_user(user.username, &User.verification_changeset(&1, %{verify_token: token})) do
           {:ok, updated_user} ->
@@ -267,7 +271,7 @@ defmodule Streamshore.Accounts do
         {:error, :not_found}
 
       user ->
-        token = AuthTokens.create_token("Reset-" <> user.username, false)
+        token = AuthTokens.create_token(user.username, false, %{purpose: @password_reset_purpose})
 
         case update_user(user.username, &User.reset_token_changeset(&1, %{reset_token: token})) do
           {:ok, updated_user} ->
@@ -280,7 +284,8 @@ defmodule Streamshore.Accounts do
   end
 
   def submit_password_reset(reset_token, password) do
-    with {:ok, username} <- decode_token_subject(reset_token, "Reset-") do
+    with {:ok, username} <-
+           AuthTokens.decode_token_for_purpose(reset_token, @password_reset_purpose) do
       reset_password(username, reset_token, password)
     end
   end
@@ -299,7 +304,7 @@ defmodule Streamshore.Accounts do
   end
 
   def submit_email_verification(token) do
-    with {:ok, username} <- decode_token_subject(token, "Verify-") do
+    with {:ok, username} <- AuthTokens.decode_token_for_purpose(token, @verify_email_purpose) do
       verify_email(username, token)
     end
   end
@@ -414,17 +419,6 @@ defmodule Streamshore.Accounts do
     |> case do
       {:ok, %{friend_request: friendship}} -> {:ok, friendship}
       {:error, _step, changeset, _changes} -> {:error, changeset}
-    end
-  end
-
-  defp decode_token_subject(token, prefix) do
-    with {:ok, claims} <- Guardian.decode_and_verify(token),
-         subject when is_binary(subject) <- claims["sub"],
-         true <- String.starts_with?(subject, prefix),
-         username when byte_size(username) > 0 <- String.replace_prefix(subject, prefix, "") do
-      {:ok, username}
-    else
-      _ -> {:error, :invalid_token}
     end
   end
 end
