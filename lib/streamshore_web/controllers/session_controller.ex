@@ -1,20 +1,19 @@
 defmodule StreamshoreWeb.SessionController do
   use StreamshoreWeb, :controller
 
-  alias Streamshore.Accounts
-  alias Streamshore.Guardian
+  alias Streamshore.Auth
   alias StreamshoreWeb.ApiResponses
 
   def create(conn, params) do
     case map_size(params) do
       0 ->
-        case Accounts.create_anonymous_session() do
+        case Auth.create_anonymous_session() do
           {:ok, session} ->
             ApiResponses.ok(conn, session)
         end
 
       _ ->
-        case Accounts.create_authenticated_session(params["id"], params["password"]) do
+        case Auth.log_in_with_password(params["id"], params["password"]) do
           {:ok, session} ->
             ApiResponses.ok(conn, session)
 
@@ -28,7 +27,7 @@ defmodule StreamshoreWeb.SessionController do
   end
 
   def delete(conn, _params) do
-    Guardian.revoke(conn.assigns.current_token)
+    Auth.log_out(conn.assigns.current_token)
     ApiResponses.ok(conn)
   end
 end

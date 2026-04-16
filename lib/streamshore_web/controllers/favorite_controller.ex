@@ -7,7 +7,6 @@ defmodule StreamshoreWeb.FavoriteController do
 
   plug StreamshoreWeb.Plugs.RequireAuth
   plug StreamshoreWeb.Plugs.RequireNonAnon
-  plug StreamshoreWeb.Plugs.RequireCurrentUser, param: "user_id"
 
   def index(conn, _params) do
     conn.assigns.current_user

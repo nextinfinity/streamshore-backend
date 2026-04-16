@@ -2,11 +2,11 @@ defmodule PermissionControllerTest do
   use StreamshoreWeb.ConnCase
   import Phoenix.ChannelTest
 
-  alias Streamshore.Guardian
+  alias Streamshore.AuthTokens
   alias Streamshore.PermissionLevel
 
   setup %{conn: conn} do
-    {:ok, token, _claims} = Guardian.encode_and_sign("user", %{anon: false})
+    token = AuthTokens.create_session_token("user", false)
 
     conn =
       conn
@@ -60,7 +60,7 @@ defmodule PermissionControllerTest do
 
     assert json_response(conn, 200) == %{}
 
-    {:ok, token, _claims} = Guardian.encode_and_sign("manager-user", %{anon: false})
+    token = AuthTokens.create_session_token("manager-user", false)
 
     manager_conn =
       build_conn()

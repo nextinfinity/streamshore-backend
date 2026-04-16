@@ -10,6 +10,12 @@ defmodule StreamshoreWeb.ApiResponses do
     |> json(payload)
   end
 
+  def accepted(conn, payload \\ %{}) do
+    conn
+    |> put_status(:accepted)
+    |> json(payload)
+  end
+
   def created(conn, payload) do
     conn
     |> put_status(:created)
